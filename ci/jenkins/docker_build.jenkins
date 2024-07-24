@@ -31,8 +31,8 @@ pipeline {
             steps {
                 echo " ============== start pushing image =================="
                 sh '''
-                docker push akafer/sms_bot
-                docker rmi akafer/sms_bot
+                docker push akafer/ins_control
+                docker rmi akafer/ins_control
                 '''
             }
         }
@@ -40,7 +40,7 @@ pipeline {
             steps {
                 echo " ============== copy docker-compose file =================="
                 dir ('./ci') {
-                    sh 'scp docker-compose.yaml root@ub1:/root/app/sms_bot/docker-compose.yaml'
+                    sh 'scp docker-compose.yaml root@ub1:/root/app/ins_control/docker-compose.yaml'
 
                 }
             }
@@ -48,7 +48,7 @@ pipeline {
         stage("renew server") {
             steps {
                 echo " ============== go to server =================="
-                sh 'ssh root@ub1 "cd /root/app/sms_bot && docker-compose down && docker rmi akafer/sms_bot && docker-compose up -d"'
+                sh 'ssh root@ub1 "cd /root/app/ins_control && docker-compose down && docker rmi akafer/ins_control && docker-compose up -d"'
             }
         }
     }
