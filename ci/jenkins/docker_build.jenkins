@@ -40,7 +40,7 @@ pipeline {
             steps {
                 echo " ============== copy docker-compose file =================="
                 dir ('./ci') {
-                    sh 'scp docker-compose.yaml root@ub1:/root/app/ins_control/docker-compose.yaml'
+                    sh 'scp docker-compose.yaml root@ub1:/root/app/INS_CONTROL/docker-compose.yaml'
 
                 }
             }
@@ -48,7 +48,7 @@ pipeline {
         stage("renew server") {
             steps {
                 echo " ============== go to server =================="
-                sh 'ssh root@ub1 "cd /root/app/ins_control && docker-compose down && docker rmi akafer/ins_control && docker-compose up -d"'
+                sh 'ssh root@ub1 "cd /root/app/INS_CONTROL && docker-compose down && docker rmi akafer/ins_control && docker-compose up -d"'
             }
         }
     }
