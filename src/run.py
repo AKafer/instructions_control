@@ -4,7 +4,7 @@ from app import create_app
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--port", default=8000, type=int)
+    parser.add_argument("-p", "--port", default=8500, type=int)
     parser.add_argument("-ll", "--log_level", default="debug")
     args = parser.parse_args()
 

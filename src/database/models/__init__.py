@@ -1,7 +1,7 @@
 __all__ = [
     "BaseModel",
-    "Profession",
+    "Professions",
 ]
 
 from database.orm import BaseModel
-from .professions import Profession
+from .professions import Professions

@@ -2,7 +2,7 @@ import sqlalchemy as sa
 from database.orm import BaseModel
 
 
-class Profession(BaseModel):
+class Professions(BaseModel):
     __tablename__ = 'professions'
 
     id = sa.Column(sa.BigInteger, primary_key=True)

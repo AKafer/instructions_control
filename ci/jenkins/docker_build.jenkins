@@ -1,0 +1,55 @@
+#!groovy
+// Run docker build
+properties([disableConcurrentBuilds()])
+
+pipeline {
+    agent any
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
+        timestamps()
+    }
+    stages {
+        stage("docker login") {
+            steps {
+                echo " ============== docker login =================="
+                withCredentials([usernamePassword(credentialsId: 'dockerhub_akafer', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh """
+                    docker login -u $USERNAME -p $PASSWORD
+                    """
+                }
+            }
+        }
+        stage("create docker image") {
+            steps {
+                echo " ============== start building image =================="
+                dir ('.') {
+                	sh 'docker build -t akafer/ins_control -f  ./ci/Dockerfile .'
+                }
+            }
+        }
+        stage("docker push") {
+            steps {
+                echo " ============== start pushing image =================="
+                sh '''
+                docker push akafer/sms_bot
+                docker rmi akafer/sms_bot
+                '''
+            }
+        }
+        stage("copy docker_compose file") {
+            steps {
+                echo " ============== copy docker-compose file =================="
+                dir ('./ci') {
+                    sh 'scp docker-compose.yaml root@ub1:/root/app/sms_bot/docker-compose.yaml'
+
+                }
+            }
+        }
+        stage("renew server") {
+            steps {
+                echo " ============== go to server =================="
+                sh 'ssh root@ub1 "cd /root/app/sms_bot && docker-compose down && docker rmi akafer/sms_bot && docker-compose up -d"'
+            }
+        }
+    }
+}
