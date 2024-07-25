@@ -3,13 +3,15 @@ from fastapi_pagination import Page, paginate
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
+from starlette.responses import Response
 
 from database.models.professions import Professions
 from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
-from schemas import ResponseErrorBody
+from main_schemas import ResponseErrorBody
 from web.professions.schemas import Profession, ProfessionInput
+from web.professions.services import update_profession
 
 router = APIRouter(prefix="/professions", tags=["professions"])
 
@@ -24,7 +26,7 @@ async def get_all_profs(
 
 
 @router.get(
-    "/{profession_id}",
+    "/{profession_id:int}",
     response_model=Profession,
     responses={
         status.HTTP_400_BAD_REQUEST: {
@@ -59,3 +61,52 @@ async def create_prof(
     await db_session.commit()
     await db_session.refresh(db_profession)
     return db_profession
+
+
+@router.put(
+    "/{profession_id:int}",
+    response_model=Profession,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": ResponseErrorBody,
+        },
+    },
+)
+async def update_prof(
+    profession_id: int,
+    update_input: ProfessionInput,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    query = select(Professions).filter(Professions.id == profession_id)
+    profession = await db_session.scalar(query)
+    if profession is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Profssion with id {profession_id} not found",
+        )
+    return await update_profession(db_session, profession, **update_input.dict())
+
+
+@router.delete(
+    "/{profession_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "model": ResponseErrorBody,
+        },
+    },
+)
+async def delete_prof(
+    profession_id: int,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    query = select(Professions).filter(Professions.id == profession_id)
+    profession = await db_session.scalar(query)
+    if profession is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Profssion with id {profession_id} not found",
+        )
+    await db_session.delete(profession)
+    await db_session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

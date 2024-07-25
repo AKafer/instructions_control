@@ -1,8 +1,9 @@
 from fastapi import APIRouter
 from starlette import status
 from web.professions.routers import router as prof_router
+from web.instructions.routers import router as ins_router
 
-from schemas import ResponseErrorBody
+from main_schemas import ResponseErrorBody
 
 api_v1_router = APIRouter(
     prefix="/api/v1",
@@ -20,3 +21,4 @@ api_v1_router = APIRouter(
 
 
 api_v1_router.include_router(prof_router)
+api_v1_router.include_router(ins_router)
