@@ -4,6 +4,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_DIR = os.path.join(BASE_DIR, "static")
+
+
 
 DATABASE_POOL_SIZE = os.getenv("DB_POOL_SIZE", default=20)
 DATABASE_POOL_MAX_OVERFLOW = os.getenv("DB_POOL_MAX_OVERFLOW", default=5)

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi_pagination import add_pagination
 from starlette.responses import PlainTextResponse
+from starlette.staticfiles import StaticFiles
 
 from routers import api_v1_router
 
@@ -17,4 +18,5 @@ def create_app() -> FastAPI:
     )
     setup_routes(app)
     add_pagination(app)
+    app.mount("/static", StaticFiles(directory="static"), name="static")
     return app

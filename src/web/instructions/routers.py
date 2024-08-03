@@ -1,15 +1,18 @@
-from fastapi import File, UploadFile, APIRouter, Depends
+import os
+
+from fastapi import File, UploadFile, APIRouter, Depends, Request
 from fastapi.responses import FileResponse
 from fastapi_pagination import paginate, Page
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from starlette.exceptions import HTTPException
-from starlette.responses import Response
+from starlette.responses import Response, PlainTextResponse
 
 from database.models.instructions import Instructions
 from dependencies import get_db_session
 from main_schemas import ResponseErrorBody
+from settings import UPLOAD_DIR
 from web.instructions.schemas import Instruction, InstructionInput
 from web.instructions.services import update_instruction
 
@@ -112,14 +115,24 @@ async def delete_instruction(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-# @router.post("/upload")
-# async def upload(uploaded_file: UploadFile = File(...)):
-#     file_location = f"/home/s-storozhuk/Documents/Dev/fastapi_auth/files/{uploaded_file.filename}"
-#     with open(file_location, "wb+") as file_object:
-#         file_object.write(uploaded_file.file.read())
-#     return {"info": f"file '{uploaded_file.filename}' saved at '{file_location}'"}
+@router.post('/upload')
+def upload(file: UploadFile = File(...)):
+    SAVE_F = os.path.join(UPLOAD_DIR, file.filename)
+    with open(SAVE_F, "wb+") as f:
+        f.write(file.file.read())
+    return FileResponse(path=SAVE_F, media_type="application/octet-stream")
 
-# @router.get("/download")
-# def download():
-#     file_path = "/home/s-storozhuk/Documents/Dev/fastapi_auth/files/ATMINTINE.docx"
-#     return FileResponse(path=file_path, filename=file_path, media_type='text/docx')
+
+@router.get("/get_link", response_class=PlainTextResponse)
+def get_link(request: Request, file_number: int = 0):
+    if not os.listdir(UPLOAD_DIR):
+        return "No files uploaded"
+    if file_number >= len(os.listdir(UPLOAD_DIR)):
+        return "File not found"
+    filename = os.listdir(UPLOAD_DIR)[file_number]
+    return f"{str(request.base_url)}static/{filename}"
+
+
+@router.get("/fileslist")
+def get_file_list():
+    return os.listdir(UPLOAD_DIR)
