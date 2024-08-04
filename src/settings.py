@@ -8,6 +8,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, "static")
 
 
+BASE_URL = os.getenv("BASE_URL")
+
 
 DATABASE_POOL_SIZE = os.getenv("DB_POOL_SIZE", default=20)
 DATABASE_POOL_MAX_OVERFLOW = os.getenv("DB_POOL_MAX_OVERFLOW", default=5)

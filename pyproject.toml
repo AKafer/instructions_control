@@ -14,6 +14,8 @@ asyncpg = "^0.29.0"
 alembic = "^1.13.2"
 pydantic = "^1.9"
 fastapi-pagination = {extras = ["sqlalchemy"], version = "^0.12.26"}
+python-multipart = "^0.0.9"
+aiofiles = "^24.1.0"
 
 
 [build-system]
