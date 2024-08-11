@@ -7,7 +7,7 @@ class Instruction(BaseModel):
     id: int
     filename: str | None
     title: str
-    number: str
+    number: str | None
     iteration: bool = False
     period: int | None
 
