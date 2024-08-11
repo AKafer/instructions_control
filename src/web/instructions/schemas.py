@@ -1,5 +1,6 @@
-from fastapi import UploadFile, File, Form
-from pydantic import BaseModel, validator
+from fastapi import Form
+
+from pydantic import BaseModel
 
 
 class Instruction(BaseModel):
@@ -12,16 +13,6 @@ class Instruction(BaseModel):
 
     class Config:
         orm_mode = True
-
-
-# class InstructionInput(BaseModel):
-#     title: str | None
-#     number: str | None
-#     iteration: bool = False
-#     period: int | None
-#
-#     class Config:
-#         orm_mode = True
 
 
 class InstructionInput(BaseModel):

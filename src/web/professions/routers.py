@@ -46,7 +46,7 @@ async def get_prof_by_id(
     if profession is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Profssion with id {profession_id} not found",
+            detail=f"Profession with id {profession_id} not found",
         )
     return profession
 
@@ -82,7 +82,7 @@ async def update_prof(
     if profession is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Profssion with id {profession_id} not found",
+            detail=f"Profession with id {profession_id} not found",
         )
     return await update_profession(db_session, profession, **update_input.dict())
 
@@ -105,7 +105,7 @@ async def delete_prof(
     if profession is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Profssion with id {profession_id} not found",
+            detail=f"Profession with id {profession_id} not found",
         )
     await db_session.delete(profession)
     await db_session.commit()

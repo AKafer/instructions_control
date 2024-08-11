@@ -17,8 +17,9 @@ from web.instructions.services import (
     get_full_link,
     save_file,
     update_instruction_in_db,
-    delete_file
+    delete_file, get_instruction_by_profession_from_db
 )
+from web.rules.exceptions import ItemNotFound
 
 router = APIRouter(prefix="/instructions", tags=["insructions"])
 
@@ -58,10 +59,38 @@ async def get_instruction_by_id(
     if instruction is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Profssion with id {instruction_id} not found",
+            detail=f"Instruction with id {instruction_id} not found",
         )
     instruction.filename = get_full_link(request, instruction.filename)
     return instruction
+
+@router.get(
+    "/get_by_profession/{profession_id:int}",
+    response_model=list[Instruction],
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": ResponseErrorBody,
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": ResponseErrorBody,
+        },
+    },
+)
+async def get_instructions_by_profession(
+    request: Request,
+    profession_id: int,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    try:
+        instructions = await get_instruction_by_profession_from_db(profession_id, db_session)
+    except ItemNotFound as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    for instruction in instructions:
+        instruction.filename = get_full_link(request, instruction.filename)
+    return instructions
 
 
 @router.post(
@@ -120,7 +149,7 @@ async def update_instruction(
     if instruction is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Profssion with id {instruction_id} not found",
+            detail=f"Instruction with id {instruction_id} not found",
         )
     update_dict = update_data.dict()
     old_filename = instruction.filename
