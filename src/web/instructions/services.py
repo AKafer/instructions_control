@@ -1,5 +1,6 @@
 import os
 
+import sqlalchemy
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,7 +11,7 @@ from settings import BASE_URL, UPLOAD_DIR
 
 import aiofiles as aiof
 
-from web.rules.exceptions import ItemNotFound
+from web.exceptions import ErrorSaveToDatabase, DuplicateFilename, ItemNotFound
 
 
 async def update_instruction_in_db(
@@ -20,9 +21,38 @@ async def update_instruction_in_db(
 ) -> Instructions:
     for field, value in update_data.items():
         setattr(instruction, field, value)
-    await db_session.commit()
+    try:
+        await db_session.commit()
+    except sqlalchemy.exc.IntegrityError as e:
+        raise ErrorSaveToDatabase(f"Error save to database {e}")
     await db_session.refresh(instruction)
     return instruction
+
+
+async def update_instruction_logic(
+    db_session: AsyncSession,
+    request: Request,
+    instruction: Instructions,
+    update_dict: dict,
+    file: UploadFile = None,
+):
+    old_filename = instruction.filename
+    if file is not None:
+        if file.filename in os.listdir(UPLOAD_DIR) and file.filename != old_filename:
+            raise DuplicateFilename(f"File with name {file.filename} already exists")
+        if instruction.filename != file.filename:
+            update_dict["filename"] = file.filename
+        db_instruction = await update_instruction_in_db(db_session, instruction, **update_dict)
+        await save_file(file)
+        if old_filename is not None and old_filename != file.filename:
+            delete_file(old_filename)
+        db_instruction.filename = get_full_link(request, file.filename)
+    else:
+        db_instruction = await update_instruction_in_db(db_session, instruction, **update_dict)
+        if old_filename is not None:
+            delete_file(old_filename)
+        db_instruction.filename = None
+    return db_instruction
 
 
 def get_full_link(request: Request, filename: str) -> str:

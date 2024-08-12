@@ -9,6 +9,6 @@ engine = create_async_engine(
     pool_size=settings.DATABASE_POOL_SIZE,
     max_overflow=settings.DATABASE_POOL_MAX_OVERFLOW
 )
-Session = sessionmaker(autocommit=False, class_=AsyncSession, bind=engine)
+Session = sessionmaker(autocommit=False, expire_on_commit=False, class_=AsyncSession, bind=engine)
 
 BaseModel = declarative_base()

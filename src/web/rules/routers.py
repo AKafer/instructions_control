@@ -9,7 +9,7 @@ from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
 from main_schemas import ResponseErrorBody
-from web.rules.exceptions import ItemNotFound, DuplicateError
+from web.exceptions import ItemNotFound, DuplicateError
 from web.rules.schemas import Rule, RuleInput
 from web.rules.services import check_constraints
 

@@ -12,14 +12,16 @@ from database.models.instructions import Instructions
 from dependencies import get_db_session
 from main_schemas import ResponseErrorBody
 from settings import UPLOAD_DIR
+from web.exceptions import ItemNotFound, DuplicateFilename, ErrorSaveToDatabase
 from web.instructions.schemas import Instruction, InstructionInput, InstructionUpdate
 from web.instructions.services import (
     get_full_link,
     save_file,
-    update_instruction_in_db,
-    delete_file, get_instruction_by_profession_from_db
+    delete_file,
+    get_instruction_by_profession_from_db,
+    update_instruction_logic
 )
-from web.rules.exceptions import ItemNotFound
+
 
 router = APIRouter(prefix="/instructions", tags=["insructions"])
 
@@ -33,7 +35,8 @@ async def get_all_instructions(
     instructions = await db_session.execute(query)
     ins = instructions.scalars().all()
     for instruction in ins:
-        instruction.filename = get_full_link(request, instruction.filename)
+        if instruction.filename is not None:
+            instruction.filename = get_full_link(request, instruction.filename)
     return paginate(ins)
 
 
@@ -61,7 +64,8 @@ async def get_instruction_by_id(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Instruction with id {instruction_id} not found",
         )
-    instruction.filename = get_full_link(request, instruction.filename)
+    if instruction.filename is not None:
+        instruction.filename = get_full_link(request, instruction.filename)
     return instruction
 
 @router.get(
@@ -89,7 +93,8 @@ async def get_instructions_by_profession(
             detail=str(e)
         )
     for instruction in instructions:
-        instruction.filename = get_full_link(request, instruction.filename)
+        if instruction.filename is not None:
+            instruction.filename = get_full_link(request, instruction.filename)
     return instructions
 
 
@@ -107,18 +112,21 @@ async def create_instruction(
     file: UploadFile = File(None),
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    if file.filename in os.listdir(UPLOAD_DIR):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File with name {file.filename} already exists",
-        )
     db_instruction = Instructions(**input_data.dict())
-    db_instruction.filename = file.filename
+    db_instruction.filename = None
+    if file is not None:
+        if file.filename in os.listdir(UPLOAD_DIR):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"File with name {file.filename} already exists",
+            )
+        db_instruction.filename = file.filename
     db_session.add(db_instruction)
     await db_session.commit()
     await db_session.refresh(db_instruction)
     await save_file(file)
-    db_instruction.filename = get_full_link(request, file.filename)
+    if file is not None:
+        db_instruction.filename = get_full_link(request, file.filename)
     return db_instruction
 
 
@@ -138,12 +146,7 @@ async def update_instruction(
     file: UploadFile = File(None),
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    del_flag = False
-    if file.filename in os.listdir(UPLOAD_DIR):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File with name {file.filename} already exists",
-        )
+    update_dict = update_data.dict()
     query = select(Instructions).filter(Instructions.id == instruction_id)
     instruction = await db_session.scalar(query)
     if instruction is None:
@@ -151,17 +154,19 @@ async def update_instruction(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Instruction with id {instruction_id} not found",
         )
-    update_dict = update_data.dict()
-    old_filename = instruction.filename
-    if file is not None:
-        if instruction.filename != file.filename:
-            update_dict["filename"] = file.filename
-            del_flag = True
-    db_instruction = await update_instruction_in_db(db_session, instruction, **update_dict)
-    await save_file(file)
-    if del_flag:
-        delete_file(old_filename)
-    db_instruction.filename = get_full_link(request, file.filename)
+    try:
+        db_instruction = await update_instruction_logic(
+            db_session=db_session,
+            instruction=instruction,
+            update_dict=update_dict,
+            file=file,
+            request=request
+        )
+    except (DuplicateFilename, ErrorSaveToDatabase) as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
     return db_instruction
 
 

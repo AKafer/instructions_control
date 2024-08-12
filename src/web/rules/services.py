@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import Professions, Instructions
 from database.models.rules import Rules
-from web.rules.exceptions import ItemNotFound, DuplicateError
+from web.exceptions import ItemNotFound, DuplicateError
 
 
 async def check_constraints(
@@ -25,4 +25,3 @@ async def check_constraints(
     rule = await db_session.scalar(query)
     if rule is not None:
         raise DuplicateError(f"Rule with instruction_id {instruction_id} and profession_id {profession_id} already exists")
-
