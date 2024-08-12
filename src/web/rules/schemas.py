@@ -8,7 +8,8 @@ class RuleCreateInput(BaseModel):
     description: str | None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
 
 
 class Rule(BaseModel):
@@ -18,4 +19,4 @@ class Rule(BaseModel):
     description: str | None
 
     class Config:
-        orm_mode = True
+        from_attributes = True

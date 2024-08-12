@@ -12,7 +12,7 @@ class Instruction(BaseModel):
     period: int | None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class InstructionCreateInput(BaseModel):

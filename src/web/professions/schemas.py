@@ -7,7 +7,7 @@ class Profession(BaseModel):
     description: str | None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ProfessionCreateInput(BaseModel):
@@ -15,7 +15,7 @@ class ProfessionCreateInput(BaseModel):
     description: str | None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ProfessionUpdateInput(BaseModel):
