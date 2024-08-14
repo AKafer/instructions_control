@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from starlette import status
 from web.professions.routers import router as prof_router
 from web.instructions.routers import router as ins_router
@@ -6,7 +6,7 @@ from web.rules.routers import router as rules_router
 
 from main_schemas import ResponseErrorBody
 from web.users.schemas import UserRead, UserCreate, UserUpdate
-from web.users.users import fastapi_users, auth_backend
+from web.users.users import fastapi_users, auth_backend, current_superuser
 
 api_v1_router = APIRouter(
     prefix="/api/v1",
@@ -31,10 +31,13 @@ api_v1_router.include_router(
     fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["auth"]
 )
 
+
+
 api_v1_router.include_router(
     fastapi_users.get_register_router(UserRead, UserCreate),
     prefix="/auth",
     tags=["auth"],
+    dependencies=[Depends(current_superuser)]
 )
 
 api_v1_router.include_router(
