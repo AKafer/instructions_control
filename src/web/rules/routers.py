@@ -10,7 +10,7 @@ from starlette.exceptions import HTTPException
 
 from main_schemas import ResponseErrorBody
 from web.exceptions import ItemNotFound, DuplicateError
-from web.rules.schemas import Rule, RuleInput
+from web.rules.schemas import Rule, RuleCreateInput
 from web.rules.services import check_constraints
 
 router = APIRouter(prefix="/rules", tags=["rules"])
@@ -53,7 +53,7 @@ async def get_rule_by_id(
 
 @router.post("/", response_model=Rule)
 async def create_rule(
-    rule_input: RuleInput,
+    rule_input: RuleCreateInput,
     db_session: AsyncSession = Depends(get_db_session),
 ):
     try:
@@ -72,14 +72,14 @@ async def create_rule(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
-    db_rule = Rules(**rule_input.dict())
+    db_rule = Rules(**rule_input.model_dump())
     db_session.add(db_rule)
     await db_session.commit()
     await db_session.refresh(db_rule)
     return db_rule
 
 
-@router.put(
+@router.patch(
     "/{rule_id:int}",
     response_model=Rule,
     responses={
@@ -93,7 +93,7 @@ async def update_rule(
     new_description: str | None = None,
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    query = select(Rules).filter(Rules.id == rule_id)
+    query = select(Rules).where(Rules.id == rule_id)
     rule = await db_session.scalar(query)
     if rule is None:
         raise HTTPException(

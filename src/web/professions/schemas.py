@@ -10,9 +10,17 @@ class Profession(BaseModel):
         orm_mode = True
 
 
-class ProfessionInput(BaseModel):
+class ProfessionCreateInput(BaseModel):
     title: str
     description: str | None
+
+    class Config:
+        orm_mode = True
+
+
+class ProfessionUpdateInput(BaseModel):
+    title: str | None = None
+    description: str | None = None
 
     class Config:
         orm_mode = True
