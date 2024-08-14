@@ -49,9 +49,7 @@ async def update_instruction_logic(
         db_instruction.filename = get_full_link(request, file.filename)
     else:
         db_instruction = await update_instruction_in_db(db_session, instruction, **update_dict)
-        if old_filename is not None:
-            delete_file(old_filename)
-        db_instruction.filename = None
+        db_instruction.filename = get_full_link(request, old_filename)
     return db_instruction
 
 

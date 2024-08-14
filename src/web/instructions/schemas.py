@@ -15,7 +15,7 @@ class Instruction(BaseModel):
         orm_mode = True
 
 
-class InstructionInput(BaseModel):
+class InstructionCreateInput(BaseModel):
     title: str
     number: str | None
     iteration: bool = False
@@ -32,18 +32,18 @@ class InstructionInput(BaseModel):
         return cls(title=title, number=number, iteration=iteration, period=period)
 
 
-class InstructionUpdate(BaseModel):
-    title: str | None
-    number: str | None
-    iteration: bool = False
-    period: int | None
+class InstructionUpdateInput(BaseModel):
+    title: str | None = None
+    number: str | None = None
+    iteration: bool | None = None
+    period: int | None = None
 
     @classmethod
     def as_form(
             cls,
-            title: str = Form(...),
+            title: str = Form(None),
             number: str = Form(None),
-            iteration: bool = Form(False),
+            iteration: bool = Form(None),
             period: int = Form(None),
     ):
         return cls(title=title, number=number, iteration=iteration, period=period)

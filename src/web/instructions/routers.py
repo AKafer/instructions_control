@@ -13,7 +13,7 @@ from dependencies import get_db_session
 from main_schemas import ResponseErrorBody
 from settings import UPLOAD_DIR
 from web.exceptions import ItemNotFound, DuplicateFilename, ErrorSaveToDatabase
-from web.instructions.schemas import Instruction, InstructionInput, InstructionUpdate
+from web.instructions.schemas import Instruction, InstructionCreateInput, InstructionUpdateInput
 from web.instructions.services import (
     get_full_link,
     save_file,
@@ -108,8 +108,8 @@ async def get_instructions_by_profession(
 )
 async def create_instruction(
     request: Request,
-    input_data: InstructionInput = Depends(InstructionInput.as_form),
-    file: UploadFile = File(None),
+    input_data: InstructionCreateInput = Depends(InstructionCreateInput.as_form),
+    file: UploadFile = File(...),
     db_session: AsyncSession = Depends(get_db_session),
 ):
     db_instruction = Instructions(**input_data.dict())
@@ -124,29 +124,32 @@ async def create_instruction(
     db_session.add(db_instruction)
     await db_session.commit()
     await db_session.refresh(db_instruction)
-    await save_file(file)
     if file is not None:
+        await save_file(file)
         db_instruction.filename = get_full_link(request, file.filename)
     return db_instruction
 
 
-@router.put(
+@router.patch(
     "/{instruction_id:int}",
     response_model=Instruction,
     responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": ResponseErrorBody,
+        },
         status.HTTP_404_NOT_FOUND: {
             "model": ResponseErrorBody,
         },
-    },
+    }
 )
 async def update_instruction(
     request: Request,
     instruction_id: int,
-    update_data: InstructionUpdate = Depends(InstructionUpdate.as_form),
+    update_data: InstructionUpdateInput = Depends(InstructionUpdateInput.as_form),
     file: UploadFile = File(None),
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    update_dict = update_data.dict()
+    update_dict = update_data.model_dump(exclude_none=True)
     query = select(Instructions).filter(Instructions.id == instruction_id)
     instruction = await db_session.scalar(query)
     if instruction is None:
