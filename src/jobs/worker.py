@@ -6,7 +6,7 @@ from peewee import *
 
 from dotenv import load_dotenv
 
-from models import Rules
+from peewee_models import Rules
 
 load_dotenv()
 

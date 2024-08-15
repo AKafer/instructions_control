@@ -37,10 +37,7 @@ services:
     image: akafer/ins_control
     restart: on-failure
     command: >
-       bash -c "tail -f /dev/null"
-#      bash -c "cd jobs/
-#      && python -m pwiz -e postgresql -u postgres db_control > models.py
-#      && python3 /app/src/worker.py"
+      bash -c "python3 /app/src/jobs/worker_t.py"
     env_file:
       - .env
     volumes:

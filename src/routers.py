@@ -32,12 +32,11 @@ api_v1_router.include_router(
 )
 
 
-
 api_v1_router.include_router(
     fastapi_users.get_register_router(UserRead, UserCreate),
     prefix="/auth",
     tags=["auth"],
-    dependencies=[Depends(current_superuser)]
+    # dependencies=[Depends(current_superuser)]
 )
 
 api_v1_router.include_router(
