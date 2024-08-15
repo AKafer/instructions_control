@@ -12,7 +12,7 @@ BaseModel = declarative_base()
 
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=True,
+    echo=False,
     pool_size=settings.DATABASE_POOL_SIZE,
     max_overflow=settings.DATABASE_POOL_MAX_OVERFLOW
 )

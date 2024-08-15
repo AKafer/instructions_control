@@ -17,7 +17,7 @@ from web.users.users import current_superuser
 router = APIRouter(
     prefix="/professions",
     tags=["professions"],
-    # dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)]
 )
 
 

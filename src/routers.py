@@ -3,6 +3,7 @@ from starlette import status
 from web.professions.routers import router as prof_router
 from web.instructions.routers import router as ins_router
 from web.rules.routers import router as rules_router
+from web.users.routers import router as users_router
 
 from main_schemas import ResponseErrorBody
 from web.users.schemas import UserRead, UserCreate, UserUpdate
@@ -26,23 +27,24 @@ api_v1_router = APIRouter(
 api_v1_router.include_router(prof_router)
 api_v1_router.include_router(ins_router)
 api_v1_router.include_router(rules_router)
+api_v1_router.include_router(users_router)
 
 api_v1_router.include_router(
     fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["auth"]
 )
 
-
 api_v1_router.include_router(
     fastapi_users.get_register_router(UserRead, UserCreate),
     prefix="/auth",
     tags=["auth"],
-    # dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)]
 )
 
 api_v1_router.include_router(
     fastapi_users.get_reset_password_router(),
     prefix="/auth",
     tags=["auth"],
+    dependencies=[Depends(current_superuser)]
 )
 
 api_v1_router.include_router(
@@ -56,3 +58,5 @@ api_v1_router.include_router(
     prefix="/users",
     tags=["users"],
 )
+
+

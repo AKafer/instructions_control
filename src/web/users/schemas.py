@@ -1,5 +1,5 @@
 import uuid
-
+from datetime import datetime
 
 from fastapi_users import schemas
 from pydantic import EmailStr, Field, BaseModel, ConfigDict
@@ -14,10 +14,14 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
     telegram_id: str | None
     phone_number: str | None
     profession: int | None
-    is_active: bool = Field(..., exclude=True)
-    is_verified: bool = Field(..., exclude=True)
-    is_superuser: bool = Field(..., exclude=True)
-
+    created_at: datetime
+    updated_at: datetime | None
+    is_active: bool = Field(True, exclude=True)
+    is_verified: bool = Field(False, exclude=True)
+    is_superuser: bool = Field(False, exclude=True)
+    # is_active: bool
+    # is_verified: bool
+    # is_superuser: bool
 
 
 class UserCreate(schemas.BaseUserCreate):
@@ -29,9 +33,9 @@ class UserCreate(schemas.BaseUserCreate):
     telegram_id: str | None = None
     phone_number: str | None = None
     profession: int
-    # is_active = Annotated[bool, Field(..., exclude=True)]
-    # is_verified = Annotated[bool, Field(..., exclude=True)]
-    # is_superuser = Annotated[bool, Field(..., exclude=True)]
+    is_active: bool = Field(True, exclude=True)
+    is_verified: bool = Field(False, exclude=True)
+    is_superuser: bool = Field(False, exclude=True)
 
 
 class UserUpdate(schemas.BaseUserUpdate):
@@ -43,6 +47,6 @@ class UserUpdate(schemas.BaseUserUpdate):
     telegram_id: str | None = None
     phone_number: str | None = None
     profession: int | None = None
-    # is_active = Annotated[bool, Field(..., exclude=True)]
-    # is_verified = Annotated[bool, Field(..., exclude=True)]
-    # is_superuser = Annotated[bool, Field(..., exclude=True)]
+    is_active: bool = Field(True, exclude=True)
+    is_verified: bool = Field(False, exclude=True)
+    is_superuser: bool = Field(False, exclude=True)

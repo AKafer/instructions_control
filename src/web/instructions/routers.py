@@ -21,12 +21,16 @@ from web.instructions.services import (
     get_instruction_by_profession_from_db,
     update_instruction_logic
 )
-
+from web.users.users import current_superuser
 
 router = APIRouter(prefix="/instructions", tags=["insructions"])
 
 
-@router.get("/", response_model=Page[Instruction])
+@router.get(
+    "/",
+    response_model=Page[Instruction],
+    dependencies=[Depends(current_superuser)]
+)
 async def get_all_instructions(
     request: Request,
     db_session: AsyncSession = Depends(get_db_session),
@@ -51,6 +55,7 @@ async def get_all_instructions(
             "model": ResponseErrorBody,
         },
     },
+    dependencies=[Depends(current_superuser)]
 )
 async def get_instruction_by_id(
     request: Request,
@@ -79,6 +84,7 @@ async def get_instruction_by_id(
             "model": ResponseErrorBody,
         },
     },
+    dependencies=[Depends(current_superuser)]
 )
 async def get_instructions_by_profession(
     request: Request,
@@ -105,6 +111,7 @@ async def get_instructions_by_profession(
             "model": ResponseErrorBody,
         },
     },
+    dependencies=[Depends(current_superuser)]
 )
 async def create_instruction(
     request: Request,
@@ -140,7 +147,8 @@ async def create_instruction(
         status.HTTP_404_NOT_FOUND: {
             "model": ResponseErrorBody,
         },
-    }
+    },
+    dependencies=[Depends(current_superuser)]
 )
 async def update_instruction(
     request: Request,
@@ -181,6 +189,7 @@ async def update_instruction(
             "model": ResponseErrorBody,
         },
     },
+    dependencies=[Depends(current_superuser)]
 )
 async def delete_instruction(
     instruction_id: int,

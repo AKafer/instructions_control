@@ -12,8 +12,9 @@ from main_schemas import ResponseErrorBody
 from web.exceptions import ItemNotFound, DuplicateError
 from web.rules.schemas import Rule, RuleCreateInput
 from web.rules.services import check_constraints
+from web.users.users import current_superuser
 
-router = APIRouter(prefix="/rules", tags=["rules"])
+router = APIRouter(prefix="/rules", tags=["rules"], dependencies=[Depends(current_superuser)])
 
 
 @router.get("/", response_model=list[Rule])
