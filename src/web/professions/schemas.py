@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class Profession(BaseModel):
@@ -7,20 +7,14 @@ class Profession(BaseModel):
     description: str | None
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 class ProfessionCreateInput(BaseModel):
     title: str
     description: str | None
 
-    class Config:
-        from_attributes = True
-
 
 class ProfessionUpdateInput(BaseModel):
     title: str | None = None
     description: str | None = None
-
-    class Config:
-        from_attributes = True

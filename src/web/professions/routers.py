@@ -21,11 +21,11 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=Page[Profession])
+@router.get("/", response_model=list[Profession])
 async def get_all_profs(db_session: AsyncSession = Depends(get_db_session)):
     query = select(Professions).order_by(Professions.id.desc())
     professions = await db_session.execute(query)
-    return paginate(professions.scalars().all())
+    return professions.scalars().all()
 
 
 @router.get(

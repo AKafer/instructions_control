@@ -19,9 +19,6 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
     is_active: bool = Field(True, exclude=True)
     is_verified: bool = Field(False, exclude=True)
     is_superuser: bool = Field(False, exclude=True)
-    # is_active: bool
-    # is_verified: bool
-    # is_superuser: bool
 
 
 class UserCreate(schemas.BaseUserCreate):
