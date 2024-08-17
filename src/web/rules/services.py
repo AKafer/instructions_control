@@ -7,9 +7,9 @@ from web.exceptions import ItemNotFound, DuplicateError
 
 
 async def check_constraints(
-        profession_id: int,
-        instruction_id: int,
-        db_session: AsyncSession,
+    db_session: AsyncSession,
+    profession_id: int,
+    instruction_id: int,
 ) -> None:
     query = select(Professions).filter(Professions.id == profession_id)
     profession = await db_session.scalar(query)

@@ -23,6 +23,7 @@ from web.instructions.services import (
     get_instruction_by_profession_from_db,
     update_instruction_logic, add_params_to_instruction
 )
+from web.journals.services import remove_lines_to_journals_for_delete_ins
 
 from web.users.users import current_superuser, current_user
 
@@ -207,6 +208,7 @@ async def delete_instruction(
     filename = instruction.filename
     await db_session.delete(instruction)
     await db_session.commit()
+    await remove_lines_to_journals_for_delete_ins(db_session, instruction_id)
     delete_file(filename)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

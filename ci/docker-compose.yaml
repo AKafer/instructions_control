@@ -23,6 +23,7 @@ services:
       - "8500:8500"
     command: >
       bash -c "alembic upgrade head
+      && python3 /app/src/scripts/create_user.py
       && python3 /app/src/run.py --port=8500"
     env_file:
       - .env

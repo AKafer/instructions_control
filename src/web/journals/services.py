@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import select, and_, delete
+from sqlalchemy import select, delete, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import User, Journals, Instructions
@@ -34,7 +34,7 @@ async def get_or_create_journals(
     await db_session.commit()
 
 
-async def add_lines_to_journals(
+async def add_lines_to_journals_for_new_user(
     user: User
 ) -> None:
     async with Session() as session:
@@ -62,3 +62,41 @@ async def add_params_to_jornals(
             journal.remain_days = period_dict[journal.instruction_id] - date_diff
     return paginate_response
 
+
+async def add_lines_to_journals_for_new_rule(
+    db_session: AsyncSession,
+    profession_id: int,
+    instruction_id: int
+) -> None:
+    query = select(User.id).where(User.profession == profession_id)
+    users_ids = await db_session.scalars(query)
+    for user_id in users_ids:
+        journal = Journals(
+            user_uuid=user_id,
+            instruction_id=instruction_id
+        )
+        db_session.add(journal)
+    await db_session.commit()
+
+
+async def remove_lines_to_journals_for_delete_rule(
+    db_session: AsyncSession,
+    profession_id: int,
+    instruction_id: int
+) -> None:
+    query = select(User.id).where(User.profession == profession_id)
+    users_ids = await db_session.scalars(query)
+    query = delete(Journals).where(
+        and_(Journals.user_uuid.in_(users_ids), Journals.instruction_id == instruction_id)
+    )
+    await db_session.execute(query)
+    await db_session.commit()
+
+
+async def remove_lines_to_journals_for_delete_ins(
+    db_session: AsyncSession,
+    instruction_id: int
+) -> None:
+    query = delete(Journals).where(Journals.instruction_id == instruction_id)
+    await db_session.execute(query)
+    await db_session.commit()
