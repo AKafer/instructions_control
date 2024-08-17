@@ -59,6 +59,7 @@ api_v1_router.include_router(
     fastapi_users.get_users_router(UserRead, UserUpdate),
     prefix="/users",
     tags=["users"],
+    dependencies=[Depends(current_superuser)]
 )
 
 

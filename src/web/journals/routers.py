@@ -14,12 +14,12 @@ from dependencies import get_db_session
 from main_schemas import ResponseErrorBody
 from web.journals.services import add_params_to_jornals
 from web.journals.shemas import Journal
-from web.users.users import current_user
+from web.users.users import current_user, current_superuser
 
 router = APIRouter(prefix="/journals", tags=["journals"])
 
 
-@router.get("/", response_model=Page[Journal])
+@router.get("/", response_model=Page[Journal], dependencies=[Depends(current_superuser)])
 async def get_all_journals(
     db_session: AsyncSession = Depends(get_db_session),
 ):

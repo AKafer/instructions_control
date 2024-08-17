@@ -8,8 +8,9 @@ from database.models import User
 from dependencies import get_db_session
 from web.users.filters import UsersFilter
 from web.users.schemas import UserRead
+from web.users.users import current_superuser
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(current_superuser)])
 
 
 @router.get("/", response_model=Page[UserRead])
