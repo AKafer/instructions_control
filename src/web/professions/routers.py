@@ -88,7 +88,7 @@ async def update_prof(
             detail=f"Profession with id {profession_id} not found",
         )
     return await update_profession(
-        db_session, profession, **update_input.model_dump(exclude_none=True)
+        db_session, profession, **update_input.dict(exclude_none=True)
     )
 
 

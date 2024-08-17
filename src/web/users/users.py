@@ -12,6 +12,7 @@ from fastapi_users.authentication import (
 from fastapi_users.db import SQLAlchemyUserDatabase
 
 from database.models.users import User, get_user_db
+from web.journals.services import add_lines_to_journals
 
 SECRET = "SECRET"
 
@@ -21,15 +22,16 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     verification_token_secret = SECRET
 
     async def on_after_register(self, user: User, request: Optional[Request] = None):
+        await add_lines_to_journals(user)
         print(f"User {user.id} has registered.")
 
     async def on_after_update(
-            self, user: User,
-            update_dict: Dict[str, Any],
+        self, user: User,
+        update_dict: Dict[str, Any],
         request: Optional[Request] = None
     ):
+        await add_lines_to_journals(user)
         print(f"User {user.id} has been updated.")
-
 
     async def on_after_forgot_password(
         self, user: User, token: str, request: Optional[Request] = None
@@ -60,6 +62,8 @@ auth_backend = AuthenticationBackend(
 )
 
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
+
+current_user = fastapi_users.current_user()
 
 current_active_user = fastapi_users.current_user(active=True)
 

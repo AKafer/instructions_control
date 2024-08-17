@@ -10,6 +10,8 @@ class Journal(BaseModel):
     instruction_id: int
     last_date_read: datetime
     signature: str | None = None
+    valid: bool | None = None
+    remain_days: int | None = None
 
     class Config:
         orm_mode = True

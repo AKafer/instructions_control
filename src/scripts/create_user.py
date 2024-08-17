@@ -1,12 +1,9 @@
 import asyncio
 import contextlib
 
-
 from fastapi_users.exceptions import UserAlreadyExists
-from sqlalchemy import select
 
-from database.models.users import get_user_db, User
-from database.orm import Session
+from database.models.users import get_user_db
 from dependencies import get_db_session
 from web.users.schemas import UserCreate
 from web.users.users import get_user_manager

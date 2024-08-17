@@ -73,7 +73,7 @@ async def create_rule(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
-    db_rule = Rules(**rule_input.model_dump())
+    db_rule = Rules(**rule_input.dict())
     db_session.add(db_rule)
     await db_session.commit()
     await db_session.refresh(db_rule)

@@ -72,8 +72,8 @@ def delete_file(filename: str) -> None:
 
 
 async def get_instruction_by_profession_from_db(
-    profession_id: int,
     db_session: AsyncSession,
+    profession_id: int,
 ) -> list[Instructions]:
     query = select(Professions).where(Professions.id == profession_id)
     profession = await db_session.scalar(query)
