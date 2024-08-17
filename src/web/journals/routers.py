@@ -8,7 +8,7 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from starlette import status
 from starlette.exceptions import HTTPException
 
-from database.models import User, Instructions
+from database.models import User
 from database.models.journals import Journals
 from dependencies import get_db_session
 from main_schemas import ResponseErrorBody
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/journals", tags=["journals"])
 
 
 @router.get("/", response_model=Page[Journal])
-async def get_all_rules(
+async def get_all_journals(
     db_session: AsyncSession = Depends(get_db_session),
 ):
     query = select(Journals).order_by(Journals.id.desc())

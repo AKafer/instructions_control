@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 
 from fastapi import File, UploadFile, APIRouter, Depends, Request
 from fastapi_pagination import Page
@@ -10,7 +9,7 @@ from starlette import status
 from starlette.exceptions import HTTPException
 from starlette.responses import Response
 
-from database.models import User, Journals
+from database.models import User
 from database.models.instructions import Instructions
 from dependencies import get_db_session
 from main_schemas import ResponseErrorBody
@@ -22,9 +21,8 @@ from web.instructions.services import (
     save_file,
     delete_file,
     get_instruction_by_profession_from_db,
-    update_instruction_logic
+    update_instruction_logic, add_params_to_instruction
 )
-from web.journals.services import add_lines_to_journals
 
 from web.users.users import current_superuser, current_user
 
@@ -226,29 +224,16 @@ async def delete_instruction(
     },
     dependencies=[Depends(current_user)]
 )
-async def get_instructions_by_profession(
+async def get_my_instructions(
     request: Request,
     db_session: AsyncSession = Depends(get_db_session),
     user: User = Depends(current_user)
 ):
-    instructions = await get_instruction_by_profession_from_db(db_session, user.profession)
-    for instruction in instructions:
+    response = await get_instruction_by_profession_from_db(db_session, user.profession)
+    for instruction in response:
         if instruction.filename is not None:
             instruction.filename = get_full_link(request, instruction.filename)
-    ins_ids = [instruction.id for instruction in instructions]
-    query = select(Journals).where(Journals.user_uuid == user.id)
-    journals = await db_session.scalars(query)
-    for instruction in instructions:
-        for journal in journals:
-            if instruction.id == journal.instruction_id:
-                date_diff = (datetime.utcnow().replace(tzinfo=None) - journal.last_date_read.replace(tzinfo=None)).days
-                if date_diff > instruction.period:
-                    instruction.valid = False
-                    instruction.remain_days = 0
-                else:
-                    instruction.valid = True
-                    instruction.remain_days = instruction.period - date_diff
-
+    instructions = await add_params_to_instruction(db_session, user, response)
     return instructions
 
 
