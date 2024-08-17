@@ -42,18 +42,18 @@ api_v1_router.include_router(
     dependencies=[Depends(current_superuser)]
 )
 
-api_v1_router.include_router(
-    fastapi_users.get_reset_password_router(),
-    prefix="/auth",
-    tags=["auth"],
-    dependencies=[Depends(current_superuser)]
-)
+# api_v1_router.include_router(
+#     fastapi_users.get_reset_password_router(),
+#     prefix="/auth",
+#     tags=["auth"],
+#     dependencies=[Depends(current_superuser)]
+# )
 
-api_v1_router.include_router(
-    fastapi_users.get_verify_router(UserRead),
-    prefix="/auth",
-    tags=["auth"],
-)
+# api_v1_router.include_router(
+#     fastapi_users.get_verify_router(UserRead),
+#     prefix="/auth",
+#     tags=["auth"],
+# )
 
 api_v1_router.include_router(
     fastapi_users.get_users_router(UserRead, UserUpdate),
