@@ -22,7 +22,7 @@ async def get_or_create_journals(
         if journal.instruction_id not in instructions_ids:
             list_to_delete.append(journal.id)
         else:
-            journal.last_date_read = datetime.utcnow()
+            # journal.last_date_read = datetime.utcnow()
             exist_instructions_ids.append(journal.instruction_id)
     if list_to_delete:
         query = delete(Journals).where(Journals.id.in_(list_to_delete))
