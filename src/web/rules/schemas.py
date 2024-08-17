@@ -7,9 +7,6 @@ class RuleCreateInput(BaseModel):
     instruction_id: int
     description: str | None
 
-    class Config:
-        orm_mode = True
-
 
 class Rule(BaseModel):
     id: int

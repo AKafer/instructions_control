@@ -1,11 +1,12 @@
 import os
+from datetime import datetime
 
 import sqlalchemy
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import Request, UploadFile
-from database.models import Instructions, Professions
+from database.models import Instructions, Professions, Journals, User
 from database.models.rules import Rules
 from settings import BASE_URL, UPLOAD_DIR
 
@@ -72,8 +73,8 @@ def delete_file(filename: str) -> None:
 
 
 async def get_instruction_by_profession_from_db(
-    profession_id: int,
     db_session: AsyncSession,
+    profession_id: int,
 ) -> list[Instructions]:
     query = select(Professions).where(Professions.id == profession_id)
     profession = await db_session.scalar(query)
@@ -83,3 +84,23 @@ async def get_instruction_by_profession_from_db(
     query = select(Instructions).where(Instructions.id.in_(subquery))
     instructions = await db_session.scalars(query)
     return instructions.all()
+
+
+async def add_params_to_instruction(
+    db_session: AsyncSession,
+    user: User,
+    response
+):
+    query = select(Journals).where(Journals.user_uuid == user.id)
+    journals = await db_session.scalars(query)
+    for instruction in response:
+        for journal in journals:
+            if instruction.id == journal.instruction_id:
+                date_diff = (datetime.utcnow().replace(tzinfo=None) - journal.last_date_read.replace(tzinfo=None)).days
+                if date_diff > instruction.period:
+                    instruction.valid = False
+                    instruction.remain_days = 0
+                else:
+                    instruction.valid = True
+                    instruction.remain_days = instruction.period - date_diff
+    return response

@@ -1,23 +1,6 @@
 version: "2.2"
 
 services:
-  app:
-    container_name: control_app
-    image: akafer/ins_control
-    restart: on-failure
-    ports:
-      - "8500:8500"
-    command: >
-      bash -c "alembic upgrade head
-      && python3 /app/src/run.py --port=8500"
-    env_file:
-      - .env
-    volumes:
-        - ./files:/app/src/static
-    depends_on:
-      db:
-        condition: service_healthy
-
   db:
     container_name: control_db
     image: postgres:14-bullseye
@@ -27,10 +10,42 @@ services:
     env_file:
       - ./.env
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
+      test: [ "CMD-SHELL", "pg_isready" ]
       interval: 10s
       timeout: 3s
       retries: 3
+
+  app:
+    container_name: control_app
+    image: akafer/ins_control
+    restart: on-failure
+    ports:
+      - "8500:8500"
+    command: >
+      bash -c "alembic upgrade head
+      && python3 /app/src/scripts/create_user.py
+      && python3 /app/src/run.py --port=8500"
+    env_file:
+      - .env
+    volumes:
+        - ./files:/app/src/static
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    container_name: control_worker
+    image: akafer/ins_control
+    restart: on-failure
+    command: >
+      bash -c "python3 /app/src/jobs/worker_t.py"
+    env_file:
+      - .env
+    volumes:
+      - ./files:/app/src/static
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:

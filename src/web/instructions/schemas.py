@@ -15,6 +15,11 @@ class Instruction(BaseModel):
         orm_mode = True
 
 
+class InstructionForUser(Instruction):
+    valid: bool
+    remain_days: int
+
+
 class InstructionCreateInput(BaseModel):
     title: str
     number: str | None

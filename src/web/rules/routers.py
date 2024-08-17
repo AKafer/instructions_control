@@ -10,10 +10,12 @@ from starlette.exceptions import HTTPException
 
 from main_schemas import ResponseErrorBody
 from web.exceptions import ItemNotFound, DuplicateError
+from web.journals.services import add_lines_to_journals_for_new_rule, remove_lines_to_journals_for_delete_rule
 from web.rules.schemas import Rule, RuleCreateInput
 from web.rules.services import check_constraints
+from web.users.users import current_superuser
 
-router = APIRouter(prefix="/rules", tags=["rules"])
+router = APIRouter(prefix="/rules", tags=["rules"], dependencies=[Depends(current_superuser)])
 
 
 @router.get("/", response_model=list[Rule])
@@ -58,9 +60,9 @@ async def create_rule(
 ):
     try:
         await check_constraints(
+            db_session,
             rule_input.profession_id,
             rule_input.instruction_id,
-            db_session,
         )
     except ItemNotFound as e:
         raise HTTPException(
@@ -72,10 +74,12 @@ async def create_rule(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
-    db_rule = Rules(**rule_input.model_dump())
+    db_rule = Rules(**rule_input.dict())
     db_session.add(db_rule)
     await db_session.commit()
     await db_session.refresh(db_rule)
+    await add_lines_to_journals_for_new_rule(
+        db_session, rule_input.profession_id, rule_input.instruction_id)
     return db_rule
 
 
@@ -126,6 +130,9 @@ async def delete_rule(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Rule with id {rule_id} not found",
         )
+    await remove_lines_to_journals_for_delete_rule(
+        db_session, rule.profession_id, rule.instruction_id
+    )
     await db_session.delete(rule)
     await db_session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

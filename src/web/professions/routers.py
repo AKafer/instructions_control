@@ -12,17 +12,20 @@ from starlette.exceptions import HTTPException
 from main_schemas import ResponseErrorBody
 from web.professions.schemas import Profession, ProfessionCreateInput, ProfessionUpdateInput
 from web.professions.services import update_profession
+from web.users.users import current_superuser
 
-router = APIRouter(prefix="/professions", tags=["professions"])
+router = APIRouter(
+    prefix="/professions",
+    tags=["professions"],
+    dependencies=[Depends(current_superuser)]
+)
 
 
-@router.get("/", response_model=Page[Profession])
-async def get_all_profs(
-    db_session: AsyncSession = Depends(get_db_session),
-):
+@router.get("/", response_model=list[Profession])
+async def get_all_profs(db_session: AsyncSession = Depends(get_db_session)):
     query = select(Professions).order_by(Professions.id.desc())
     professions = await db_session.execute(query)
-    return paginate(professions.scalars().all())
+    return professions.scalars().all()
 
 
 @router.get(
@@ -39,7 +42,7 @@ async def get_all_profs(
 )
 async def get_prof_by_id(
     profession_id: int,
-    db_session: AsyncSession = Depends(get_db_session),
+    db_session: AsyncSession = Depends(get_db_session)
 ):
     query = select(Professions).filter(Professions.id == profession_id)
     profession = await db_session.scalar(query)
@@ -85,7 +88,7 @@ async def update_prof(
             detail=f"Profession with id {profession_id} not found",
         )
     return await update_profession(
-        db_session, profession, **update_input.model_dump(exclude_none=True)
+        db_session, profession, **update_input.dict(exclude_none=True)
     )
 
 

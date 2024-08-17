@@ -5,6 +5,7 @@ RUN apt-get update && apt-get upgrade -y && \
   apt-get -y install \
     pip \
     bash \
+    expect \
     curl \
     git \
     htop \

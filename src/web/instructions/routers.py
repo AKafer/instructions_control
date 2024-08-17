@@ -1,43 +1,50 @@
 import os
 
 from fastapi import File, UploadFile, APIRouter, Depends, Request
-from fastapi_pagination import paginate, Page
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from starlette.exceptions import HTTPException
 from starlette.responses import Response
 
+from database.models import User
 from database.models.instructions import Instructions
 from dependencies import get_db_session
 from main_schemas import ResponseErrorBody
 from settings import UPLOAD_DIR
 from web.exceptions import ItemNotFound, DuplicateFilename, ErrorSaveToDatabase
-from web.instructions.schemas import Instruction, InstructionCreateInput, InstructionUpdateInput
+from web.instructions.schemas import Instruction, InstructionCreateInput, InstructionUpdateInput, InstructionForUser
 from web.instructions.services import (
     get_full_link,
     save_file,
     delete_file,
     get_instruction_by_profession_from_db,
-    update_instruction_logic
+    update_instruction_logic, add_params_to_instruction
 )
+from web.journals.services import remove_lines_to_journals_for_delete_ins
 
+from web.users.users import current_superuser, current_user
 
 router = APIRouter(prefix="/instructions", tags=["insructions"])
 
 
-@router.get("/", response_model=Page[Instruction])
+@router.get(
+    "/",
+    response_model=Page[Instruction],
+    dependencies=[Depends(current_superuser)]
+)
 async def get_all_instructions(
     request: Request,
     db_session: AsyncSession = Depends(get_db_session),
 ):
     query = select(Instructions).order_by(Instructions.id.desc())
-    instructions = await db_session.execute(query)
-    ins = instructions.scalars().all()
-    for instruction in ins:
+    ins = await paginate(db_session, query)
+    for instruction in ins.items:
         if instruction.filename is not None:
             instruction.filename = get_full_link(request, instruction.filename)
-    return paginate(ins)
+    return ins
 
 
 @router.get(
@@ -51,6 +58,7 @@ async def get_all_instructions(
             "model": ResponseErrorBody,
         },
     },
+    dependencies=[Depends(current_superuser)]
 )
 async def get_instruction_by_id(
     request: Request,
@@ -79,6 +87,7 @@ async def get_instruction_by_id(
             "model": ResponseErrorBody,
         },
     },
+    dependencies=[Depends(current_superuser)]
 )
 async def get_instructions_by_profession(
     request: Request,
@@ -86,7 +95,7 @@ async def get_instructions_by_profession(
     db_session: AsyncSession = Depends(get_db_session),
 ):
     try:
-        instructions = await get_instruction_by_profession_from_db(profession_id, db_session)
+        instructions = await get_instruction_by_profession_from_db(db_session, profession_id)
     except ItemNotFound as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -105,6 +114,7 @@ async def get_instructions_by_profession(
             "model": ResponseErrorBody,
         },
     },
+    dependencies=[Depends(current_superuser)]
 )
 async def create_instruction(
     request: Request,
@@ -140,7 +150,8 @@ async def create_instruction(
         status.HTTP_404_NOT_FOUND: {
             "model": ResponseErrorBody,
         },
-    }
+    },
+    dependencies=[Depends(current_superuser)]
 )
 async def update_instruction(
     request: Request,
@@ -149,7 +160,7 @@ async def update_instruction(
     file: UploadFile = File(None),
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    update_dict = update_data.model_dump(exclude_none=True)
+    update_dict = update_data.dict(exclude_none=True)
     query = select(Instructions).filter(Instructions.id == instruction_id)
     instruction = await db_session.scalar(query)
     if instruction is None:
@@ -181,6 +192,7 @@ async def update_instruction(
             "model": ResponseErrorBody,
         },
     },
+    dependencies=[Depends(current_superuser)]
 )
 async def delete_instruction(
     instruction_id: int,
@@ -196,28 +208,34 @@ async def delete_instruction(
     filename = instruction.filename
     await db_session.delete(instruction)
     await db_session.commit()
+    await remove_lines_to_journals_for_delete_ins(db_session, instruction_id)
     delete_file(filename)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-# @router.post('/upload')
-# def upload(file: UploadFile = File(...)):
-#     SAVE_F = os.path.join(UPLOAD_DIR, file.filename)
-#     with open(SAVE_F, "wb+") as f:
-#         f.write(file.file.read())
-#     return FileResponse(path=SAVE_F, media_type="application/octet-stream")
-#
-#
-# @router.get("/get_link", response_class=PlainTextResponse)
-# def get_link(request: Request, file_number: int = 0):
-#     if not os.listdir(UPLOAD_DIR):
-#         return "No files uploaded"
-#     if file_number >= len(os.listdir(UPLOAD_DIR)):
-#         return "File not found"
-#     filename = os.listdir(UPLOAD_DIR)[file_number]
-#     return f"{str(request.base_url)}static/{filename}"
-#
-#
-# @router.get("/fileslist")
-# def get_file_list():
-#     return os.listdir(UPLOAD_DIR)
+@router.get(
+    "/get_my_instructions/",
+    response_model=list[InstructionForUser],
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": ResponseErrorBody,
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": ResponseErrorBody,
+        },
+    },
+    dependencies=[Depends(current_user)]
+)
+async def get_my_instructions(
+    request: Request,
+    db_session: AsyncSession = Depends(get_db_session),
+    user: User = Depends(current_user)
+):
+    response = await get_instruction_by_profession_from_db(db_session, user.profession)
+    for instruction in response:
+        if instruction.filename is not None:
+            instruction.filename = get_full_link(request, instruction.filename)
+    instructions = await add_params_to_instruction(db_session, user, response)
+    return instructions
+
+
