@@ -92,7 +92,7 @@ async def add_params_to_instruction(
     response
 ):
     query = select(Journals).where(Journals.user_uuid == user.id)
-    journals = await db_session.scalars(query)
+    journals = (await db_session.scalars(query)).all()
     for instruction in response:
         for journal in journals:
             if instruction.id == journal.instruction_id:

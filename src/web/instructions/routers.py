@@ -232,10 +232,10 @@ async def get_my_instructions(
     user: User = Depends(current_user)
 ):
     response = await get_instruction_by_profession_from_db(db_session, user.profession)
-    for instruction in response:
+    instructions = await add_params_to_instruction(db_session, user, response)
+    for instruction in instructions:
         if instruction.filename is not None:
             instruction.filename = get_full_link(request, instruction.filename)
-    instructions = await add_params_to_instruction(db_session, user, response)
     return instructions
 
 
