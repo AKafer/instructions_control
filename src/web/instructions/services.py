@@ -15,6 +15,7 @@ import aiofiles as aiof
 from web.exceptions import ErrorSaveToDatabase, DuplicateFilename, ItemNotFound
 
 
+
 async def update_instruction_in_db(
         db_session: AsyncSession,
         instruction: Instructions,
@@ -91,6 +92,8 @@ async def add_params_to_instruction(
     user: User,
     response
 ):
+    from web.journals.services import actualize_journals_for_user
+    await actualize_journals_for_user(user)
     query = select(Journals).where(Journals.user_uuid == user.id)
     journals = (await db_session.scalars(query)).all()
     for instruction in response:

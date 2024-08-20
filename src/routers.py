@@ -7,7 +7,7 @@ from web.users.routers import router as users_router
 from web.journals.routers import router as journals_router
 
 from main_schemas import ResponseErrorBody
-from web.users.schemas import UserRead, UserCreate, UserUpdate
+from web.users.schemas import UserRead, UserCreate
 from web.users.users import fastapi_users, auth_backend, current_superuser
 
 api_v1_router = APIRouter(
@@ -55,11 +55,10 @@ api_v1_router.include_router(
 #     tags=["auth"],
 # )
 
-api_v1_router.include_router(
-    fastapi_users.get_users_router(UserRead, UserUpdate),
-    prefix="/users",
-    tags=["users"],
-    dependencies=[Depends(current_superuser)]
-)
+# api_v1_router.include_router(
+#     fastapi_users.get_users_router(UserRead, UserUpdate),
+#     prefix="/users",
+#     tags=["users"],
+# )
 
 

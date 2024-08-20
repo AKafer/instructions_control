@@ -11,10 +11,11 @@ from fastapi_users.authentication import (
 
 from fastapi_users.db import SQLAlchemyUserDatabase
 
+import settings
 from database.models.users import User, get_user_db
-from web.journals.services import add_lines_to_journals_for_new_user
+from web.journals.services import actualize_journals_for_user
 
-SECRET = "SECRET"
+SECRET = settings.SECRET_KEY
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
@@ -22,7 +23,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     verification_token_secret = SECRET
 
     async def on_after_register(self, user: User, request: Optional[Request] = None):
-        await add_lines_to_journals_for_new_user(user)
+        await actualize_journals_for_user(user)
         print(f"User {user.id} has registered.")
 
     async def on_after_update(
@@ -30,7 +31,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         update_dict: Dict[str, Any],
         request: Optional[Request] = None
     ):
-        await add_lines_to_journals_for_new_user(user)
+        await actualize_journals_for_user(user)
         print(f"User {user.id} has been updated.")
 
     async def on_after_forgot_password(

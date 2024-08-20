@@ -34,7 +34,7 @@ async def get_or_create_journals(
     await db_session.commit()
 
 
-async def add_lines_to_journals_for_new_user(
+async def actualize_journals_for_user(
     user: User
 ) -> None:
     async with Session() as session:

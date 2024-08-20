@@ -25,7 +25,7 @@ from web.instructions.services import (
 )
 from web.journals.services import remove_lines_to_journals_for_delete_ins
 
-from web.users.users import current_superuser, current_user
+from web.users.users import current_superuser, current_user, current_active_user
 
 router = APIRouter(prefix="/instructions", tags=["insructions"])
 
@@ -215,7 +215,7 @@ async def delete_instruction(
 
 @router.get(
     "/get_my_instructions/",
-    response_model=list[InstructionForUser],
+    response_model=list[InstructionForUser] | dict,
     responses={
         status.HTTP_400_BAD_REQUEST: {
             "model": ResponseErrorBody,
@@ -229,8 +229,10 @@ async def delete_instruction(
 async def get_my_instructions(
     request: Request,
     db_session: AsyncSession = Depends(get_db_session),
-    user: User = Depends(current_user)
+    user: User = Depends(current_active_user)
 ):
+    if user.is_superuser:
+        return {"detail": "This endpoint is only for users"}
     response = await get_instruction_by_profession_from_db(db_session, user.profession)
     instructions = await add_params_to_instruction(db_session, user, response)
     for instruction in instructions:
