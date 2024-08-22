@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import Depends, APIRouter
+from fastapi import Depends, APIRouter, UploadFile, File
 from sqlalchemy import select, and_
 from fastapi_pagination import Page
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,9 +40,11 @@ async def get_all_journals(
     dependencies=[Depends(current_user)])
 async def update_journal(
     instruction_id: int,
+    file: UploadFile = File(...),
     db_session: AsyncSession = Depends(get_db_session),
     user: User = Depends(current_user)
 ):
+
     query = select(Journals).where(
         and_(Journals.user_uuid == user.id, Journals.instruction_id == instruction_id)
     )

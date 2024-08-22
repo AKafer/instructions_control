@@ -5,7 +5,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_DIR = os.path.join(BASE_DIR, "static")
+STATIC_FOLDER = 'static'
+INSTRUCTIONS_FOLDER = 'instructions'
+SIGNATURES_FOLDER = 'signatures'
+UPLOAD_DIR = os.path.join(BASE_DIR, STATIC_FOLDER)
+INSTRUCTIONS_DIR = os.path.join(UPLOAD_DIR, INSTRUCTIONS_FOLDER)
+SIGNATURES_DIR = os.path.join(UPLOAD_DIR, SIGNATURES_FOLDER)
 
 
 BASE_URL = os.getenv("BASE_URL")

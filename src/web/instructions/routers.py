@@ -13,7 +13,7 @@ from database.models import User
 from database.models.instructions import Instructions
 from dependencies import get_db_session
 from main_schemas import ResponseErrorBody
-from settings import UPLOAD_DIR
+from settings import INSTRUCTIONS_DIR
 from web.exceptions import ItemNotFound, DuplicateFilename, ErrorSaveToDatabase
 from web.instructions.schemas import Instruction, InstructionCreateInput, InstructionUpdateInput, InstructionForUser
 from web.instructions.services import (
@@ -125,7 +125,7 @@ async def create_instruction(
     db_instruction = Instructions(**input_data.dict())
     db_instruction.filename = None
     if file is not None:
-        if file.filename in os.listdir(UPLOAD_DIR):
+        if file.filename in os.listdir(INSTRUCTIONS_DIR):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"File with name {file.filename} already exists",

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Request, UploadFile
 from database.models import Instructions, Professions, Journals, User
 from database.models.rules import Rules
-from settings import BASE_URL, UPLOAD_DIR
+from settings import BASE_URL, INSTRUCTIONS_DIR, STATIC_FOLDER, INSTRUCTIONS_FOLDER
 
 import aiofiles as aiof
 
@@ -40,7 +40,7 @@ async def update_instruction_logic(
 ):
     old_filename = instruction.filename
     if file is not None:
-        if file.filename in os.listdir(UPLOAD_DIR) and file.filename != old_filename:
+        if file.filename in os.listdir(INSTRUCTIONS_DIR) and file.filename != old_filename:
             raise DuplicateFilename(f"File with name {file.filename} already exists")
         if instruction.filename != file.filename:
             update_dict["filename"] = file.filename
@@ -57,18 +57,18 @@ async def update_instruction_logic(
 
 def get_full_link(request: Request, filename: str) -> str:
     base_url = BASE_URL or str(request.base_url)
-    return f"{base_url}static/{filename}"
+    return f"{base_url}{STATIC_FOLDER}/{INSTRUCTIONS_FOLDER}/{filename}"
 
 
 async def save_file(file: UploadFile) -> None:
-    path_to_file = os.path.join(UPLOAD_DIR, file.filename)
+    path_to_file = os.path.join(INSTRUCTIONS_DIR, file.filename)
     async with aiof.open(path_to_file, "wb+") as f:
         await f.write(file.file.read())
 
 
 def delete_file(filename: str) -> None:
     try:
-        os.remove(os.path.join(UPLOAD_DIR, filename))
+        os.remove(os.path.join(INSTRUCTIONS_DIR, filename))
     except FileNotFoundError:
         pass
 
