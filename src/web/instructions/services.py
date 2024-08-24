@@ -99,11 +99,19 @@ async def add_params_to_instruction(
     for instruction in response:
         for journal in journals:
             if instruction.id == journal.instruction_id:
-                date_diff = (datetime.utcnow().replace(tzinfo=None) - journal.last_date_read.replace(tzinfo=None)).days
-                if date_diff > instruction.period:
+                if journal.last_date_read is None:
                     instruction.valid = False
                     instruction.remain_days = 0
                 else:
-                    instruction.valid = True
-                    instruction.remain_days = instruction.period - date_diff
+                    if instruction.iteration:
+                        date_diff = (datetime.utcnow().replace(tzinfo=None) - journal.last_date_read.replace(tzinfo=None)).days
+                        if date_diff > instruction.period:
+                            instruction.valid = False
+                            instruction.remain_days = 0
+                        else:
+                            instruction.valid = True
+                            instruction.remain_days = instruction.period - date_diff
+                    else:
+                        instruction.valid = True
+                        instruction.remain_days = 0
     return response

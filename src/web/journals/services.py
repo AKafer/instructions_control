@@ -51,15 +51,23 @@ async def add_params_to_jornals(
     ins_ids = [journal.instruction_id for journal in paginate_response.items]
     query = select(Instructions).where(Instructions.id.in_(ins_ids))
     instructions = await db_session.scalars(query)
-    period_dict = {instruction.id: instruction.period for instruction in instructions}
+    period_dict = {instruction.id: instruction for instruction in instructions}
     for journal in paginate_response.items:
-        date_diff = (datetime.utcnow().replace(tzinfo=None) - journal.last_date_read.replace(tzinfo=None)).days
-        if date_diff > period_dict[journal.instruction_id]:
+        if journal.last_date_read is None:
             journal.valid = False
             journal.remain_days = 0
         else:
-            journal.valid = True
-            journal.remain_days = period_dict[journal.instruction_id] - date_diff
+            if period_dict[journal.instruction_id].iteration:
+                date_diff = (datetime.utcnow().replace(tzinfo=None) - journal.last_date_read.replace(tzinfo=None)).days
+                if date_diff > period_dict[journal.instruction_id].period:
+                    journal.valid = False
+                    journal.remain_days = 0
+                else:
+                    journal.valid = True
+                    journal.remain_days = period_dict[journal.instruction_id].period - date_diff
+            else:
+                journal.valid = True
+                journal.remain_days = 0
     return paginate_response
 
 

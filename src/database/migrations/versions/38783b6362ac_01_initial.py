@@ -29,7 +29,7 @@ def upgrade() -> None:
     sa.Column('iteration', sa.Boolean(), nullable=False),
     sa.Column('period', sa.INTEGER(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('title')
+    sa.UniqueConstraint('title'),
     )
     op.create_table('professions',
     sa.Column('id', sa.BigInteger(), nullable=False),
@@ -44,7 +44,8 @@ def upgrade() -> None:
     sa.Column('description', sa.Text(), nullable=True),
     sa.ForeignKeyConstraint(['instruction_id'], ['instructions.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['profession_id'], ['professions.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('profession_id', 'instruction_id', name='uix_1')
     )
     op.create_table('user',
     sa.Column('email', sa.String(length=320), nullable=False),

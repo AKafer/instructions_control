@@ -40,11 +40,10 @@ async def get_all_journals(
     dependencies=[Depends(current_user)])
 async def update_journal(
     instruction_id: int,
-    file: UploadFile = File(...),
+    file: UploadFile = File(None),
     db_session: AsyncSession = Depends(get_db_session),
     user: User = Depends(current_user)
 ):
-
     query = select(Journals).where(
         and_(Journals.user_uuid == user.id, Journals.instruction_id == instruction_id)
     )
