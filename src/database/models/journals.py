@@ -18,7 +18,7 @@ class Journals(BaseModel):
         sa.ForeignKey("instructions.id", ondelete="CASCADE"),
         nullable=False,
     )
-    last_date_read = sa.Column(DateTime(timezone=True), server_default=utcnow(), nullable=False)
+    last_date_read = sa.Column(DateTime(timezone=True), nullable=True)
     signature = sa.Column(String(length=320), nullable=True)
 
     sa.UniqueConstraint('user_uuid', 'instruction_id', name='uix_2')
