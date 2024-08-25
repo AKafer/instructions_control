@@ -9,7 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import Instructions, Journals, User
 from database.orm import Session
-from settings import SIGNATURES_DIR, BASE_URL, STATIC_FOLDER, INSTRUCTIONS_FOLDER, SIGNATURES_FOLDER
+from settings import (
+    SIGNATURES_DIR,
+    BASE_URL,
+    STATIC_FOLDER,
+    SIGNATURES_FOLDER,
+)
 from web.instructions.services import get_instruction_by_profession_from_db
 
 
@@ -45,9 +50,11 @@ async def actualize_journals_for_user(user: User) -> None:
             ins_ids = [instruction.id for instruction in instructions]
             await get_or_create_journals(session, ins_ids, user.id)
 
+
 def get_full_link(request: Request, filename: str) -> str:
     base_url = BASE_URL or str(request.base_url)
-    return f"{base_url}{STATIC_FOLDER}/{SIGNATURES_FOLDER}/{filename}"
+    return f'{base_url}{STATIC_FOLDER}/{SIGNATURES_FOLDER}/{filename}'
+
 
 async def add_params_to_jornals(
     db_session: AsyncSession,
@@ -139,7 +146,7 @@ async def save_file(
         await delete_file(journal.signature)
     _, suffix = os.path.splitext(new_file.filename)
     new_name = (
-        f"{user.id}--{journal.id}--"
+        f'{user.id}--{journal.id}--'
         f"{datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')}{suffix}"
     )
     path_to_file = os.path.join(SIGNATURES_DIR, new_name)
@@ -151,7 +158,7 @@ async def save_file(
 async def delete_files_from_journals(journals) -> None:
     for journal in journals:
         if journal.signature:
-            print(f"Delete signature {journal.signature}")
+            print(f'Delete signature {journal.signature}')
             await delete_file(journal.signature)
 
 

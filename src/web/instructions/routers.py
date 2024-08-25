@@ -1,6 +1,4 @@
-import os
-from fileinput import filename
-
+import sqlalchemy
 from fastapi import File, UploadFile, APIRouter, Depends, Request
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
@@ -15,26 +13,35 @@ from database.models.instructions import Instructions
 from dependencies import get_db_session
 from main_schemas import ResponseErrorBody
 from web.exceptions import ItemNotFound, ErrorSaveToDatabase
-from web.instructions.schemas import Instruction, InstructionCreateInput, InstructionUpdateInput, InstructionForUser
+from web.instructions.schemas import (
+    Instruction,
+    InstructionCreateInput,
+    InstructionUpdateInput,
+    InstructionForUser,
+)
 from web.instructions.services import (
     get_full_link,
     save_file,
     delete_file,
     get_instruction_by_profession_from_db,
     add_params_to_instruction,
-    update_instruction_in_db
+    update_instruction_in_db,
 )
 from web.journals.services import remove_lines_to_journals_for_delete_ins
 
-from web.users.users import current_superuser, current_user, current_active_user
+from web.users.users import (
+    current_superuser,
+    current_user,
+    current_active_user,
+)
 
-router = APIRouter(prefix="/instructions", tags=["insructions"])
+router = APIRouter(prefix='/instructions', tags=['insructions'])
 
 
 @router.get(
-    "/",
+    '/',
     response_model=Page[Instruction],
-    dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)],
 )
 async def get_all_instructions(
     request: Request,
@@ -49,17 +56,17 @@ async def get_all_instructions(
 
 
 @router.get(
-    "/{instruction_id:int}",
+    '/{instruction_id:int}',
     response_model=Instruction,
     responses={
         status.HTTP_400_BAD_REQUEST: {
-            "model": ResponseErrorBody,
+            'model': ResponseErrorBody,
         },
         status.HTTP_404_NOT_FOUND: {
-            "model": ResponseErrorBody,
+            'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)],
 )
 async def get_instruction_by_id(
     request: Request,
@@ -71,24 +78,25 @@ async def get_instruction_by_id(
     if instruction is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Instruction with id {instruction_id} not found",
+            detail=f'Instruction with id {instruction_id} not found',
         )
     if instruction.filename is not None:
         instruction.filename = get_full_link(request, instruction.filename)
     return instruction
 
+
 @router.get(
-    "/get_by_profession/{profession_id:int}",
+    '/get_by_profession/{profession_id:int}',
     response_model=list[Instruction],
     responses={
         status.HTTP_400_BAD_REQUEST: {
-            "model": ResponseErrorBody,
+            'model': ResponseErrorBody,
         },
         status.HTTP_404_NOT_FOUND: {
-            "model": ResponseErrorBody,
+            'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)],
 )
 async def get_instructions_by_profession(
     request: Request,
@@ -96,11 +104,12 @@ async def get_instructions_by_profession(
     db_session: AsyncSession = Depends(get_db_session),
 ):
     try:
-        instructions = await get_instruction_by_profession_from_db(db_session, profession_id)
+        instructions = await get_instruction_by_profession_from_db(
+            db_session, profession_id
+        )
     except ItemNotFound as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
         )
     for instruction in instructions:
         if instruction.filename is not None:
@@ -109,51 +118,60 @@ async def get_instructions_by_profession(
 
 
 @router.post(
-    "/",
+    '/',
     responses={
         status.HTTP_400_BAD_REQUEST: {
-            "model": ResponseErrorBody,
+            'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)],
 )
 async def create_instruction(
     request: Request,
-    input_data: InstructionCreateInput = Depends(InstructionCreateInput.as_form),
+    input_data: InstructionCreateInput = Depends(
+        InstructionCreateInput.as_form
+    ),
     file: UploadFile = File(...),
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    db_instruction = Instructions(**input_data.dict())
-    db_instruction.filename = None
-    db_session.add(db_instruction)
-    await db_session.commit()
-    await db_session.refresh(db_instruction)
-    if file is not None:
-        file_name = await save_file(file, db_instruction)
-        db_instruction.filename = file_name
+    try:
+        db_instruction = Instructions(**input_data.dict())
+        db_instruction.filename = None
+        db_session.add(db_instruction)
         await db_session.commit()
         await db_session.refresh(db_instruction)
-        db_instruction.filename = get_full_link(request, file_name)
+        if file is not None:
+            file_name = await save_file(file, db_instruction)
+            db_instruction.filename = file_name
+            await db_session.commit()
+            await db_session.refresh(db_instruction)
+            db_instruction.filename = get_full_link(request, file_name)
+    except sqlalchemy.exc.IntegrityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        )
     return db_instruction
 
 
 @router.patch(
-    "/{instruction_id:int}",
+    '/{instruction_id:int}',
     response_model=Instruction,
     responses={
         status.HTTP_400_BAD_REQUEST: {
-            "model": ResponseErrorBody,
+            'model': ResponseErrorBody,
         },
         status.HTTP_404_NOT_FOUND: {
-            "model": ResponseErrorBody,
+            'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)],
 )
 async def update_instruction(
     request: Request,
     instruction_id: int,
-    update_data: InstructionUpdateInput = Depends(InstructionUpdateInput.as_form),
+    update_data: InstructionUpdateInput = Depends(
+        InstructionUpdateInput.as_form
+    ),
     file: UploadFile = File(None),
     db_session: AsyncSession = Depends(get_db_session),
 ):
@@ -163,34 +181,37 @@ async def update_instruction(
     if instruction is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Instruction with id {instruction_id} not found",
+            detail=f'Instruction with id {instruction_id} not found',
         )
     try:
-        db_instruction = await update_instruction_in_db(db_session, instruction, **update_dict)
+        db_instruction = await update_instruction_in_db(
+            db_session, instruction, **update_dict
+        )
         if file is not None:
             new_filename = await save_file(file, db_instruction)
             db_instruction.filename = new_filename
         await db_session.commit()
         await db_session.refresh(db_instruction)
         if db_instruction.filename is not None:
-            db_instruction.filename = get_full_link(request, db_instruction.filename)
+            db_instruction.filename = get_full_link(
+                request, db_instruction.filename
+            )
     except ErrorSaveToDatabase as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
         )
     return db_instruction
 
 
 @router.delete(
-    "/{instruction_id:int}",
+    '/{instruction_id:int}',
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         status.HTTP_404_NOT_FOUND: {
-            "model": ResponseErrorBody,
+            'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)],
 )
 async def delete_instruction(
     instruction_id: int,
@@ -201,7 +222,7 @@ async def delete_instruction(
     if instruction is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Instruction with id {instruction_id} not found",
+            detail=f'Instruction with id {instruction_id} not found',
         )
     filename = instruction.filename
     await remove_lines_to_journals_for_delete_ins(db_session, instruction_id)
@@ -213,30 +234,30 @@ async def delete_instruction(
 
 
 @router.get(
-    "/get_my_instructions/",
+    '/get_my_instructions/',
     response_model=list[InstructionForUser] | dict,
     responses={
         status.HTTP_400_BAD_REQUEST: {
-            "model": ResponseErrorBody,
+            'model': ResponseErrorBody,
         },
         status.HTTP_404_NOT_FOUND: {
-            "model": ResponseErrorBody,
+            'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_user)]
+    dependencies=[Depends(current_user)],
 )
 async def get_my_instructions(
     request: Request,
     db_session: AsyncSession = Depends(get_db_session),
-    user: User = Depends(current_active_user)
+    user: User = Depends(current_active_user),
 ):
     if user.is_superuser:
-        return {"detail": "This endpoint is only for users"}
-    response = await get_instruction_by_profession_from_db(db_session, user.profession)
+        return {'detail': 'This endpoint is only for users'}
+    response = await get_instruction_by_profession_from_db(
+        db_session, user.profession
+    )
     instructions = await add_params_to_instruction(db_session, user, response)
     for instruction in instructions:
         if instruction.filename is not None:
             instruction.filename = get_full_link(request, instruction.filename)
     return instructions
-
-

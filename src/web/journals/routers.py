@@ -16,10 +16,14 @@ from web.journals.services import add_params_to_jornals, save_file
 from web.journals.shemas import Journal
 from web.users.users import current_user, current_superuser
 
-router = APIRouter(prefix="/journals", tags=["journals"])
+router = APIRouter(prefix='/journals', tags=['journals'])
 
 
-@router.get("/", response_model=Page[Journal], dependencies=[Depends(current_superuser)])
+@router.get(
+    '/',
+    response_model=Page[Journal],
+    dependencies=[Depends(current_superuser)],
+)
 async def get_all_journals(
     request: Request,
     db_session: AsyncSession = Depends(get_db_session),
@@ -31,41 +35,37 @@ async def get_all_journals(
 
 
 @router.patch(
-    "/update_journal/{instruction_id:int}",
+    '/update_journal/{instruction_id:int}',
     response_model=dict,
     responses={
         status.HTTP_404_NOT_FOUND: {
-            "model": ResponseErrorBody,
+            'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_user)])
+    dependencies=[Depends(current_user)],
+)
 async def update_journal(
     instruction_id: int,
     file: UploadFile = File(None),
     db_session: AsyncSession = Depends(get_db_session),
-    user: User = Depends(current_user)
+    user: User = Depends(current_user),
 ):
-    query = (
-        select(Journals)
-        .where(
-            and_(
-                Journals.user_uuid == user.id,
-                Journals.instruction_id == instruction_id
-            )
+    query = select(Journals).where(
+        and_(
+            Journals.user_uuid == user.id,
+            Journals.instruction_id == instruction_id,
         )
     )
     journal = await db_session.scalar(query)
     if journal is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Journal for this user and  instruction_id {instruction_id} not found",
+            detail=f'Journal for this user and  instruction_id {instruction_id} not found',
         )
     journal.last_date_read = datetime.utcnow()
     if file is not None:
         journal.signature = await save_file(
-            new_file=file,
-            journal=journal,
-            user=user
+            new_file=file, journal=journal, user=user
         )
     await db_session.commit()
-    return {"detail": "Journal updated"}
+    return {'detail': 'Journal updated'}
