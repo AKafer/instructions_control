@@ -19,7 +19,7 @@ pipeline {
                 }
             }
         }
-        stage("create docker image") {
+        stage("update docker image") {
             steps {
                 echo " ============== start building image =================="
                 dir ('.') {
