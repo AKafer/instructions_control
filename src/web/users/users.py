@@ -1,8 +1,8 @@
 import uuid
 from typing import Optional, Dict, Any
 
-from fastapi import Depends, Request
-from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin
+from fastapi import Depends, Request, Response
+from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin, models
 from fastapi_users.authentication import (
     AuthenticationBackend,
     BearerTransport,
@@ -40,6 +40,15 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_before_delete(self, user: User, request: Optional[Request] = None):
         await remove_lines_to_journals_for_delete_user(user)
         print(f"User {user.id} is going to be deleted")
+
+    async def on_after_login(
+        self,
+        user: models.UP,
+        request: Optional[Request] = None,
+        response: Optional[Response] = None,
+    ) -> None:
+        if user.is_superuser:
+            print(f"Superuser {user.id} has logged in.")
 
 
 async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db)):
