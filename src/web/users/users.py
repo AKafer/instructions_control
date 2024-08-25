@@ -13,7 +13,10 @@ from fastapi_users.db import SQLAlchemyUserDatabase
 
 import settings
 from database.models.users import User, get_user_db
-from web.journals.services import actualize_journals_for_user
+from web.journals.services import (
+    actualize_journals_for_user,
+    remove_lines_to_journals_for_delete_user
+)
 
 SECRET = settings.SECRET_KEY
 
@@ -34,15 +37,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         await actualize_journals_for_user(user)
         print(f"User {user.id} has been updated.")
 
-    async def on_after_forgot_password(
-        self, user: User, token: str, request: Optional[Request] = None
-    ):
-        print(f"User {user.id} has forgot their password. Reset token: {token}")
-
-    async def on_after_request_verify(
-        self, user: User, token: str, request: Optional[Request] = None
-    ):
-        print(f"Verification requested for user {user.id}. Verification token: {token}")
+    async def on_before_delete(self, user: User, request: Optional[Request] = None):
+        await remove_lines_to_journals_for_delete_user(user)
+        print(f"User {user.id} is going to be deleted")
 
 
 async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db)):

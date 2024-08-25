@@ -31,28 +31,6 @@ async def update_instruction_in_db(
     return instruction
 
 
-async def update_instruction_logic(
-    db_session: AsyncSession,
-    request: Request,
-    instruction: Instructions,
-    update_dict: dict,
-    file: UploadFile = None,
-):
-    old_filename = instruction.filename
-    if file is not None:
-        if file.filename in os.listdir(INSTRUCTIONS_DIR) and file.filename != old_filename:
-            raise DuplicateFilename(f"File with name {file.filename} already exists")
-        if instruction.filename != file.filename:
-            update_dict["filename"] = file.filename
-        db_instruction = await update_instruction_in_db(db_session, instruction, **update_dict)
-        await save_file(file)
-        if old_filename is not None and old_filename != file.filename:
-            delete_file(old_filename)
-        db_instruction.filename = get_full_link(request, file.filename)
-    else:
-        db_instruction = await update_instruction_in_db(db_session, instruction, **update_dict)
-        db_instruction.filename = get_full_link(request, old_filename)
-    return db_instruction
 
 
 def get_full_link(request: Request, filename: str) -> str:
@@ -60,13 +38,24 @@ def get_full_link(request: Request, filename: str) -> str:
     return f"{base_url}{STATIC_FOLDER}/{INSTRUCTIONS_FOLDER}/{filename}"
 
 
-async def save_file(file: UploadFile) -> None:
-    path_to_file = os.path.join(INSTRUCTIONS_DIR, file.filename)
-    async with aiof.open(path_to_file, "wb+") as f:
-        await f.write(file.file.read())
+async def save_file(
+    new_file: UploadFile, instruction: Instructions
+) -> str:
+    if instruction.filename is not None:
+        delete_file(instruction.filename)
+    _, suffix = os.path.splitext(new_file.filename)
+    new_name = (
+        f"{instruction.id}--"
+        f"{datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')}{suffix}"
+    )
+    path_to_file = os.path.join(INSTRUCTIONS_DIR, new_name)
+    async with aiof.open(path_to_file, 'wb+') as f:
+        await f.write(new_file.file.read())
+    return new_name
 
 
 def delete_file(filename: str) -> None:
+    print(f"Delete file {filename}")
     try:
         os.remove(os.path.join(INSTRUCTIONS_DIR, filename))
     except FileNotFoundError:
@@ -82,7 +71,7 @@ async def get_instruction_by_profession_from_db(
     if profession is None:
         raise ItemNotFound(f"Profession with id {profession_id} not found")
     subquery = select(Rules.instruction_id).where(Rules.profession_id == profession_id)
-    query = select(Instructions).where(Instructions.id.in_(subquery))
+    query = select(Instructions).where(Instructions.id.in_(subquery)).order_by(Instructions.id)
     instructions = await db_session.scalars(query)
     return instructions.all()
 
