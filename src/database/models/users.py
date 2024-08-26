@@ -6,7 +6,7 @@ from fastapi import Depends
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
 from sqlalchemy import String, Boolean, ForeignKey, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import expression
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.types import DateTime
@@ -43,6 +43,13 @@ class User(SQLAlchemyBaseUserTableUUID, BaseModel):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    instructions = relationship(
+        "Instructions",
+        secondary='journals',
+        back_populates="users",
+        lazy='subquery'
+    )
 
 
 async def get_user_db(session: AsyncSession = Depends(get_db_session)):

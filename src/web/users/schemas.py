@@ -5,6 +5,8 @@ from fastapi_users import schemas
 from pydantic import EmailStr, Field, BaseModel, ConfigDict
 from typing_extensions import Annotated
 
+from web.instructions.schemas import Instruction, InstructionForUser
+
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
     email: EmailStr
@@ -16,6 +18,7 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
     profession: int | None
     created_at: datetime
     updated_at: datetime | None
+    instructions: list[InstructionForUser]
     is_active: bool = Field(True, exclude=True)
     is_verified: bool = Field(False, exclude=True)
     is_superuser: bool = Field(False, exclude=True)

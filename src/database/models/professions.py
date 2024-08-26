@@ -1,4 +1,6 @@
 import sqlalchemy as sa
+from sqlalchemy.orm import relationship
+
 from database.orm import BaseModel
 
 
@@ -8,3 +10,10 @@ class Professions(BaseModel):
     id = sa.Column(sa.BigInteger, primary_key=True)
     title = sa.Column(sa.String(64), nullable=False)
     description = sa.Column(sa.Text(), nullable=True)
+
+    instructions = relationship(
+        "Instructions",
+        secondary='rules',
+        back_populates="professions",
+        lazy='selectin'
+    )

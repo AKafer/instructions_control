@@ -15,7 +15,6 @@ from settings import (
     STATIC_FOLDER,
     SIGNATURES_FOLDER,
 )
-from web.instructions.services import get_instruction_by_profession_from_db
 
 
 async def get_or_create_journals(
@@ -44,10 +43,7 @@ async def get_or_create_journals(
 async def actualize_journals_for_user(user: User) -> None:
     async with Session() as session:
         if user.profession is not None:
-            instructions = await get_instruction_by_profession_from_db(
-                session, user.profession
-            )
-            ins_ids = [instruction.id for instruction in instructions]
+            ins_ids = [instruction.id for instruction in user.instructions]
             await get_or_create_journals(session, ins_ids, user.id)
 
 

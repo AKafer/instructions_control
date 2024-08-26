@@ -13,8 +13,9 @@ from fastapi_users.manager import BaseUserManager
 from fastapi_users.router.common import ErrorCode, ErrorModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
-from database.models import User
+from database.models import User, Instructions
 from dependencies import get_db_session
 from web.users.filters import UsersFilter
 from web.users.schemas import UserRead, UserUpdate
@@ -36,9 +37,10 @@ async def get_all_users(
     user_filter: UsersFilter = Depends(UsersFilter),
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    query = select(User).order_by(User.created_at)
+    query = select(User).options(joinedload(User.instructions).joinedload(Instructions.journals))
     query = user_filter.filter(query)
     return await paginate(db_session, query)
+
 
 
 async def get_user_or_404(
@@ -49,7 +51,14 @@ async def get_user_or_404(
 ) -> models.UP:
     try:
         parsed_id = user_manager.parse_id(id)
-        return await user_manager.get(parsed_id)
+        user =  await user_manager.get(parsed_id)
+        if not user.is_superuser:
+            for instruction in user.instructions:
+                for journal in instruction.journals:
+                    if journal.user_uuid == user.id:
+                        instruction.journal = journal
+                        break
+        return user
     except (exceptions.UserNotExists, exceptions.InvalidID) as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from e
 
@@ -67,6 +76,12 @@ async def get_user_or_404(
 async def me(
     user: models.UP = Depends(current_active_user),
 ):
+    if not user.is_superuser:
+        for instruction in user.instructions:
+            for journal in instruction.journals:
+                if journal.user_uuid == user.id:
+                    instruction.journal = journal
+                    break
     return schemas.model_validate(UserRead, user)
 
 

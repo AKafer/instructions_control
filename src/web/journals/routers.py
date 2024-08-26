@@ -34,6 +34,20 @@ async def get_all_journals(
     return journals
 
 
+@router.get(
+    '/{journal_id:int}',
+    response_model=Page[Journal],
+    dependencies=[Depends(current_superuser)],
+)
+async def get_by_id(
+    journal_id: int,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    query = select(Journals).where(and_(Journals.remain_days < 100, Journals.valid == True)).distinct()
+    response = await paginate(db_session, query)
+    return response
+
+
 @router.patch(
     '/update_journal/{instruction_id:int}',
     response_model=dict,
