@@ -26,7 +26,7 @@ class Journals(BaseModel):
 
     sa.UniqueConstraint('user_uuid', 'instruction_id', name='uix_2')
 
-    instruction = sa.orm.relationship('Instructions', back_populates='journals', lazy='joined')
+    instruction = sa.orm.relationship('Instructions', back_populates='journals', lazy='selectin')
 
     @hybrid_property
     def valid(self):

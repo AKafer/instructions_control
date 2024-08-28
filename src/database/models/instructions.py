@@ -16,7 +16,7 @@ class Instructions(BaseModel):
 
     journals = sa.orm.relationship(
         'Journals',
-        lazy='joined'
+        lazy='selectin'
     )
 
     users = relationship(

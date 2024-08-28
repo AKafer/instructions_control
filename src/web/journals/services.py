@@ -42,8 +42,10 @@ async def get_or_create_journals(
 
 async def actualize_journals_for_user(user: User) -> None:
     async with Session() as session:
-        if user.profession is not None:
-            ins_ids = [instruction.id for instruction in user.instructions]
+        print(f'Actualize journals for user {user.id}')
+        print(f'User profession id: {user.profession_id}')
+        if user.profession_id is not None:
+            ins_ids = [instruction.id for instruction in user.profession.instructions]
             await get_or_create_journals(session, ins_ids, user.id)
 
 

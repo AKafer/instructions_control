@@ -4,7 +4,8 @@ __all__ = [
     "Instructions",
     "Rules",
     "User",
-    "Journals"
+    "Journals",
+    "Divisions",
 ]
 
 from database.orm import BaseModel
@@ -13,3 +14,4 @@ from .instructions import Instructions
 from .rules import Rules
 from .users import User
 from .journals import Journals
+from .divisions import Divisions

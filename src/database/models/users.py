@@ -37,7 +37,8 @@ class User(SQLAlchemyBaseUserTableUUID, BaseModel):
     father_name: Mapped[str] = mapped_column(String(length=320), nullable=True)
     telegram_id: Mapped[str] = mapped_column(String(length=320), nullable=True)
     phone_number: Mapped[str] = mapped_column(String(length=320), nullable=True)
-    profession: Mapped[str] = mapped_column(ForeignKey("professions.id", ondelete='SET NULL'), nullable=True)
+    profession_id: Mapped[str] = mapped_column(ForeignKey("professions.id", ondelete='SET NULL'), nullable=True)
+    division_id: Mapped[str] = mapped_column(ForeignKey("divisions.id", ondelete='SET NULL'), nullable=True)
     created_at: Mapped[str] = mapped_column(DateTime(timezone=True), server_default=utcnow(), nullable=False)
     updated_at: Mapped[str] = mapped_column(DateTime(timezone=True), onupdate=utcnow(), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -48,7 +49,19 @@ class User(SQLAlchemyBaseUserTableUUID, BaseModel):
         "Instructions",
         secondary='journals',
         back_populates="users",
-        lazy='subquery'
+        lazy='selectin'
+    )
+
+    profession = relationship(
+        "Professions",
+        back_populates="users",
+        lazy='selectin'
+    )
+
+    division = relationship(
+        "Divisions",
+        back_populates="users",
+        lazy='selectin'
     )
 
 
