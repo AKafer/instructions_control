@@ -9,8 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 import pytest
 from sqlalchemy.orm import declarative_base
 
+from app import create_app
 from database.orm import BaseModel
 from database.models import User, Professions
+from dependencies import get_db_session
 
 async_engine = create_async_engine(
     url="postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/test_control",
@@ -23,13 +25,17 @@ test_session = async_sessionmaker(
         expire_on_commit=False,
     )
 
-async def override_get_db():
-    async with test_session() as session:
-        try:
-            yield session
-        finally:
-            await session.rollback()
-            await session.close()
+
+app = create_app()
+
+
+# async def override_get_db():
+#     async with test_session() as session:
+#         try:
+#             yield session
+#         finally:
+#             await session.rollback()
+#             await session.close()
 
 # truncate all table to isolate tests
 @pytest_asyncio.fixture(name='async_db')
@@ -50,3 +56,21 @@ def event_loop():
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
+
+
+
+
+
+@pytest_asyncio.fixture(name='async_client')
+async def async_client() -> AsyncClient:
+
+    async def override_get_db() -> Iterator[AsyncSession]:
+        async with test_session() as session:
+            try:
+                yield session
+            finally:
+                await session.rollback()
+                await session.close()
+
+    app.dependency_overrides[get_db_session] = override_get_db
+    return AsyncClient(app=app, base_url="http://test")

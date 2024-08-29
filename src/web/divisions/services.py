@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database.models import Divisions
 
 
-async def update_division(
+async def update_division_in_db(
         db_session: AsyncSession,
         division: Divisions,
         **update_data: dict

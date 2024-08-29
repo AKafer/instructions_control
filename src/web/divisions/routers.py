@@ -1,3 +1,4 @@
+import sqlalchemy
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,7 +11,7 @@ from starlette.exceptions import HTTPException
 
 from main_schemas import ResponseErrorBody
 from web.divisions.schemas import Division, DivisionCreateInput, DivisionUpdateInput
-from web.divisions.services import update_division
+from web.divisions.services import update_division_in_db
 from web.users.users import current_superuser
 
 router = APIRouter(
@@ -54,22 +55,41 @@ async def get_division_by_id(
     return division
 
 
-@router.post('/', response_model=Division)
+@router.post(
+    '/',
+    response_model=Division,
+    responses={
+            status.HTTP_400_BAD_REQUEST: {
+                'model': ResponseErrorBody,
+            },
+            status.HTTP_404_NOT_FOUND: {
+                'model': ResponseErrorBody,
+            },
+        },
+)
 async def create_division(
     division_input: DivisionCreateInput,
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    db_division = Divisions(**division_input.dict())
-    db_session.add(db_division)
-    await db_session.commit()
-    await db_session.refresh(db_division)
-    return db_division
+    try:
+        db_division = Divisions(**division_input.dict())
+        db_session.add(db_division)
+        await db_session.commit()
+        await db_session.refresh(db_division)
+        return db_division
+    except sqlalchemy.exc.IntegrityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        )
 
 
 @router.patch(
     '/{division_id:int}',
     response_model=Division,
     responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
         status.HTTP_404_NOT_FOUND: {
             'model': ResponseErrorBody,
         },
@@ -87,9 +107,14 @@ async def update_division(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f'Division with id {division_id} not found',
         )
-    return await update_division(
-        db_session, division, **update_input.dict(exclude_none=True)
-    )
+    try:
+        return await update_division_in_db(
+            db_session, division, **update_input.dict(exclude_none=True)
+        )
+    except sqlalchemy.exc.IntegrityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        )
 
 
 @router.delete(

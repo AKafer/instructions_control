@@ -1,23 +1,14 @@
-import asyncio
-
 import pytest
 import pytest_asyncio
-from fastapi.testclient import TestClient
-from httpx import AsyncClient
 from sqlalchemy import select
 
 from database.models import User, Professions
-from dependencies import get_db_session
 from scripts.create_user import create_user
-from src.app import create_app
-from tests.conftest import async_db, override_get_db
+from tests.conftest import async_db
 
-app = create_app()
-app.dependency_overrides[get_db_session] = override_get_db
-test_client = TestClient(app)
-
-def test_ping():
-    response = test_client.get("/ping")
+@pytest.mark.asyncio
+async def test_ping(async_client):
+    response = await async_client.get("/ping/")
     assert response.status_code == 200
     assert response.text == "pong"
 
@@ -64,33 +55,33 @@ async def test_create_superuser(async_db, superuser):
 
 
 @pytest.mark.asyncio
-async def test_create_get_user(async_db, profession, superuser):
-    async with AsyncClient(app=app, base_url="http://test") as test_client:
+async def test_create_get_user(async_client, async_db, profession, superuser):
 
-        response_jwt = await test_client.post(
-            "/api/v1/auth/jwt/login",
-            data={"username": "admin@gmail.com", "password": "111111"}
-        )
 
-        token = response_jwt.json()["access_token"]
+    response_jwt = await async_client.post(
+        "/api/v1/auth/jwt/login",
+        data={"username": "admin@gmail.com", "password": "111111"}
+    )
 
-        user_payload = {
-            "email": "zelen@example.com",
-            "password": "111111",
-            "is_active": True,
-            "is_superuser": False,
-            "is_verified": False,
-            "name": "Volodimir",
-            "last_name": "Zelenskiy",
-            "father_name": "Alexandrovich",
-            "telegram_id": "80989888",
-            "phone_number": "+380987654321",
-            "profession": profession.id,
-        }
-        response = await test_client.post(
-            "/api/v1/auth/register",
-            json=user_payload,
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        assert response.status_code == 201
-        assert response.json()["email"] == "zelen@example.com"
+    token = response_jwt.json()["access_token"]
+
+    user_payload = {
+        "email": "zelen@example.com",
+        "password": "111111",
+        "is_active": True,
+        "is_superuser": False,
+        "is_verified": False,
+        "name": "Volodimir",
+        "last_name": "Zelenskiy",
+        "father_name": "Alexandrovich",
+        "telegram_id": "80989888",
+        "phone_number": "+380987654321",
+        "profession_id": profession.id,
+    }
+    response = await async_client.post(
+        "/api/v1/auth/register",
+        json=user_payload,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 201
+    assert response.json()["email"] == "zelen@example.com"
