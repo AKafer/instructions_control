@@ -92,7 +92,7 @@ async def add_params_to_jornals(
 async def add_lines_to_journals_for_new_rule(
     db_session: AsyncSession, profession_id: int, instruction_id: int
 ) -> None:
-    query = select(User.id).where(User.profession == profession_id)
+    query = select(User.id).where(User.profession_id == profession_id)
     users_ids = await db_session.scalars(query)
     for user_id in users_ids:
         journal = Journals(user_uuid=user_id, instruction_id=instruction_id)
@@ -103,7 +103,7 @@ async def add_lines_to_journals_for_new_rule(
 async def remove_lines_to_journals_for_delete_rule(
     db_session: AsyncSession, profession_id: int, instruction_id: int
 ) -> None:
-    query = select(User.id).where(User.profession == profession_id)
+    query = select(User.id).where(User.profession_id == profession_id)
     users_ids = await db_session.scalars(query)
     query = select(Journals).where(
         and_(

@@ -48,6 +48,7 @@ class UserCreate(schemas.BaseUserCreate):
     telegram_id: str | None = None
     phone_number: str | None = None
     profession_id: int
+    division_id: int | None = None
     is_active: bool = Field(True, exclude=True)
     is_verified: bool = Field(False, exclude=True)
     is_superuser: bool = Field(False, exclude=True)
@@ -62,6 +63,7 @@ class UserUpdate(schemas.BaseUserUpdate):
     telegram_id: str | None = None
     phone_number: str | None = None
     profession_id: int | None = None
+    division_id: int | None = None
     is_active: bool = Field(True, exclude=True)
     is_verified: bool = Field(False, exclude=True)
     is_superuser: bool = Field(False, exclude=True)

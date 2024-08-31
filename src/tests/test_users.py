@@ -6,36 +6,6 @@ from database.models import User, Professions
 from scripts.create_user import create_user
 from tests.conftest import async_db
 
-@pytest.mark.asyncio
-async def test_ping(async_client):
-    response = await async_client.get("/ping/")
-    assert response.status_code == 200
-    assert response.text == "pong"
-
-@pytest_asyncio.fixture
-async def profession(async_db):
-    profession_payload = {
-        "title": "president",
-        "description": "The head of the state",
-    }
-
-    prof = Professions(**profession_payload)
-    async_db.add(prof)
-    await async_db.commit()
-    await async_db.refresh(prof)
-    yield prof
-
-@pytest_asyncio.fixture
-async def superuser(async_db):
-    superuser = await create_user(
-        async_db,
-        email="admin@gmail.com",
-        password="111111",
-        name="John",
-        last_name="Doe",
-    )
-    yield superuser
-
 
 @pytest.mark.asyncio
 async def test_create_profession(async_db, profession):
@@ -43,6 +13,7 @@ async def test_create_profession(async_db, profession):
     profession = await async_db.scalar(query)
     assert profession.title == "president"
     assert profession.description == "The head of the state"
+
 
 @pytest.mark.asyncio
 async def test_create_superuser(async_db, superuser):
@@ -53,17 +24,30 @@ async def test_create_superuser(async_db, superuser):
     assert superuser_db.name == "John"
     assert superuser_db.last_name == "Doe"
 
+@pytest.mark.asyncio
+async def test_get_superuser_token(superuser_token):
+    assert type(superuser_token) == str
+
+
+
 
 @pytest.mark.asyncio
-async def test_create_get_user(async_client, async_db, profession, superuser):
+async def test_create_get_user(async_client, superuser_token):
+    profession_payload = {
+        "title": "president",
+        "description": "The head of the state",
+    }
 
-
-    response_jwt = await async_client.post(
-        "/api/v1/auth/jwt/login",
-        data={"username": "admin@gmail.com", "password": "111111"}
+    response = await async_client.post(
+        "/api/v1/professions/",
+        json=profession_payload,
+        headers={"Authorization": f"Bearer {superuser_token}"},
     )
+    profession = response.json()
+    assert response.status_code == 201
+    assert profession["title"] == "president"
+    assert profession["description"] == "The head of the state"
 
-    token = response_jwt.json()["access_token"]
 
     user_payload = {
         "email": "zelen@example.com",
@@ -76,12 +60,19 @@ async def test_create_get_user(async_client, async_db, profession, superuser):
         "father_name": "Alexandrovich",
         "telegram_id": "80989888",
         "phone_number": "+380987654321",
-        "profession_id": profession.id,
+        "profession_id": profession['id'],
     }
     response = await async_client.post(
         "/api/v1/auth/register",
         json=user_payload,
-        headers={"Authorization": f"Bearer {token}"},
+        headers={"Authorization": f"Bearer {superuser_token}"},
     )
+    user = response.json()
     assert response.status_code == 201
-    assert response.json()["email"] == "zelen@example.com"
+    assert  user["email"] == "zelen@example.com"
+    assert  user["name"] == "Volodimir"
+    assert  user["last_name"] == "Zelenskiy"
+    assert  user["father_name"] == "Alexandrovich"
+    assert  user["telegram_id"] == "80989888"
+    assert  user["phone_number"] == "+380987654321"
+    assert  user["profession"] == {'id': 1, 'title': 'president'}
