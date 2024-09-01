@@ -19,21 +19,6 @@ from web.users.users import current_user, current_superuser
 router = APIRouter(prefix='/journals', tags=['journals'])
 
 
-# @router.get(
-#     '/',
-#     response_model=Page[Journal],
-#     dependencies=[Depends(current_superuser)],
-# )
-# async def get_all_journals(
-#     request: Request,
-#     db_session: AsyncSession = Depends(get_db_session),
-# ):
-#     query = select(Journals).order_by(Journals.id.desc())
-#     response = await paginate(db_session, query)
-#     journals = await add_params_to_jornals(db_session, request, response)
-#     return journals
-
-
 @router.get(
     '/',
     response_model=Page[Journal],
