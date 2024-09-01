@@ -11,6 +11,8 @@ async def peak_personal_journal(request: Request, user: User) -> User:
                 instruction.filename = get_full_link(request, instruction.filename)
             for journal in instruction.journals:
                 if journal.user_uuid == user.id:
+                    if journal.signature is not None:
+                        journal.signature = get_full_link(request, journal.signature)
                     instruction.journal = journal
                     break
     return user
