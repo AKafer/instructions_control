@@ -24,7 +24,7 @@ class TestInstructions:
 
     @pytest.mark.asyncio
     async def test_get_instruction_by_id(self, setup, async_client, superuser_token, async_db_session):
-        query = select(Professions).where(Instructions.title == TEST_INSTRUCTIONS[0]["title"])
+        query = select(Instructions).where(Instructions.title == TEST_INSTRUCTIONS[0]["title"])
         ins_N_1 = await async_db_session.scalar(query)
         test_id = ins_N_1.id
 
