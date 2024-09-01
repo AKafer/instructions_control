@@ -1,6 +1,21 @@
+from datetime import datetime
+
 from fastapi import Form
+from fastapi_users import models
 
 from pydantic import BaseModel
+
+
+class Journal(BaseModel):
+    id: int
+    user_uuid: models.ID
+    last_date_read: datetime | None
+    signature: str | None = None
+    valid: bool | None = None
+    remain_days: int | None = None
+
+    class Config:
+        orm_mode = True
 
 
 class Instruction(BaseModel):
@@ -15,9 +30,10 @@ class Instruction(BaseModel):
         orm_mode = True
 
 
+
 class InstructionForUser(Instruction):
-    valid: bool
-    remain_days: int
+    journal: Journal | None
+
 
 
 class InstructionCreateInput(BaseModel):

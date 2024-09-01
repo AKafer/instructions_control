@@ -1,5 +1,5 @@
+import sqlalchemy
 from fastapi import APIRouter, Depends
-from fastapi_pagination import Page, paginate
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -54,16 +54,30 @@ async def get_prof_by_id(
     return profession
 
 
-@router.post("/", response_model=Profession)
+@router.post(
+    "/",
+    status_code=status.HTTP_201_CREATED,
+    response_model=Profession,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
 async def create_prof(
     profession: ProfessionCreateInput,
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    db_profession = Professions(**profession.dict())
-    db_session.add(db_profession)
-    await db_session.commit()
-    await db_session.refresh(db_profession)
-    return db_profession
+    try:
+        db_profession = Professions(**profession.dict())
+        db_session.add(db_profession)
+        await db_session.commit()
+        await db_session.refresh(db_profession)
+        return db_profession
+    except sqlalchemy.exc.IntegrityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        )
 
 
 @router.patch(

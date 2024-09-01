@@ -34,7 +34,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         update_dict: Dict[str, Any],
         request: Optional[Request] = None
     ):
-        await actualize_journals_for_user(user)
+        # await actualize_journals_for_user(user)
         print(f"User {user.id} has been updated.")
 
     async def on_before_delete(self, user: User, request: Optional[Request] = None):

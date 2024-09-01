@@ -13,11 +13,14 @@ from fastapi_users.manager import BaseUserManager
 from fastapi_users.router.common import ErrorCode, ErrorModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
-from database.models import User
+from database.models import User, Instructions
 from dependencies import get_db_session
+from web.journals.services import actualize_journals_for_user
 from web.users.filters import UsersFilter
-from web.users.schemas import UserRead, UserUpdate
+from web.users.schemas import UserRead, UserUpdate, UserListRead
+from web.users.services import peak_personal_journal
 from web.users.users import (
     current_active_user,
     current_superuser,
@@ -29,19 +32,21 @@ router = APIRouter(prefix='/users', tags=['users'])
 
 @router.get(
     '/',
-    response_model=Page[UserRead],
+    response_model=Page[UserListRead],
     dependencies=[Depends(current_superuser)],
 )
 async def get_all_users(
     user_filter: UsersFilter = Depends(UsersFilter),
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    query = select(User).order_by(User.created_at)
+    query = select(User).options(joinedload(User.instructions).joinedload(Instructions.journals))
     query = user_filter.filter(query)
     return await paginate(db_session, query)
 
 
+
 async def get_user_or_404(
+    request: Request,
     id: str,
     user_manager: BaseUserManager[models.UP, models.ID] = Depends(
         get_user_manager
@@ -49,7 +54,8 @@ async def get_user_or_404(
 ) -> models.UP:
     try:
         parsed_id = user_manager.parse_id(id)
-        return await user_manager.get(parsed_id)
+        user =  await user_manager.get(parsed_id)
+        return await peak_personal_journal(request, user)
     except (exceptions.UserNotExists, exceptions.InvalidID) as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from e
 
@@ -65,8 +71,10 @@ async def get_user_or_404(
     },
 )
 async def me(
+    request: Request,
     user: models.UP = Depends(current_active_user),
 ):
+    user = await peak_personal_journal(request, user)
     return schemas.model_validate(UserRead, user)
 
 
@@ -204,11 +212,15 @@ async def update_user(
     user_manager: BaseUserManager[models.UP, models.ID] = Depends(
         get_user_manager
     ),
+    db_session: AsyncSession = Depends(get_db_session),
 ):
     try:
         user = await user_manager.update(
             user_update, user, safe=False, request=request
         )
+        await actualize_journals_for_user(user)
+        await db_session.refresh(user)
+        user = await peak_personal_journal(request, user)
         return schemas.model_validate(UserRead, user)
     except exceptions.InvalidPasswordException as e:
         raise HTTPException(

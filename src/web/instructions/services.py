@@ -2,12 +2,10 @@ import os
 from datetime import datetime
 
 import sqlalchemy
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import Request, UploadFile
-from database.models import Instructions, Professions, Journals, User
-from database.models.rules import Rules
+from database.models import Instructions
 from settings import (
     BASE_URL,
     INSTRUCTIONS_DIR,
@@ -17,7 +15,7 @@ from settings import (
 
 import aiofiles as aiof
 
-from web.exceptions import ErrorSaveToDatabase, DuplicateFilename, ItemNotFound
+from web.exceptions import ErrorSaveToDatabase
 
 
 async def update_instruction_in_db(
@@ -46,6 +44,7 @@ async def save_file(new_file: UploadFile, instruction: Instructions) -> str:
         f'{instruction.id}--'
         f"{datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')}{suffix}"
     )
+    x = INSTRUCTIONS_DIR
     path_to_file = os.path.join(INSTRUCTIONS_DIR, new_name)
     async with aiof.open(path_to_file, 'wb+') as f:
         await f.write(new_file.file.read())
@@ -58,57 +57,3 @@ def delete_file(filename: str) -> None:
         os.remove(os.path.join(INSTRUCTIONS_DIR, filename))
     except FileNotFoundError:
         pass
-
-
-async def get_instruction_by_profession_from_db(
-    db_session: AsyncSession,
-    profession_id: int,
-) -> list[Instructions]:
-    query = select(Professions).where(Professions.id == profession_id)
-    profession = await db_session.scalar(query)
-    if profession is None:
-        raise ItemNotFound(f'Profession with id {profession_id} not found')
-    subquery = select(Rules.instruction_id).where(
-        Rules.profession_id == profession_id
-    )
-    query = (
-        select(Instructions)
-        .where(Instructions.id.in_(subquery))
-        .order_by(Instructions.id)
-    )
-    instructions = await db_session.scalars(query)
-    return instructions.all()
-
-
-async def add_params_to_instruction(
-    db_session: AsyncSession, user: User, response
-):
-    from web.journals.services import actualize_journals_for_user
-
-    await actualize_journals_for_user(user)
-    query = select(Journals).where(Journals.user_uuid == user.id)
-    journals = (await db_session.scalars(query)).all()
-    for instruction in response:
-        for journal in journals:
-            if instruction.id == journal.instruction_id:
-                if journal.last_date_read is None:
-                    instruction.valid = False
-                    instruction.remain_days = 0
-                else:
-                    if instruction.iteration:
-                        date_diff = (
-                            datetime.utcnow().replace(tzinfo=None)
-                            - journal.last_date_read.replace(tzinfo=None)
-                        ).days
-                        if date_diff > instruction.period:
-                            instruction.valid = False
-                            instruction.remain_days = 0
-                        else:
-                            instruction.valid = True
-                            instruction.remain_days = (
-                                instruction.period - date_diff
-                            )
-                    else:
-                        instruction.valid = True
-                        instruction.remain_days = 0
-    return response

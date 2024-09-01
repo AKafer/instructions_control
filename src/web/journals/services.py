@@ -15,7 +15,6 @@ from settings import (
     STATIC_FOLDER,
     SIGNATURES_FOLDER,
 )
-from web.instructions.services import get_instruction_by_profession_from_db
 
 
 async def get_or_create_journals(
@@ -43,11 +42,10 @@ async def get_or_create_journals(
 
 async def actualize_journals_for_user(user: User) -> None:
     async with Session() as session:
-        if user.profession is not None:
-            instructions = await get_instruction_by_profession_from_db(
-                session, user.profession
-            )
-            ins_ids = [instruction.id for instruction in instructions]
+        print(f'Actualize journals for user {user.id}')
+        print(f'User profession id: {user.profession_id}')
+        if user.profession_id is not None:
+            ins_ids = [instruction.id for instruction in user.profession.instructions]
             await get_or_create_journals(session, ins_ids, user.id)
 
 
@@ -94,7 +92,7 @@ async def add_params_to_jornals(
 async def add_lines_to_journals_for_new_rule(
     db_session: AsyncSession, profession_id: int, instruction_id: int
 ) -> None:
-    query = select(User.id).where(User.profession == profession_id)
+    query = select(User.id).where(User.profession_id == profession_id)
     users_ids = await db_session.scalars(query)
     for user_id in users_ids:
         journal = Journals(user_uuid=user_id, instruction_id=instruction_id)
@@ -105,7 +103,7 @@ async def add_lines_to_journals_for_new_rule(
 async def remove_lines_to_journals_for_delete_rule(
     db_session: AsyncSession, profession_id: int, instruction_id: int
 ) -> None:
-    query = select(User.id).where(User.profession == profession_id)
+    query = select(User.id).where(User.profession_id == profession_id)
     users_ids = await db_session.scalars(query)
     query = select(Journals).where(
         and_(

@@ -12,7 +12,7 @@ from database.models import User
 from database.models.instructions import Instructions
 from dependencies import get_db_session
 from main_schemas import ResponseErrorBody
-from web.exceptions import ItemNotFound, ErrorSaveToDatabase
+from web.exceptions import ErrorSaveToDatabase
 from web.instructions.schemas import (
     Instruction,
     InstructionCreateInput,
@@ -23,8 +23,6 @@ from web.instructions.services import (
     get_full_link,
     save_file,
     delete_file,
-    get_instruction_by_profession_from_db,
-    add_params_to_instruction,
     update_instruction_in_db,
 )
 from web.journals.services import remove_lines_to_journals_for_delete_ins
@@ -85,40 +83,9 @@ async def get_instruction_by_id(
     return instruction
 
 
-@router.get(
-    '/get_by_profession/{profession_id:int}',
-    response_model=list[Instruction],
-    responses={
-        status.HTTP_400_BAD_REQUEST: {
-            'model': ResponseErrorBody,
-        },
-        status.HTTP_404_NOT_FOUND: {
-            'model': ResponseErrorBody,
-        },
-    },
-    dependencies=[Depends(current_superuser)],
-)
-async def get_instructions_by_profession(
-    request: Request,
-    profession_id: int,
-    db_session: AsyncSession = Depends(get_db_session),
-):
-    try:
-        instructions = await get_instruction_by_profession_from_db(
-            db_session, profession_id
-        )
-    except ItemNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
-        )
-    for instruction in instructions:
-        if instruction.filename is not None:
-            instruction.filename = get_full_link(request, instruction.filename)
-    return instructions
-
-
 @router.post(
     '/',
+    status_code=status.HTTP_201_CREATED,
     responses={
         status.HTTP_400_BAD_REQUEST: {
             'model': ResponseErrorBody,
@@ -246,18 +213,19 @@ async def delete_instruction(
     },
     dependencies=[Depends(current_user)],
 )
-async def get_my_instructions(
+async def get_my_instructions2(
     request: Request,
-    db_session: AsyncSession = Depends(get_db_session),
     user: User = Depends(current_active_user),
 ):
     if user.is_superuser:
         return {'detail': 'This endpoint is only for users'}
-    response = await get_instruction_by_profession_from_db(
-        db_session, user.profession
-    )
-    instructions = await add_params_to_instruction(db_session, user, response)
+    instructions = user.instructions
     for instruction in instructions:
         if instruction.filename is not None:
             instruction.filename = get_full_link(request, instruction.filename)
+        instruction.journal = None
+        for journal in instruction.journals:
+            if journal.user_uuid == user.id:
+                instruction.journal = journal
+                break
     return instructions

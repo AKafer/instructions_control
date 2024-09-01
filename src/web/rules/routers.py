@@ -53,7 +53,11 @@ async def get_rule_by_id(
     return rule
 
 
-@router.post("/", response_model=Rule)
+@router.post(
+    "/",
+    status_code=status.HTTP_201_CREATED,
+    response_model=Rule
+)
 async def create_rule(
     rule_input: RuleCreateInput,
     db_session: AsyncSession = Depends(get_db_session),
