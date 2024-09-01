@@ -1,20 +1,17 @@
 # conftest.py
 import asyncio
-import glob
 import os
 from typing import Iterator
 
 import pytest_asyncio
-from fastapi import FastAPI
-from fastapi_pagination import add_pagination
+
 from httpx import AsyncClient
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 import pytest
-from starlette.staticfiles import StaticFiles
 
-from app import setup_routes, create_app
+from app import create_app
 from database.orm import BaseModel
 from database.models import Professions, Instructions, Rules
 from dependencies import get_db_session
@@ -222,6 +219,7 @@ async def setup(async_client, superuser_token, async_db_session, test_instructio
             rule = response.json()
             assert rule["profession_id"] == prof.id
             assert rule["instruction_id"] == ins.id
+            assert rule["description"] == f"Test rule {prof.id} -- {ins.id}"
 
     yield
 

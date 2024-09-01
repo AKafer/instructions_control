@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Body
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -98,7 +98,7 @@ async def create_rule(
 )
 async def update_rule(
     rule_id: int,
-    new_description: str | None = None,
+    description = Body(embed=True),
     db_session: AsyncSession = Depends(get_db_session),
 ):
     query = select(Rules).where(Rules.id == rule_id)
@@ -108,7 +108,7 @@ async def update_rule(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Rule with id {rule_id} not found",
         )
-    rule.description = new_description
+    rule.description = description
     await db_session.commit()
     await db_session.refresh(rule)
     return rule
