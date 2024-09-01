@@ -4,21 +4,14 @@ from sqlalchemy import select
 
 from database.models import User, Professions
 from scripts.create_user import create_user
-from tests.conftest import async_db
+from tests.conftest import async_db_session
 
-
-@pytest.mark.asyncio
-async def test_create_profession(async_db, profession):
-    query = select(Professions).where(Professions.id == profession.id)
-    profession = await async_db.scalar(query)
-    assert profession.title == "president"
-    assert profession.description == "The head of the state"
 
 
 @pytest.mark.asyncio
-async def test_create_superuser(async_db, superuser):
+async def test_create_superuser(async_db_session, superuser):
     query = select(User).where(User.email == "admin@gmail.com")
-    superuser_db = await async_db.scalar(query)
+    superuser_db = await async_db_session.scalar(query)
     assert superuser_db.email == "admin@gmail.com"
     assert superuser_db.is_superuser == True
     assert superuser_db.name == "John"

@@ -18,9 +18,9 @@ class TestProfessions:
         assert len(prosefions) == len(TEST_PROFESSIONS)
 
     @pytest.mark.asyncio
-    async def test_get_profession_by_id(self, setup, async_client, superuser_token, async_db):
+    async def test_get_profession_by_id(self, setup, async_client, superuser_token, async_db_session):
         query = select(Professions).where(Professions.title == "engineer")
-        engineer = await async_db.scalar(query)
+        engineer = await async_db_session.scalar(query)
         test_id = engineer.id
 
         response = await async_client.get(
@@ -34,7 +34,7 @@ class TestProfessions:
         assert profession["description"] == "Makes the world better"
 
         query = select(Professions)
-        professions = await async_db.scalars(query)
+        professions = await async_db_session.scalars(query)
         max_id = max([prof.id for prof in professions])
         response = await async_client.get(
             f"/api/v1/professions/{max_id + 1}",
@@ -45,9 +45,9 @@ class TestProfessions:
 
 
     @pytest.mark.asyncio
-    async def test_update_profession(self, setup, async_client, superuser_token, async_db):
+    async def test_update_profession(self, setup, async_client, superuser_token, async_db_session):
         query = select(Professions).where(Professions.title == "engineer")
-        engineer = await async_db.scalar(query)
+        engineer = await async_db_session.scalar(query)
         test_id = engineer.id
 
         profession_payload = {
@@ -66,9 +66,9 @@ class TestProfessions:
         assert profession["description"] == profession_payload["description"]
 
     @pytest.mark.asyncio
-    async def test_delete_profession(self, setup, async_client, superuser_token, async_db):
+    async def test_delete_profession(self, setup, async_client, superuser_token, async_db_session):
         query = select(Professions).where(Professions.title == "profession_to_delete")
-        profession_to_delete = await async_db.scalar(query)
+        profession_to_delete = await async_db_session.scalar(query)
         test_id = profession_to_delete.id
 
         response = await async_client.delete(
@@ -77,7 +77,7 @@ class TestProfessions:
         )
         assert response.status_code == 204
         query = select(Professions).where(Professions.id == test_id)
-        profession = await async_db.scalar(query)
+        profession = await async_db_session.scalar(query)
         assert profession is None
 
         response = await async_client.get(
@@ -89,7 +89,7 @@ class TestProfessions:
         assert len(prosefions) == len(TEST_PROFESSIONS) - 1
 
     @pytest.mark.asyncio
-    async def test_create_profession_with_same_title(self, setup, async_client, superuser_token, async_db):
+    async def test_create_profession_with_same_title(self, setup, async_client, superuser_token, async_db_session):
         profession_payload = {
             "title": "engineer",
             "description": "Makes the world better"

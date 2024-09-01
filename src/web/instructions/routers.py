@@ -85,6 +85,7 @@ async def get_instruction_by_id(
 
 @router.post(
     '/',
+    status_code=status.HTTP_201_CREATED,
     responses={
         status.HTTP_400_BAD_REQUEST: {
             'model': ResponseErrorBody,
