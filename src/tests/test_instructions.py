@@ -5,7 +5,7 @@ from sqlalchemy import select
 
 import settings
 from database.models import Professions, Instructions
-from tests.conftest import TEST_INSTRUCTIONS
+from tests.conftest import TEST_INSTRUCTIONS, TEST_RULES
 
 
 class TestInstructions:
@@ -78,7 +78,13 @@ class TestInstructions:
     async def test_delete_instruction(
         self, setup, async_client, superuser_token, async_db_session, test_instructions_dir
     ):
-        query = select(Instructions).where(Instructions.title == TEST_INSTRUCTIONS[3]["title"])
+        response = await async_client.get(
+            '/api/v1/rules/',
+            headers={'Authorization': f'Bearer {superuser_token}'},
+        )
+        rules_before_deletion = response.json()
+
+        query = select(Instructions).where(Instructions.title == TEST_INSTRUCTIONS[-1]["title"])
         instruction_to_delete = await async_db_session.scalar(query)
         test_id = instruction_to_delete.id
         files_before_deletion = os.listdir(test_instructions_dir)
@@ -101,6 +107,23 @@ class TestInstructions:
         assert response.status_code == 200
         assert len(instructions) == len(TEST_INSTRUCTIONS) - 1
         assert len(files_after_deletion) == len(files_before_deletion) -1
+
+        deleted_rules = []
+        for rule in TEST_RULES:
+            if rule[1] == instruction_to_delete.title:
+                deleted_rules.append(rule)
+
+        response = await async_client.get(
+            '/api/v1/rules/',
+            headers={'Authorization': f'Bearer {superuser_token}'},
+        )
+        rules_after_deletion = response.json()
+
+        assert len(rules_after_deletion) == len(rules_before_deletion) - len(deleted_rules)
+        for rule in deleted_rules:
+            assert rule not in rules_after_deletion
+        for rule in rules_after_deletion:
+            assert test_id != rule["instruction_id"]
 
     @pytest.mark.asyncio
     async def test_create_instruction_with_same_title(self, setup, async_client, superuser_token, async_db_session):

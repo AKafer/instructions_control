@@ -1,11 +1,30 @@
 import pytest
-from sqlalchemy import select
+import pytest_asyncio
+from sqlalchemy import select, and_
 
 from database.models import Rules, Professions, Instructions
 from tests.conftest import TEST_RULES
 
+@pytest_asyncio.fixture()
+async def get_test_rule(async_db_session):
+    query = select(Professions.id).where(Professions.title == TEST_RULES[-1][0])
+    prof_id = await async_db_session.scalar(query)
+    query = select(Instructions.id).where(Instructions.title == TEST_RULES[-1][1])
+    ins_id = await async_db_session.scalar(query)
+    query = select(Rules).where(
+        and_(
+            Rules.profession_id == prof_id,
+            Rules.instruction_id == ins_id
+        )
+    )
+    test_rule = await async_db_session.scalar(query)
+    assert test_rule.profession_id == prof_id
+    assert test_rule.instruction_id == ins_id
+    yield test_rule, prof_id, ins_id
+
 
 class TestRules:
+
     @pytest.mark.asyncio
     async def test_get_rules(
         self, setup, async_client, superuser_token, test_instructions_dir
@@ -20,68 +39,49 @@ class TestRules:
 
     @pytest.mark.asyncio
     async def test_get_rule_by_id(
-        self, setup, async_client, superuser_token, async_db_session
+        self, setup, async_client, superuser_token, async_db_session, get_test_rule
     ):
-        query = select(Rules)
-        rules = (await async_db_session.scalars(query)).all()
-        max_id = max([rule.id for rule in rules])
-
+        test_rule, prof_id, ins_id = get_test_rule
         response = await async_client.get(
-            f'/api/v1/rules/{max_id}',
+            f'/api/v1/rules/{test_rule.id}',
             headers={'Authorization': f'Bearer {superuser_token}'},
         )
         rule = response.json()
         assert response.status_code == 200
-        assert rule['id'] == max_id
-        query = select(Professions.id).where(
-            Professions.title == list(TEST_RULES[-1].keys())[0]
-        )
-        prof_id = await async_db_session.scalar(query)
-        query = select(Instructions.id).where(
-            Instructions.title == list(TEST_RULES[-1].values())[0]
-        )
-        ins_id = await async_db_session.scalar(query)
+        assert rule['id'] == test_rule.id
         assert rule['profession_id'] == prof_id
         assert rule['instruction_id'] == ins_id
-        assert rule['description'] == f'Test rule {prof_id} -- {ins_id}'
+        assert rule['description'] == test_rule.description
 
+        query = select(Rules).order_by(Rules.id.desc()).limit(1)
+        rule_max_id = await async_db_session.scalar(query)
         response = await async_client.get(
-            f'/api/v1/rules/{max_id + 1}',
+            f'/api/v1/rules/{rule_max_id.id + 1}',
             headers={'Authorization': f'Bearer {superuser_token}'},
         )
         assert response.status_code == 404
         assert (
-            response.json()['detail'] == f'Rule with id {max_id + 1} not found'
+            response.json()['detail'] == f'Rule with id {rule_max_id.id + 1} not found'
         )
 
     @pytest.mark.asyncio
     async def test_update_rule(
-        self, setup, async_client, superuser_token, async_db_session
+        self, setup, async_client, superuser_token, async_db_session, get_test_rule
     ):
-        query = select(Rules)
-        rules = (await async_db_session.scalars(query)).all()
-        max_id = max([rule.id for rule in rules])
+        test_rule, prof_id, ins_id = get_test_rule
 
         rule_payload = {'description': 'New description'}
 
         response = await async_client.patch(
-            f'/api/v1/rules/{max_id}',
+            f'/api/v1/rules/{test_rule.id}',
             json=rule_payload,
             headers={'Authorization': f'Bearer {superuser_token}'},
         )
         rule = response.json()
         assert response.status_code == 200
-        assert rule['id'] == max_id
-        query = select(Professions.id).where(
-            Professions.title == list(TEST_RULES[-1].keys())[0]
-        )
-        prof_id = await async_db_session.scalar(query)
-        query = select(Instructions.id).where(
-            Instructions.title == list(TEST_RULES[-1].values())[0]
-        )
-        ins_id = await async_db_session.scalar(query)
-        assert rule['profession_id'] == prof_id
-        assert rule['instruction_id'] == ins_id
+        assert rule['id'] == test_rule.id
+        assert rule['profession_id'] == test_rule.profession_id
+        assert rule['instruction_id'] == test_rule.instruction_id
         assert rule['description'] == rule_payload['description']
 
     @pytest.mark.asyncio
@@ -92,17 +92,17 @@ class TestRules:
         superuser_token,
         async_db_session,
         test_instructions_dir,
+        get_test_rule
     ):
-        query = select(Rules)
-        rules = (await async_db_session.scalars(query)).all()
-        max_id = max([rule.id for rule in rules])
+        test_rule, prof_id, ins_id = get_test_rule
 
         response = await async_client.delete(
-            f'/api/v1/rules/{max_id}',
+            f'/api/v1/rules/{test_rule.id}',
             headers={'Authorization': f'Bearer {superuser_token}'},
         )
+
         assert response.status_code == 204
-        query = select(Rules).where(Rules.id == max_id)
+        query = select(Rules).where(Rules.id == test_rule.id)
         rule = await async_db_session.scalar(query)
         assert rule is None
 
@@ -119,11 +119,11 @@ class TestRules:
         self, setup, async_client, superuser_token, async_db_session
     ):
         query = select(Professions.id).where(
-            Professions.title == list(TEST_RULES[-1].keys())[0]
+            Professions.title == TEST_RULES[-1][0]
         )
         prof_id = await async_db_session.scalar(query)
         query = select(Instructions.id).where(
-            Instructions.title == list(TEST_RULES[-1].values())[0]
+            Instructions.title == TEST_RULES[-1][1]
         )
         ins_id = await async_db_session.scalar(query)
 

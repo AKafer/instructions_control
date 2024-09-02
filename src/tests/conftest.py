@@ -72,12 +72,15 @@ TEST_INSTRUCTIONS = [
 ]
 
 TEST_RULES=[
-    {TEST_PROFESSIONS[0]["title"]: TEST_INSTRUCTIONS[0]["title"]},
-    {TEST_PROFESSIONS[0]["title"]: TEST_INSTRUCTIONS[1]["title"]},
-    {TEST_PROFESSIONS[0]["title"]: TEST_INSTRUCTIONS[2]["title"]},
-    {TEST_PROFESSIONS[1]["title"]: TEST_INSTRUCTIONS[0]["title"]},
-    {TEST_PROFESSIONS[1]["title"]: TEST_INSTRUCTIONS[1]["title"]},
-    {TEST_PROFESSIONS[2]["title"]: TEST_INSTRUCTIONS[0]["title"]},
+    (TEST_PROFESSIONS[0]["title"], TEST_INSTRUCTIONS[0]["title"]),
+    (TEST_PROFESSIONS[0]["title"], TEST_INSTRUCTIONS[1]["title"]),
+    (TEST_PROFESSIONS[0]["title"], TEST_INSTRUCTIONS[2]["title"]),
+    (TEST_PROFESSIONS[1]["title"], TEST_INSTRUCTIONS[3]["title"]),
+    (TEST_PROFESSIONS[1]["title"], TEST_INSTRUCTIONS[1]["title"]),
+    (TEST_PROFESSIONS[2]["title"], TEST_INSTRUCTIONS[0]["title"]),
+    (TEST_PROFESSIONS[3]["title"], TEST_INSTRUCTIONS[3]["title"]),
+    (TEST_PROFESSIONS[4]["title"], TEST_INSTRUCTIONS[0]["title"]),
+    (TEST_PROFESSIONS[4]["title"], TEST_INSTRUCTIONS[1]["title"]),
 ]
 
 @pytest_asyncio.fixture(name='async_db_session')
@@ -202,24 +205,23 @@ async def setup(async_client, superuser_token, async_db_session, test_instructio
     query = select(Instructions)
     instructions = (await async_db_session.scalars(query)).all()
 
-    for rules in TEST_RULES:
-        for prof_title, ins_title in rules.items():
-            prof = [prof for prof in professions if prof.title == prof_title][0]
-            ins = [ins for ins in instructions if ins.title == ins_title][0]
-            response = await async_client.post(
-                "/api/v1/rules/",
-                json={
-                    "profession_id": prof.id,
-                    "instruction_id": ins.id,
-                    "description": f"Test rule {prof.id} -- {ins.id}",
-                },
-                headers={"Authorization": f"Bearer {superuser_token}"}
-            )
-            assert response.status_code == 201
-            rule = response.json()
-            assert rule["profession_id"] == prof.id
-            assert rule["instruction_id"] == ins.id
-            assert rule["description"] == f"Test rule {prof.id} -- {ins.id}"
+    for rule in TEST_RULES:
+        prof = [prof for prof in professions if prof.title == rule[0]][0]
+        ins = [ins for ins in instructions if ins.title == rule[1]][0]
+        response = await async_client.post(
+            "/api/v1/rules/",
+            json={
+                "profession_id": prof.id,
+                "instruction_id": ins.id,
+                "description": f"Test rule {prof.id} -- {ins.id}",
+            },
+            headers={"Authorization": f"Bearer {superuser_token}"}
+        )
+        assert response.status_code == 201
+        rule = response.json()
+        assert rule["profession_id"] == prof.id
+        assert rule["instruction_id"] == ins.id
+        assert rule["description"] == f"Test rule {prof.id} -- {ins.id}"
 
     yield
 
