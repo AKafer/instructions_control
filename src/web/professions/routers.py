@@ -10,18 +10,22 @@ from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
 from main_schemas import ResponseErrorBody
-from web.professions.schemas import Profession, ProfessionCreateInput, ProfessionUpdateInput
+from web.professions.schemas import (
+    Profession,
+    ProfessionCreateInput,
+    ProfessionUpdateInput,
+)
 from web.professions.services import update_profession
 from web.users.users import current_superuser
 
 router = APIRouter(
-    prefix="/professions",
-    tags=["professions"],
-    dependencies=[Depends(current_superuser)]
+    prefix='/professions',
+    tags=['professions'],
+    dependencies=[Depends(current_superuser)],
 )
 
 
-@router.get("/", response_model=list[Profession])
+@router.get('/', response_model=list[Profession])
 async def get_all_profs(db_session: AsyncSession = Depends(get_db_session)):
     query = select(Professions).order_by(Professions.id.desc())
     professions = await db_session.execute(query)
@@ -29,33 +33,32 @@ async def get_all_profs(db_session: AsyncSession = Depends(get_db_session)):
 
 
 @router.get(
-    "/{profession_id:int}",
+    '/{profession_id:int}',
     response_model=Profession,
     responses={
         status.HTTP_400_BAD_REQUEST: {
-            "model": ResponseErrorBody,
+            'model': ResponseErrorBody,
         },
         status.HTTP_404_NOT_FOUND: {
-            "model": ResponseErrorBody,
+            'model': ResponseErrorBody,
         },
     },
 )
 async def get_prof_by_id(
-    profession_id: int,
-    db_session: AsyncSession = Depends(get_db_session)
+    profession_id: int, db_session: AsyncSession = Depends(get_db_session)
 ):
     query = select(Professions).filter(Professions.id == profession_id)
     profession = await db_session.scalar(query)
     if profession is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Profession with id {profession_id} not found",
+            detail=f'Profession with id {profession_id} not found',
         )
     return profession
 
 
 @router.post(
-    "/",
+    '/',
     status_code=status.HTTP_201_CREATED,
     response_model=Profession,
     responses={
@@ -76,16 +79,17 @@ async def create_prof(
         return db_profession
     except sqlalchemy.exc.IntegrityError as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Profession with this title already exists: {e}',
         )
 
 
 @router.patch(
-    "/{profession_id:int}",
+    '/{profession_id:int}',
     response_model=Profession,
     responses={
         status.HTTP_404_NOT_FOUND: {
-            "model": ResponseErrorBody,
+            'model': ResponseErrorBody,
         },
     },
 )
@@ -99,19 +103,25 @@ async def update_prof(
     if profession is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Profession with id {profession_id} not found",
+            detail=f'Profession with id {profession_id} not found',
         )
-    return await update_profession(
-        db_session, profession, **update_input.dict(exclude_none=True)
-    )
+    try:
+        return await update_profession(
+            db_session, profession, **update_input.dict(exclude_none=True)
+        )
+    except sqlalchemy.exc.IntegrityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Profession with this title already exists: {e}',
+        )
 
 
 @router.delete(
-    "/{profession_id}",
+    '/{profession_id}',
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         status.HTTP_404_NOT_FOUND: {
-            "model": ResponseErrorBody,
+            'model': ResponseErrorBody,
         },
     },
 )
@@ -124,7 +134,7 @@ async def delete_prof(
     if profession is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Profession with id {profession_id} not found",
+            detail=f'Profession with id {profession_id} not found',
         )
     await db_session.delete(profession)
     await db_session.commit()

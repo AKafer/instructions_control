@@ -115,7 +115,8 @@ async def create_instruction(
             db_instruction.filename = get_full_link(request, file_name)
     except sqlalchemy.exc.IntegrityError as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Instruction with this title already exists: {e}',
         )
     return db_instruction
 
@@ -165,7 +166,8 @@ async def update_instruction(
             )
     except ErrorSaveToDatabase as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Instruction with this title already exists: {e}',
         )
     return db_instruction
 
