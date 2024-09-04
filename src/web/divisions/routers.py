@@ -10,7 +10,11 @@ from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
 from main_schemas import ResponseErrorBody
-from web.divisions.schemas import Division, DivisionCreateInput, DivisionUpdateInput
+from web.divisions.schemas import (
+    Division,
+    DivisionCreateInput,
+    DivisionUpdateInput,
+)
 from web.divisions.services import update_division_in_db
 from web.users.users import current_superuser
 
@@ -58,14 +62,15 @@ async def get_division_by_id(
 @router.post(
     '/',
     response_model=Division,
+    status_code=status.HTTP_201_CREATED,
     responses={
-            status.HTTP_400_BAD_REQUEST: {
-                'model': ResponseErrorBody,
-            },
-            status.HTTP_404_NOT_FOUND: {
-                'model': ResponseErrorBody,
-            },
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
         },
+        status.HTTP_404_NOT_FOUND: {
+            'model': ResponseErrorBody,
+        },
+    },
 )
 async def create_division(
     division_input: DivisionCreateInput,
@@ -79,7 +84,8 @@ async def create_division(
         return db_division
     except sqlalchemy.exc.IntegrityError as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Division with this title already exists: {e}',
         )
 
 
@@ -113,7 +119,8 @@ async def update_division(
         )
     except sqlalchemy.exc.IntegrityError as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Division with this title already exists: {e}',
         )
 
 
