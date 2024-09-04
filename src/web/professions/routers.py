@@ -84,6 +84,35 @@ async def create_prof(
         )
 
 
+@router.post(
+    '/return_list',
+    status_code=status.HTTP_201_CREATED,
+    response_model=list[Profession],
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def create_prof_return_list(
+    profession: ProfessionCreateInput,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    try:
+        db_profession = Professions(**profession.dict())
+        db_session.add(db_profession)
+        await db_session.commit()
+        await db_session.refresh(db_profession)
+        query = select(Professions).order_by(Professions.id.desc())
+        professions = await db_session.execute(query)
+        return professions.scalars().all()
+    except sqlalchemy.exc.IntegrityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Profession with this title already exists: {e}',
+        )
+
+
 @router.patch(
     '/{profession_id:int}',
     response_model=Profession,
