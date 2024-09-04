@@ -17,11 +17,12 @@ import pytest
 
 from app import create_app
 from database.orm import BaseModel
-from database.models import Professions, Instructions, Rules, Divisions
+from database.models import Professions, Instructions, Rules, Divisions, User
 from dependencies import get_db_session
 from scripts.create_user import create_user
 import settings
 from web.instructions import services
+from web.journals import services as journal_services
 
 async_engine = create_async_engine(
     url='postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/test_control',
@@ -91,6 +92,54 @@ TEST_RULES = [
     (TEST_PROFESSIONS[3]['title'], TEST_INSTRUCTIONS[3]['title']),
     (TEST_PROFESSIONS[4]['title'], TEST_INSTRUCTIONS[0]['title']),
     (TEST_PROFESSIONS[4]['title'], TEST_INSTRUCTIONS[1]['title']),
+]
+
+TEST_USERS = [
+    {
+        'email': 'user1@example.com',
+        'password': '111111',
+        'name': 'Vlasov',
+        'last_name': 'Alex',
+        'father_name': 'Valerievich',
+        'telegram_id': '111111',
+        'phone_number': '+380123456789',
+    },
+    {
+        'email': 'user2@example.com',
+        'password': '222222',
+        'name': 'Ryabishkin',
+        'last_name': 'Andrey',
+        'father_name': 'Vladimirovich',
+        'telegram_id': '222222',
+        'phone_number': '+37055544433',
+    },
+    {
+        'email': 'user3@example.com',
+        'password': '333333',
+        'name': 'Alexandr',
+        'last_name': 'Bihalenko',
+        'father_name': 'Xerznaetovich',
+        'telegram_id': '333333',
+        'phone_number': '+36055544433',
+    },
+    {
+        'email': 'user4@example.com',
+        'password': '111111',
+        'name': 'Jura',
+        'last_name': 'Koptev',
+        'father_name': 'Viktorovich',
+        'telegram_id': '444444',
+        'phone_number': '+35055544433',
+    },
+    {
+        'email': 'user5@example.com',
+        'password': '555555',
+        'name': 'Andrey',
+        'last_name': 'Rubcov',
+        'father_name': 'Sergeevich',
+        'telegram_id': '555555',
+        'phone_number': '+34055544433',
+    }
 ]
 
 
@@ -174,6 +223,8 @@ async def clean_db(async_db_session, test_instructions_dir):
     await async_db_session.execute(query_del_rules)
     query_del_rules = delete(Divisions)
     await async_db_session.execute(query_del_rules)
+    query_del_users = delete(User)
+    await async_db_session.execute(query_del_users)
     await async_db_session.commit()
     for filename in os.listdir(test_instructions_dir):
         try:
@@ -273,6 +324,11 @@ async def create_divisions(async_client, superuser_token):
         assert division_from_api['description'] == division['description']
 
 
+@pytest.fixture
+def get_test_session(monkeypatch):
+    monkeypatch.setattr(journal_services, 'Session', test_session)
+    yield test_session
+
 @pytest_asyncio.fixture
 async def setup(
     teardown_db,
@@ -284,5 +340,33 @@ async def setup(
     create_instructions,
     create_rules,
     create_divisions,
+    get_test_session
 ):
+    user1 = TEST_USERS[0]
+    user2 = TEST_USERS[1]
+    user3 = TEST_USERS[2]
+    user4 = TEST_USERS[3]
+    user5 = TEST_USERS[4]
+
+    user1.update({'profession_id': 1, 'division_id': 1})
+    user2.update({'profession_id': 1, 'division_id': 2})
+    user3.update({'profession_id': 2, 'division_id': 3})
+    user4.update({'profession_id': 3, 'division_id': 1})
+    user5.update({'profession_id': 4, 'division_id': 2})
+
+    for user in [user1, user2, user3, user4, user5]:
+        response = await async_client.post(
+            '/api/v1/auth/register',
+            json=user,
+            headers={'Authorization': f'Bearer {superuser_token}'},
+        )
+        assert response.status_code == 201
+        user_from_api = response.json()
+        assert user_from_api['email'] == user['email']
+        assert user_from_api['name'] == user['name']
+        assert user_from_api['last_name'] == user['last_name']
+        assert user_from_api['father_name'] == user['father_name']
+        assert user_from_api['telegram_id'] == user['telegram_id']
+        assert user_from_api['phone_number'] == user['phone_number']
+
     yield

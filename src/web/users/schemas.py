@@ -85,6 +85,8 @@ class UserListRead(schemas.BaseUser[uuid.UUID]):
     father_name: str | None
     profession_id: int | None
     division_id: int | None
+    telegram_id: str | None
+    phone_number: str | None
     instructions: list[InstructionForUserList]
     is_active: bool = Field(True, exclude=True)
     is_verified: bool = Field(False, exclude=True)
