@@ -342,17 +342,30 @@ async def setup(
     create_divisions,
     get_test_session
 ):
+    professions = (await async_db_session.scalars(select(Professions))).all()
+    divisions = (await async_db_session.scalars(select(Divisions))).all()
+
+    engeener_id = [prof.id for prof in professions if prof.title == 'engineer'][0]
+    developer_id = [prof.id for prof in professions if prof.title == 'developer'][0]
+    delivery_manager_id = [prof.id for prof in professions if prof.title == 'delivery-manager'][0]
+    director_id = [prof.id for prof in professions if prof.title == 'director'][0]
+    profession_to_delete_id = [prof.id for prof in professions if prof.title == 'profession_to_delete'][0]
+
+    division1_id = [div.id for div in divisions if div.title == 'sklad N1'][0]
+    division2_id = [div.id for div in divisions if div.title == 'sklad N2'][0]
+    division3_id = [div.id for div in divisions if div.title == 'direction'][0]
+
     user1 = TEST_USERS[0]
     user2 = TEST_USERS[1]
     user3 = TEST_USERS[2]
     user4 = TEST_USERS[3]
     user5 = TEST_USERS[4]
 
-    user1.update({'profession_id': 1, 'division_id': 1})
-    user2.update({'profession_id': 1, 'division_id': 2})
-    user3.update({'profession_id': 2, 'division_id': 3})
-    user4.update({'profession_id': 3, 'division_id': 1})
-    user5.update({'profession_id': 4, 'division_id': 2})
+    user1.update({'profession_id': engeener_id, 'division_id': division1_id})
+    user2.update({'profession_id': developer_id, 'division_id': division1_id})
+    user3.update({'profession_id': delivery_manager_id, 'division_id': division2_id})
+    user4.update({'profession_id': director_id, 'division_id': division3_id})
+    user5.update({'profession_id': profession_to_delete_id, 'division_id': division3_id})
 
     for user in [user1, user2, user3, user4, user5]:
         response = await async_client.post(

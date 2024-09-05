@@ -34,6 +34,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         update_dict: Dict[str, Any],
         request: Optional[Request] = None
     ):
+        # actualize in router
         # await actualize_journals_for_user(user)
         print(f"User {user.id} has been updated.")
 
@@ -49,6 +50,8 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     ) -> None:
         if user.is_superuser:
             print(f"Superuser {user.id} has logged in.")
+        else:
+            await actualize_journals_for_user(user)
 
 
 async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db)):

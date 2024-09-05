@@ -49,19 +49,21 @@ class User(SQLAlchemyBaseUserTableUUID, BaseModel):
         "Instructions",
         secondary='journals',
         back_populates="users",
-        lazy='selectin'
+        lazy='selectin',
+
     )
 
     profession = relationship(
         "Professions",
         back_populates="users",
-        lazy='selectin'
+        lazy='selectin',
     )
 
     division = relationship(
         "Divisions",
         back_populates="users",
-        lazy='selectin'
+        lazy='selectin',
+        passive_updates=False
     )
 
 
