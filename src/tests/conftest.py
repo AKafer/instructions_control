@@ -24,6 +24,8 @@ import settings
 from web.instructions import services
 from web.journals import services as journal_services
 
+TEST_BASE_URL = 'http://test'
+
 async_engine = create_async_engine(
     url='postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/test_control',
     echo=True,
@@ -174,7 +176,7 @@ async def async_client() -> AsyncClient:
                 await session.close()
 
     app.dependency_overrides[get_db_session] = override_get_db
-    return AsyncClient(app=app, base_url='http://test')
+    return AsyncClient(app=app, base_url=TEST_BASE_URL)
 
 
 @pytest.mark.asyncio
@@ -282,6 +284,9 @@ async def create_instructions(async_client, superuser_token):
         assert instruction_from_api['number'] == instruction['number']
         assert instruction_from_api['iteration'] == instruction['iteration']
         assert instruction_from_api['period'] == instruction['period']
+        expected_start_link = f"{TEST_BASE_URL}/static/instructions/{instruction_from_api['id']}--"
+        assert instruction_from_api['link'].startswith(expected_start_link)
+
 
 
 @pytest_asyncio.fixture
