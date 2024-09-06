@@ -3,16 +3,17 @@ from datetime import datetime
 from fastapi import Form
 from fastapi_users import models
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Journal(BaseModel):
     id: int
     user_uuid: models.ID
     last_date_read: datetime | None
-    signature: str | None = None
     valid: bool | None = None
     remain_days: int | None = None
+    link: str | None = None
+    signature: str | None = Field(None, exclude=True)
 
     class Config:
         orm_mode = True
@@ -20,11 +21,12 @@ class Journal(BaseModel):
 
 class Instruction(BaseModel):
     id: int
-    filename: str | None
+    link: str | None = None
     title: str
     number: str | None
     iteration: bool = False
     period: int | None
+    filename: str | None = Field(None, exclude=True)
 
     class Config:
         orm_mode = True

@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 import sqlalchemy as sa
@@ -27,6 +28,13 @@ class Journals(BaseModel):
     sa.UniqueConstraint('user_uuid', 'instruction_id', name='uix_2')
 
     instruction = sa.orm.relationship('Instructions', back_populates='journals', lazy='selectin')
+
+    # def __setattr__(self, key, value):
+    #     pattern = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}--\d+--\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\w+$"
+    #     if key == 'signature' and not re.match(pattern, value):
+    #         print(f"Value {value} is not match pattern and not updated")
+    #     else:
+    #         super().__setattr__(key, value)
 
     @hybrid_property
     def valid(self):
@@ -110,3 +118,4 @@ class Journals(BaseModel):
             # Если iteration == False, вернуть 0
             else_=0
         )
+

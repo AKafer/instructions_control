@@ -49,7 +49,7 @@ async def get_all_instructions(
     ins = await paginate(db_session, query)
     for instruction in ins.items:
         if instruction.filename is not None:
-            instruction.filename = get_full_link(request, instruction.filename)
+            instruction.link = get_full_link(request, instruction.filename)
     return ins
 
 
@@ -79,7 +79,7 @@ async def get_instruction_by_id(
             detail=f'Instruction with id {instruction_id} not found',
         )
     if instruction.filename is not None:
-        instruction.filename = get_full_link(request, instruction.filename)
+        instruction.link = get_full_link(request, instruction.filename)
     return instruction
 
 
@@ -112,7 +112,8 @@ async def create_instruction(
             db_instruction.filename = file_name
             await db_session.commit()
             await db_session.refresh(db_instruction)
-            db_instruction.filename = get_full_link(request, file_name)
+            if db_instruction.filename is not None:
+                db_instruction.link = get_full_link(request, db_instruction.filename)
     except sqlalchemy.exc.IntegrityError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -161,9 +162,7 @@ async def update_instruction(
         await db_session.commit()
         await db_session.refresh(db_instruction)
         if db_instruction.filename is not None:
-            db_instruction.filename = get_full_link(
-                request, db_instruction.filename
-            )
+            db_instruction.link = get_full_link(request, db_instruction.filename)
     except ErrorSaveToDatabase as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -215,7 +214,7 @@ async def delete_instruction(
     },
     dependencies=[Depends(current_user)],
 )
-async def get_my_instructions2(
+async def get_my_instructions(
     request: Request,
     user: User = Depends(current_active_user),
 ):
@@ -224,7 +223,7 @@ async def get_my_instructions2(
     instructions = user.instructions
     for instruction in instructions:
         if instruction.filename is not None:
-            instruction.filename = get_full_link(request, instruction.filename)
+            instruction.link = get_full_link(request, instruction.filename)
         instruction.journal = None
         for journal in instruction.journals:
             if journal.user_uuid == user.id:

@@ -40,7 +40,7 @@ async def get_or_create_journals(
     await db_session.commit()
 
 
-async def actualize_journals_for_user(user: User) -> None:
+async def actualize_journals_for_user(user: User, ) -> None:
     async with Session() as session:
         print(f'Actualize journals for user {user.id}')
         print(f'User profession id: {user.profession_id}')

@@ -6,7 +6,7 @@ from sqlalchemy import select
 
 import settings
 from database.models import Instructions
-from tests.conftest import TEST_INSTRUCTIONS, TEST_RULES
+from tests.conftest import TEST_INSTRUCTIONS, TEST_RULES, TEST_BASE_URL
 
 
 @pytest_asyncio.fixture
@@ -30,6 +30,9 @@ class TestInstructions:
         assert len(instructions['items']) == len(TEST_INSTRUCTIONS)
         files = os.listdir(test_instructions_dir)
         assert len(files) == len(TEST_INSTRUCTIONS)
+        for instruction in instructions['items']:
+            expected_start_link = f"{TEST_BASE_URL}/static/instructions/{instruction['id']}--"
+            assert instruction['link'].startswith(expected_start_link)
 
     @pytest.mark.asyncio
     async def test_get_instruction_by_id(
@@ -54,6 +57,8 @@ class TestInstructions:
         assert instruction['number'] == test_instruction.number
         assert instruction['iteration'] == test_instruction.iteration
         assert instruction['period'] == test_instruction.period
+        expected_start_link = f"{TEST_BASE_URL}/static/instructions/{instruction['id']}--"
+        assert instruction['link'].startswith(expected_start_link)
 
         response = await async_client.get(
             f'/api/v1/instructions/{test_instruction.id + 1}',
@@ -89,6 +94,8 @@ class TestInstructions:
         assert instruction['period'] == instruction_payload['period']
         assert instruction['number'] == test_instruction.number
         assert instruction['iteration'] == test_instruction.iteration
+        expected_start_link = f"{TEST_BASE_URL}/static/instructions/{instruction['id']}--"
+        assert instruction['link'].startswith(expected_start_link)
 
     @pytest.mark.asyncio
     async def test_delete_instruction(
