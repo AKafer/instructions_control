@@ -2,6 +2,7 @@ from fastapi import Request
 from fastapi_users import InvalidPasswordException
 from sqlalchemy import select
 
+import settings
 from database.models import User, Professions, Divisions
 from database.orm import Session
 from web.instructions.services import get_full_link as get_full_link_ins
@@ -27,10 +28,11 @@ async def peak_personal_journal(request: Request, user: User) -> User:
 
 
 async def check_profession_division(user: User) -> None:
-    async with Session() as db_session:
-        query = select(Professions).where(Professions.id == user.profession_id)
-        profession = await db_session.scalar(query)
-        query = select(Divisions).where(Divisions.id == user.division_id)
-        division = await db_session.scalar(query)
-        if profession is None or division is None:
-            raise InvalidPasswordException('Profession or division not found')
+    if not user.email == settings.SUPERUSER_EMAIL:
+        async with Session() as db_session:
+            query = select(Professions).where(Professions.id == user.profession_id)
+            profession = await db_session.scalar(query)
+            query = select(Divisions).where(Divisions.id == user.division_id)
+            division = await db_session.scalar(query)
+            if profession is None or division is None:
+                raise InvalidPasswordException('Profession or division not found')
