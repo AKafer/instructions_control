@@ -1,12 +1,12 @@
-import re
 from datetime import datetime
 
 import sqlalchemy as sa
-from sqlalchemy import DateTime, String, func, case
+from sqlalchemy import DateTime, String, func, case, select, and_
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import column_property
 
-from database.models import Instructions
-from database.orm import BaseModel
+from database.models import Instructions, Rules, User
+from database.orm import BaseModel, Session
 
 
 class Journals(BaseModel):
@@ -23,18 +23,14 @@ class Journals(BaseModel):
         nullable=False,
     )
     last_date_read = sa.Column(DateTime(timezone=True), nullable=True)
+    actual = sa.Column(sa.Boolean, default=True, nullable=False)
     signature = sa.Column(String(length=320), nullable=True)
 
     sa.UniqueConstraint('user_uuid', 'instruction_id', name='uix_2')
 
     instruction = sa.orm.relationship('Instructions', back_populates='journals', lazy='selectin')
+    histories = sa.orm.relationship('Histories', back_populates='journal', lazy='selectin')
 
-    # def __setattr__(self, key, value):
-    #     pattern = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}--\d+--\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\w+$"
-    #     if key == 'signature' and not re.match(pattern, value):
-    #         print(f"Value {value} is not match pattern and not updated")
-    #     else:
-    #         super().__setattr__(key, value)
 
     @hybrid_property
     def valid(self):
@@ -55,12 +51,8 @@ class Journals(BaseModel):
 
     @valid.expression
     def valid(cls):
-        # Подключение к связанной таблице через instruction
         return case(
-            # Если last_date_read is NULL, то False
             (cls.last_date_read == None, False),
-
-            # Если iteration == True и разница в днях превышает период
             (
                 cls.instruction.has(
                     (Instructions.iteration == True) &
@@ -70,7 +62,7 @@ class Journals(BaseModel):
                 ),
                 False
             ),
-            else_=True  # В противном случае True
+            else_=True
         )
 
 
@@ -93,12 +85,9 @@ class Journals(BaseModel):
 
     @remain_days.expression
     def remain_days(cls):
-        # SQL выражение для вычисления оставшихся дней
         return case(
-            # Если last_date_read == NULL, то вернуть 0
             (cls.last_date_read == None, 0),
 
-            # Если iteration == True и разница в днях больше чем период
             (
                 cls.instruction.has(
                     (Instructions.iteration == True) &
@@ -108,14 +97,10 @@ class Journals(BaseModel):
                 ),
                 0
             ),
-
-            # Если iteration == True, вычислить оставшиеся дни
             (
                 cls.instruction.has(Instructions.iteration == True),
                 Instructions.period - func.date_part('day', func.now() - cls.last_date_read)
             ),
-
-            # Если iteration == False, вернуть 0
             else_=0
         )
 

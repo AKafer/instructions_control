@@ -1,5 +1,7 @@
 import asyncio
 import contextlib
+import logging
+from logging import config as logging_config
 
 from fastapi_users.exceptions import UserAlreadyExists
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +11,9 @@ from database.models.users import get_user_db
 from dependencies import get_db_session
 from web.users.schemas import UserCreate
 from web.users.users import get_user_manager
+
+logging_config.dictConfig(settings.LOGGING)
+logger = logging.getLogger("control")
 
 
 get_async_session_context = contextlib.asynccontextmanager(get_db_session)
@@ -41,10 +46,10 @@ async def create_user(
                 user.is_superuser = True
                 await session.commit()
                 await session.refresh(user)
-                print(f"User created {user}")
+                logger.info(f"User created {user}")
                 return user
     except UserAlreadyExists:
-        print(f"User {email} already exists")
+        logger.error(f"User {email} already exists")
 
 
 async def main():

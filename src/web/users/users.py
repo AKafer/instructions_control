@@ -1,4 +1,5 @@
 import uuid
+import logging
 from typing import Optional, Dict, Any, Union
 
 from fastapi import Depends, Request, Response
@@ -8,7 +9,7 @@ from fastapi_users.authentication import (
     BearerTransport,
     JWTStrategy,
 )
-
+from fastapi_users.jwt import generate_jwt
 from fastapi_users.db import SQLAlchemyUserDatabase
 
 import settings
@@ -19,6 +20,8 @@ from web.journals.services import (
 )
 from web.users.schemas import UserCreate
 from web.users.services import check_profession_division
+
+logger = logging.getLogger("control")
 
 SECRET = settings.SECRET_KEY
 
@@ -38,7 +41,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         self, user: User, request: Optional[Request] = None
     ):
         await actualize_journals_for_user(user)
-        print(f'User {user.id} has registered.')
+        logger.debug(f'User {user.id} has registered.')
 
     async def on_after_update(
         self,
@@ -47,13 +50,13 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         request: Optional[Request] = None,
     ):
         # actualize journals in router
-        print(f'User {user.id} has been updated.')
+        logger.debug(f'User {user.id} has been updated.')
 
     async def on_before_delete(
         self, user: User, request: Optional[Request] = None
     ):
         await remove_lines_to_journals_for_delete_user(user)
-        print(f'User {user.id} is going to be deleted')
+        logger.debug(f'User {user.id} is going to be deleted')
 
     async def on_after_login(
         self,
@@ -62,7 +65,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         response: Optional[Response] = None,
     ) -> None:
         if user.is_superuser:
-            print(f'Superuser {user.id} has logged in.')
+            logger.debug(f'Superuser {user.id} has logged in.')
         else:
             await actualize_journals_for_user(user)
 
@@ -76,8 +79,20 @@ async def get_user_manager(
 bearer_transport = BearerTransport(tokenUrl='auth/jwt/login')
 
 
+class CustomJWTStrategy(JWTStrategy):
+    async def write_token(self, user: models.UP) -> str:
+        data = {
+            "sub": str(user.id),
+            "aud": self.token_audience,
+            "is_superuser": user.is_superuser,
+        }
+        return generate_jwt(
+            data, self.encode_key, self.lifetime_seconds, algorithm=self.algorithm
+        )
+
+
 def get_jwt_strategy() -> JWTStrategy:
-    return JWTStrategy(secret=SECRET, lifetime_seconds=3600)
+    return CustomJWTStrategy(secret=SECRET, lifetime_seconds=3600)
 
 
 auth_backend = AuthenticationBackend(

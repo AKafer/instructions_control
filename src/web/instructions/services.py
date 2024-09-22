@@ -16,6 +16,7 @@ from settings import (
 import aiofiles as aiof
 
 from web.exceptions import ErrorSaveToDatabase
+from web.journals.services import logger
 
 
 async def update_instruction_in_db(
@@ -44,7 +45,6 @@ async def save_file(new_file: UploadFile, instruction: Instructions) -> str:
         f'{instruction.id}--'
         f"{datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')}{suffix}"
     )
-    x = INSTRUCTIONS_DIR
     path_to_file = os.path.join(INSTRUCTIONS_DIR, new_name)
     async with aiof.open(path_to_file, 'wb+') as f:
         await f.write(new_file.file.read())
@@ -52,7 +52,7 @@ async def save_file(new_file: UploadFile, instruction: Instructions) -> str:
 
 
 def delete_file(filename: str) -> None:
-    print(f'Delete file {filename}')
+    logger.debug(f'Delete file {filename}')
     try:
         os.remove(os.path.join(INSTRUCTIONS_DIR, filename))
     except FileNotFoundError:

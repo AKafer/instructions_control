@@ -26,6 +26,7 @@ from web.instructions.services import (
     update_instruction_in_db,
 )
 from web.journals.services import remove_lines_to_journals_for_delete_ins
+from web.journals.services import get_full_link as get_full_link_signature
 
 from web.users.users import (
     current_superuser,
@@ -227,6 +228,8 @@ async def get_my_instructions(
         instruction.journal = None
         for journal in instruction.journals:
             if journal.user_uuid == user.id:
+                if journal.signature is not None:
+                    journal.link = get_full_link_signature(request, journal.signature)
                 instruction.journal = journal
                 break
     return instructions

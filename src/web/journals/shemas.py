@@ -5,6 +5,16 @@ from pydantic import BaseModel, Field
 
 from web.instructions.schemas import Instruction
 
+class Histories(BaseModel):
+    id: int
+    date: datetime
+    user_uuid: models.ID
+    link: str | None = None
+    signature: str | None = Field(None, exclude=True)
+
+    class Config:
+        orm_mode = True
+
 
 class Journal(BaseModel):
     id: int
@@ -15,6 +25,7 @@ class Journal(BaseModel):
     instruction: Instruction
     link: str | None = None
     signature: str | None = Field(None, exclude=True)
+    histories: list[Histories]
 
     class Config:
         orm_mode = True

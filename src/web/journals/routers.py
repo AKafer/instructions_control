@@ -8,7 +8,7 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from starlette import status
 from starlette.exceptions import HTTPException
 
-from database.models import User
+from database.models import User, Histories
 from database.models.journals import Journals
 from dependencies import get_db_session
 from main_schemas import ResponseErrorBody
@@ -29,13 +29,16 @@ async def get_all_journals(
     request: Request,
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    query = select(Journals).order_by(Journals.id.desc())
+    query = select(Journals).where(Journals.actual == True).order_by(Journals.id.desc())
     response = await paginate(db_session, query)
     for journal in response.items:
         if journal.signature is not None:
             journal.link = get_full_link(request, journal.signature)
         if journal.instruction.filename is not None:
             journal.instruction.link = get_full_link_ins(request, journal.instruction.filename)
+        for history in journal.histories:
+            if history.signature is not None:
+                history.link = get_full_link(request, history.signature)
     return response
 
 
@@ -59,6 +62,7 @@ async def update_journal(
         and_(
             Journals.user_uuid == user.id,
             Journals.instruction_id == instruction_id,
+            Journals.actual == True,
         )
     )
     journal = await db_session.scalar(query)
@@ -68,9 +72,12 @@ async def update_journal(
             detail=f'Journal for this user and  instruction_id {instruction_id} not found',
         )
     journal.last_date_read = datetime.utcnow()
+    history = Histories(user_uuid=user.id, journal_id=journal.id, date=datetime.utcnow())
     if file is not None:
-        journal.signature = await save_file(
-            new_file=file, journal=journal, user=user
-        )
+        generated_filename = await save_file(new_file=file, journal=journal, user=user)
+        journal.signature = generated_filename
+        history.signature = generated_filename
+
+    db_session.add(history)
     await db_session.commit()
     return {'detail': 'Journal updated'}

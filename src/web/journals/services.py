@@ -1,10 +1,11 @@
+import logging
 import os
 import uuid
 from datetime import datetime
 
 import aiofiles as aiof
 from fastapi import UploadFile, Request
-from sqlalchemy import and_, delete, select
+from sqlalchemy import and_, delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import Instructions, Journals, User
@@ -16,6 +17,8 @@ from settings import (
     SIGNATURES_FOLDER,
 )
 
+logger = logging.getLogger('control')
+
 
 async def get_or_create_journals(
     db_session: AsyncSession, instructions_ids: list[int], user_uuid: uuid
@@ -23,70 +26,49 @@ async def get_or_create_journals(
     query = select(Journals).where(Journals.user_uuid == user_uuid)
     journals = await db_session.scalars(query)
     exist_instructions_ids = []
+    exist_journals_ids = []
     list_to_delete = []
     for journal in journals:
         if journal.instruction_id not in instructions_ids:
             list_to_delete.append(journal.id)
         else:
-            # journal.last_date_read = datetime.utcnow()
+            exist_journals_ids.append(journal.id)
             exist_instructions_ids.append(journal.instruction_id)
-    if list_to_delete:
-        query = delete(Journals).where(Journals.id.in_(list_to_delete))
+
+    if exist_journals_ids:
+        query = update(Journals).where(
+            and_(
+                Journals.id.in_(exist_journals_ids),
+                Journals.actual == False,
+            )
+        ).values(actual=True)
         await db_session.execute(query)
+    if list_to_delete:
+        query = update(Journals).where(Journals.id.in_(list_to_delete)).values(actual=False)
+        await delete_journals(db_session, query)
     list_to_create = list(set(instructions_ids) - set(exist_instructions_ids))
     for instruction_id in list_to_create:
-        journal = Journals(instruction_id=instruction_id, user_uuid=user_uuid)
+        journal = Journals(instruction_id=instruction_id, user_uuid=user_uuid, actual=True)
         db_session.add(journal)
+        logger.info(f'Created new journal for user {user_uuid} and instruction {instruction_id}')
     await db_session.commit()
 
 
-async def actualize_journals_for_user(user: User, ) -> None:
-    async with Session() as session:
-        print(f'Actualize journals for user {user.id}')
-        print(f'User profession id: {user.profession_id}')
-        if user.profession_id is not None:
-            ins_ids = [instruction.id for instruction in user.profession.instructions]
+async def actualize_journals_for_user(
+    user: User,
+) -> None:
+    if user.profession_id is not None:
+        async with Session() as session:
+            ins_ids = [
+                instruction.id for instruction in user.profession.instructions
+            ]
             await get_or_create_journals(session, ins_ids, user.id)
+            logger.info(f'Actualized journals for user {user.id}')
 
 
 def get_full_link(request: Request, filename: str) -> str:
     base_url = BASE_URL or str(request.base_url)
     return f'{base_url}{STATIC_FOLDER}/{SIGNATURES_FOLDER}/{filename}'
-
-
-async def add_params_to_jornals(
-    db_session: AsyncSession,
-    request: Request,
-    paginate_response,
-):
-    ins_ids = [journal.instruction_id for journal in paginate_response.items]
-    query = select(Instructions).where(Instructions.id.in_(ins_ids))
-    instructions = await db_session.scalars(query)
-    period_dict = {instruction.id: instruction for instruction in instructions}
-    for journal in paginate_response.items:
-        if journal.signature is not None:
-            journal.signature = get_full_link(request, journal.signature)
-        if journal.last_date_read is None:
-            journal.valid = False
-            journal.remain_days = 0
-        else:
-            if period_dict[journal.instruction_id].iteration:
-                date_diff = (
-                    datetime.utcnow().replace(tzinfo=None)
-                    - journal.last_date_read.replace(tzinfo=None)
-                ).days
-                if date_diff > period_dict[journal.instruction_id].period:
-                    journal.valid = False
-                    journal.remain_days = 0
-                else:
-                    journal.valid = True
-                    journal.remain_days = (
-                        period_dict[journal.instruction_id].period - date_diff
-                    )
-            else:
-                journal.valid = True
-                journal.remain_days = 0
-    return paginate_response
 
 
 async def add_lines_to_journals_for_new_rule(
@@ -117,7 +99,6 @@ async def remove_lines_to_journals_for_delete_rule(
 async def remove_lines_to_journals_for_delete_ins(
     db_session: AsyncSession, instruction_id: int
 ) -> None:
-
     query = select(Journals).where(Journals.instruction_id == instruction_id)
     await delete_journals(db_session, query)
 
@@ -135,6 +116,7 @@ async def delete_journals(db_session: AsyncSession, query) -> None:
     query = delete(Journals).where(Journals.id.in_(ids))
     await db_session.execute(query)
     await db_session.commit()
+    logger.info(f'Deleted journals: {ids}')
 
 
 async def save_file(
@@ -150,18 +132,21 @@ async def save_file(
     path_to_file = os.path.join(SIGNATURES_DIR, new_name)
     async with aiof.open(path_to_file, 'wb+') as f:
         await f.write(new_file.file.read())
+    logger.info(f'Saved new signature: {new_name}')
     return new_name
 
 
 async def delete_files_from_journals(journals) -> None:
     for journal in journals:
         if journal.signature:
-            print(f'Delete signature {journal.signature}')
             await delete_file(journal.signature)
+            logger.info(f'Delete signature: {journal.signature}')
 
 
 async def delete_file(filename: str) -> None:
     try:
         os.remove(os.path.join(SIGNATURES_DIR, filename))
+        logger.info(f'Signature {filename} was deleted')
     except FileNotFoundError:
+        logger.error(f'Signature {filename} not found for deleting')
         pass

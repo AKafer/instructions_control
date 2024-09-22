@@ -52,7 +52,6 @@ class User(SQLAlchemyBaseUserTableUUID, BaseModel):
         lazy='selectin',
 
     )
-
     profession = relationship(
         "Professions",
         back_populates="users",
@@ -63,7 +62,6 @@ class User(SQLAlchemyBaseUserTableUUID, BaseModel):
         "Divisions",
         back_populates="users",
         lazy='selectin',
-        passive_updates=False
     )
 
 

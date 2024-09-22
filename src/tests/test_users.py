@@ -25,7 +25,7 @@ async def test_get_superuser_token(superuser_token):
 
 
 @pytest.mark.asyncio
-async def test_create_get_user(async_client, superuser_token):
+async def test_create_get_user(setup, async_client, superuser_token, get_test_session_in_user_services):
     profession_payload = {
         "title": "president",
         "description": "The head of the state",
@@ -54,6 +54,7 @@ async def test_create_get_user(async_client, superuser_token):
         "telegram_id": "80989888",
         "phone_number": "+380987654321",
         "profession_id": profession['id'],
+        "division_id": 1,
     }
     response = await async_client.post(
         "/api/v1/auth/register",
@@ -68,4 +69,5 @@ async def test_create_get_user(async_client, superuser_token):
     assert  user["father_name"] == "Alexandrovich"
     assert  user["telegram_id"] == "80989888"
     assert  user["phone_number"] == "+380987654321"
-    assert  user["profession"] == {'id': 1, 'title': 'president'}
+    assert  user["profession"] == {'id': profession['id'], 'title': 'president'}
+

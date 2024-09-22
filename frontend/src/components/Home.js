@@ -93,21 +93,26 @@ const Home = () => {
           <div key={instruction.id} className="instruction-item">
             <div className="instruction-details">
               <h3>{instruction.title}</h3>
-              <p><strong>Number:</strong> {instruction.number}</p>
-              <p><strong>Period:</strong> {instruction.period} days</p>
-              <p><strong>Iteration:</strong> {instruction.iteration ? 'Yes' : 'No'}</p>
-              <p><strong>Instruction Link:</strong> <a href={instruction.link} target="_blank" rel="noopener noreferrer">View File</a></p>
+              <p><strong>Номер:</strong> {instruction.number}</p>
+              <p><strong>Период:</strong> {instruction.period} дней</p>
+              <p><strong>Повторяемость:</strong> {instruction.iteration ? 'Да' : 'Нет'}</p>
+              <p><strong>Ссылка на файл:</strong> <a href={instruction.link} target="_blank" rel="noopener noreferrer">Смотреть файл</a></p>
 
               {/* Journal Details */}
               <div className="journal-details">
-                {instruction.journal.valid ? (
-                  <>
-                    <p><strong>Journal Link:</strong> <a href={instruction.journal.link} target="_blank" rel="noopener noreferrer">View Signature</a></p>
-                    <p><strong>Last Date Read:</strong> {instruction.journal.last_date_read ? new Date(instruction.journal.last_date_read).toLocaleString() : 'Not read yet'}</p>
-                    <p><strong>Remaining Days:</strong> {instruction.journal.remain_days} days</p>
-                  </>
+                {instruction.journal.last_date_read ? (
+                    <>
+                      <p><strong>Ссылка на подпись:</strong> <a href={instruction.journal.link} target="_blank"
+                                                                rel="noopener noreferrer">Смотреть подпись</a></p>
+                      <p><strong>Дата
+                        ознакомления:</strong> {instruction.journal.last_date_read ? new Date(instruction.journal.last_date_read).toLocaleString() : 'Новая инструкция. Нет ознакомлений.'}
+                      </p>
+                      <p><strong>Ознакомлен:</strong> {instruction.journal.valid ? 'Да' : 'Нужно ознакомиться'}
+                      </p>
+                      <p><strong>Ознакомиться повторно через:</strong> {instruction.journal.remain_days} дней</p>
+                    </>
                 ) : (
-                  <p>Journal not valid or not yet completed</p>
+                    <p>Новая инструкция. Нет ознакомлений.</p>
                 )}
               </div>
             </div>

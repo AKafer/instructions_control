@@ -1,17 +1,37 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode'; // Исправленный импорт
+import { useNavigate } from 'react-router-dom';
 import '../styles/LoginPage.css'; // Импорт стилей
+
+const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'http://0.0.0.0:8700';
 
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate(); // Хук для программного перенаправления
+
+  const checkServerAvailability = async () => {
+    try {
+      const response = await axios.get(`${apiBaseUrl}/ping/`, {
+        maxRedirects: 0,
+        timeout: 5000,
+      });
+      console.log('Server is reachable. Status:', response.status);
+    } catch (error) {
+      console.error('Server check error:', error.message);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Login form submitted');
+
+    await checkServerAvailability();
 
     try {
-      const response = await axios.post('http://0.0.0.0:8700/api/v1/auth/jwt/login',
+      const response = await axios.post(`${apiBaseUrl}/api/v1/auth/jwt/login`,
         `grant_type=password&username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&scope=&client_id=string&client_secret=string`,
         {
           headers: {
@@ -21,25 +41,27 @@ const Login = ({ onLogin }) => {
         }
       );
 
-      console.log('Login response:', response.data);
-
       if (response.status === 200 && response.data.access_token) {
-        localStorage.setItem('token', response.data.access_token);
+        const token = response.data.access_token;
+        localStorage.setItem('token', token);
 
-        // Проверяем, что onLogin это функция
-        if (typeof onLogin === 'function') {
-          onLogin();
+        const decodedToken = jwtDecode(token);
+        console.log('Decoded token:', decodedToken);
+
+        if (decodedToken.is_superuser) {
+          navigate('/admin'); // Перенаправляем на страницу админа
         } else {
-          console.error('onLogin is not a function:', onLogin);
+          navigate('/'); // Перенаправляем на главную страницу
         }
 
-        // Обновляем страницу после успешного логина
-        window.location.href = '/';
+        if (typeof onLogin === 'function') {
+          onLogin();
+        }
       } else {
         throw new Error('No access token received');
       }
     } catch (err) {
-      console.error('Login error:', err);
+      console.error('Login error:', err.message);
       setError('Failed to login. Please check your credentials.');
     }
   };
