@@ -1,0 +1,18 @@
+.professions-container {
+  padding: 20px;
+}
+
+.professions-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.professions-table th, .professions-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.professions-table th {
+  background-color: #f2f2f2;
+  text-align: left;
+}

@@ -1,0 +1,74 @@
+version: "3.8"
+
+services:
+  db:
+    container_name: control_db
+    image: postgres:14-bullseye
+    restart: on-failure
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./.env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - control
+
+  app:
+    container_name: control_app
+    image: akafer/ins_control
+    restart: on-failure
+    ports:
+      - "8500:8500"
+    command: >
+      bash -c "alembic upgrade head
+      && python3 /app/src/scripts/create_user.py
+      && python3 /app/src/run.py --port=8500"
+    env_file:
+      - .env
+    volumes:
+        - ./files:/app/src/static
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - control
+
+  worker:
+    container_name: control_worker
+    image: akafer/ins_control
+    restart: on-failure
+    command: >
+      bash -c "python3 /app/src/jobs/worker_t.py"
+    env_file:
+      - .env
+    volumes:
+      - ./files:/app/src/static
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - control
+
+  frontend:
+    container_name: control_frontend
+    image: akafer/ins_control_frontend
+    restart: on-failure
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_BASE_URL=http://localhost:8500
+    depends_on:
+      - app
+    networks:
+      - control
+
+volumes:
+  postgres_data:
+
+networks:
+  control:
+    driver: bridge
