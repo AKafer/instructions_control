@@ -12,12 +12,42 @@ from database.models import User, Histories
 from database.models.journals import Journals
 from dependencies import get_db_session
 from main_schemas import ResponseErrorBody
-from web.journals.services import save_file, get_full_link
+from web.journals.filters import JornalsFilter
+from web.journals.services import save_file, collect_full_links
 from web.journals.shemas import Journal
 from web.users.users import current_user, current_superuser
-from web.instructions.services import get_full_link as get_full_link_ins
 
 router = APIRouter(prefix='/journals', tags=['journals'])
+
+
+@router.get(
+    '/{journal_id:int}',
+    response_model=Journal,
+    dependencies=[Depends(current_superuser)],
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def get_journal_by_id(
+    journal_id: int,
+    request: Request,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    query = (
+        select(Journals)
+        .where(Journals.id == journal_id)
+        .order_by(Journals.id.desc())
+    )
+    journal = await db_session.scalar(query)
+    if journal is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'Journal with id {journal_id} not found',
+        )
+    collect_full_links(journal, request)
+    return journal
 
 
 @router.get(
@@ -27,18 +57,14 @@ router = APIRouter(prefix='/journals', tags=['journals'])
 )
 async def get_all_journals(
     request: Request,
+    journals_filter: JornalsFilter = Depends(JornalsFilter),
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    query = select(Journals).where(Journals.actual == True).order_by(Journals.id.desc())
+    query = select(Journals).order_by(Journals.id.desc())
+    query = journals_filter.filter(query)
     response = await paginate(db_session, query)
     for journal in response.items:
-        if journal.signature is not None:
-            journal.link = get_full_link(request, journal.signature)
-        if journal.instruction.filename is not None:
-            journal.instruction.link = get_full_link_ins(request, journal.instruction.filename)
-        for history in journal.histories:
-            if history.signature is not None:
-                history.link = get_full_link(request, history.signature)
+        collect_full_links(journal, request)
     return response
 
 

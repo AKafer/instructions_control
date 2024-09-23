@@ -8,7 +8,7 @@ from fastapi import UploadFile, Request
 from sqlalchemy import and_, delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import Instructions, Journals, User
+from database.models import Journals, User
 from database.orm import Session
 from settings import (
     SIGNATURES_DIR,
@@ -17,7 +17,19 @@ from settings import (
     SIGNATURES_FOLDER,
 )
 
+
 logger = logging.getLogger('control')
+
+
+def collect_full_links(journal: Journals, request: Request) -> None:
+    from web.instructions.services import get_full_link as get_full_link_ins
+    if journal.signature is not None:
+        journal.link = get_full_link(request, journal.signature)
+    if journal.instruction.filename is not None:
+        journal.instruction.link = get_full_link_ins(request, journal.instruction.filename)
+    for history in journal.histories:
+        if history.signature is not None:
+            history.link = get_full_link(request, history.signature)
 
 
 async def get_or_create_journals(
@@ -45,7 +57,7 @@ async def get_or_create_journals(
         await db_session.execute(query)
     if list_to_delete:
         query = update(Journals).where(Journals.id.in_(list_to_delete)).values(actual=False)
-        await delete_journals(db_session, query)
+        await db_session.execute(query)
     list_to_create = list(set(instructions_ids) - set(exist_instructions_ids))
     for instruction_id in list_to_create:
         journal = Journals(instruction_id=instruction_id, user_uuid=user_uuid, actual=True)
@@ -122,8 +134,6 @@ async def delete_journals(db_session: AsyncSession, query) -> None:
 async def save_file(
     new_file: UploadFile, journal: Journals, user: User
 ) -> str:
-    if journal.signature:
-        await delete_file(journal.signature)
     _, suffix = os.path.splitext(new_file.filename)
     new_name = (
         f'{user.id}--{journal.id}--'

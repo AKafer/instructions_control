@@ -26,6 +26,7 @@ class Journal(BaseModel):
     link: str | None = None
     signature: str | None = Field(None, exclude=True)
     histories: list[Histories]
+    actual: bool
 
     class Config:
         orm_mode = True

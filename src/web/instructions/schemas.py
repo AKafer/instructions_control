@@ -32,10 +32,8 @@ class Instruction(BaseModel):
         orm_mode = True
 
 
-
 class InstructionForUser(Instruction):
     journal: Journal | None
-
 
 
 class InstructionCreateInput(BaseModel):
