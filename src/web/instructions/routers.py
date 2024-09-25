@@ -221,7 +221,8 @@ async def get_my_instructions(
 ):
     if user.is_superuser:
         return {'detail': 'This endpoint is only for users'}
-    instructions = user.instructions
+    instructions = list(user.instructions)
+    instructions_for_show = []
     for instruction in instructions:
         if instruction.filename is not None:
             instruction.link = get_full_link(request, instruction.filename)
@@ -232,4 +233,6 @@ async def get_my_instructions(
                     journal.link = get_full_link_signature(request, journal.signature)
                 instruction.journal = journal
                 break
-    return instructions
+        if instruction.journal.actual:
+            instructions_for_show.append(instruction)
+    return instructions_for_show

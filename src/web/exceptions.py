@@ -13,3 +13,6 @@ class ErrorSaveToDatabase(Exception):
 
 class DuplicateFilename(Exception):
     pass
+
+class BulkChecksError(Exception):
+    pass

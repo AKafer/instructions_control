@@ -20,6 +20,7 @@ typing-inspect = "^0.9.0"
 peewee = "^3.17.6"
 psycopg2 = "^2.9.9"
 fastapi-filter = "^0.6.1"
+openpyxl = "^3.1.5"
 
 
 [tool.poetry.group.dev.dependencies]

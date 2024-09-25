@@ -30,3 +30,7 @@ class Journal(BaseModel):
 
     class Config:
         orm_mode = True
+
+class BulkUpdateJournalsInput(BaseModel):
+    user_uuids_list: list[str]
+    instruction_id: int

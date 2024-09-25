@@ -18,6 +18,7 @@ class Histories(BaseModel):
     )
     date = sa.Column(DateTime(timezone=True), nullable=False)
     signature = sa.Column(String(length=320), nullable=True)
+    instruction_title = sa.Column(String(length=640), nullable=True)
 
 
     journal = sa.orm.relationship('Journals', lazy='selectin')

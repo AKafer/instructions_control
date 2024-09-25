@@ -23,6 +23,11 @@ async def peak_personal_journal(request: Request, user: User) -> User:
                             request, journal.signature
                         )
                     instruction.journal = journal
+                    for history in journal.histories:
+                        if history.signature is not None:
+                            history.link = get_full_link_sign(
+                                request, history.signature
+                            )
                     break
     return user
 

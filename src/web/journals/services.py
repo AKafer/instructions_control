@@ -8,7 +8,7 @@ from fastapi import UploadFile, Request
 from sqlalchemy import and_, delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import Journals, User
+from database.models import Journals, User, Instructions
 from database.orm import Session
 from settings import (
     SIGNATURES_DIR,
@@ -16,9 +16,36 @@ from settings import (
     STATIC_FOLDER,
     SIGNATURES_FOLDER,
 )
-
+from web.exceptions import BulkChecksError
+from web.journals.shemas import BulkUpdateJournalsInput
 
 logger = logging.getLogger('control')
+
+
+def is_valid_uuid(uuids_list: list[str]) -> bool:
+    for user_uuid in uuids_list:
+        try:
+            uuid.UUID(user_uuid, version=4)
+        except ValueError:
+            return False
+    return True
+
+
+async def check_for_bulk_operation(
+    db_session: AsyncSession, bulk_update: BulkUpdateJournalsInput
+) -> None:
+    if not is_valid_uuid(bulk_update.user_uuids_list):
+        raise BulkChecksError('Invalid user_uuids_list')
+    len_user_uuids_list = len(bulk_update.user_uuids_list)
+    query = select(User.id).where(User.id.in_(bulk_update.user_uuids_list))
+    users_ids = (await db_session.scalars(query)).all()
+    len_users_ids = len(users_ids)
+    if len_user_uuids_list != len_users_ids:
+        raise BulkChecksError('Some users not found')
+    query = select(Instructions).where(Instructions.id == bulk_update.instruction_id)
+    instruction = await db_session.scalar(query)
+    if instruction is None:
+        raise BulkChecksError('Instruction not found')
 
 
 def collect_full_links(journal: Journals, request: Request) -> None:
@@ -115,19 +142,28 @@ async def remove_lines_to_journals_for_delete_ins(
     await delete_journals(db_session, query)
 
 
+async def remove_lines_to_journals_for_delete_prof(
+    db_session: AsyncSession, profession_id: int
+) -> None:
+    query = select(User.id).where(User.profession_id == profession_id)
+    users_ids = await db_session.scalars(query)
+    query = select(Journals).where(Journals.user_uuid.in_(users_ids))
+    await delete_journals(db_session, query)
+
+
 async def remove_lines_to_journals_for_delete_user(user: User) -> None:
     async with Session() as db_session:
         query = select(Journals).where(Journals.user_uuid == user.id)
         await delete_journals(db_session, query)
+        db_session.commit()
 
 
 async def delete_journals(db_session: AsyncSession, query) -> None:
     journals = (await db_session.scalars(query)).all()
-    await delete_files_from_journals(journals)
+    # await delete_files_from_journals(journals)
     ids = [journal.id for journal in journals]
-    query = delete(Journals).where(Journals.id.in_(ids))
+    query = update(Journals).where(Journals.id.in_(ids)).values(actual=False)
     await db_session.execute(query)
-    await db_session.commit()
     logger.info(f'Deleted journals: {ids}')
 
 
