@@ -27,19 +27,11 @@ pipeline {
                 }
             }
         }
-        stage("update docker frontend image") {
-            steps {
-                echo " ============== start building image =================="
-                dir ('.') {
-                	sh 'docker build -t akafer/ins_control_frontend -f  ./ci/Dockerfile_frontend .'
-                }
-            }
-        }
         stage("docker push") {
             steps {
                 echo " ============== start pushing image =================="
                 sh '''
-                docker push akafer/ins_control && docker push akafer/ins_control_frontend
+                docker push akafer/ins_control
                 '''
             }
         }
