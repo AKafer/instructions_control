@@ -23,6 +23,7 @@ RUN pip install --no-cache poetry==1.4.0
 COPY pyproject.toml poetry.lock /app/
 COPY src/ /app/src
 RUN mkdir /app/logs
+RUN touch /app/logs/app.log
 
 ENV PYTHONPATH "${PYTHONPATH}:/app/src"
 ENV PYTHONUNBUFFERED=TRUE
