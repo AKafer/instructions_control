@@ -47,7 +47,7 @@ pipeline {
         stage("renew server") {
             steps {
                 echo " ============== go to server =================="
-                sh 'ssh root@ub1 "cd /root/app/INS_CONTROL && docker-compose down && docker pull akafer/ins_control && docker-compose up -d"'
+                sh 'ssh root@ub1 "cd /root/app/INS_CONTROL && docker-compose down --remove-orphans && docker pull akafer/ins_control && docker-compose up -d"'
             }
         }
     }
