@@ -9,6 +9,7 @@ RUN apt-get update && apt-get upgrade -y && \
     curl \
     git \
     htop \
+    iputils-ping \
     python3-aiofiles \
     vim \
     openssl \

@@ -1,0 +1,29 @@
+FROM node:18-bullseye
+
+WORKDIR /frontend/
+
+RUN apt-get update && apt-get upgrade -y && \
+  apt-get -y install \
+    pip \
+    bash \
+    expect \
+    curl \
+    git \
+    htop \
+    iputils-ping \
+    python3-aiofiles \
+    vim \
+    openssl \
+    libssl-dev \
+  && apt-get clean
+
+COPY frontend/src/ /frontend/src
+COPY frontend/public/ /frontend/public
+COPY frontend/package.json /frontend/
+
+RUN npm install
+
+# Добавьте шаг сборки
+RUN npm run build
+
+CMD ["npm", "start"]

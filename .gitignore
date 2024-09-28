@@ -2,3 +2,4 @@ src/.env
 ci/.env
 .env
 ci/files/
+/ci/.env_prod

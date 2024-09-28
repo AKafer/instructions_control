@@ -15,3 +15,4 @@ from .rules import Rules
 from .users import User
 from .journals import Journals
 from .divisions import Divisions
+from .histories import Histories

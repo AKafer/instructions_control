@@ -10,6 +10,7 @@ from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
 from main_schemas import ResponseErrorBody
+from web.journals.services import remove_lines_to_journals_for_delete_prof
 from web.professions.schemas import (
     Profession,
     ProfessionCreateInput,
@@ -165,6 +166,7 @@ async def delete_prof(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f'Profession with id {profession_id} not found',
         )
+    await remove_lines_to_journals_for_delete_prof(db_session, profession_id)
     await db_session.delete(profession)
     await db_session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

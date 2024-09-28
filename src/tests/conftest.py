@@ -23,6 +23,7 @@ from scripts.create_user import create_user
 import settings
 from web.instructions import services
 from web.journals import services as journal_services
+from web.users import services as user_services
 
 TEST_BASE_URL = 'http://test'
 
@@ -330,8 +331,13 @@ async def create_divisions(async_client, superuser_token):
 
 
 @pytest.fixture
-def get_test_session(monkeypatch):
+def get_test_session_in_journal_services(monkeypatch):
     monkeypatch.setattr(journal_services, 'Session', test_session)
+    yield test_session
+
+@pytest.fixture
+def get_test_session_in_user_services(monkeypatch):
+    monkeypatch.setattr(user_services, 'Session', test_session)
     yield test_session
 
 @pytest_asyncio.fixture
@@ -345,7 +351,8 @@ async def setup(
     create_instructions,
     create_rules,
     create_divisions,
-    get_test_session
+    get_test_session_in_journal_services,
+    get_test_session_in_user_services,
 ):
     professions = (await async_db_session.scalars(select(Professions))).all()
     divisions = (await async_db_session.scalars(select(Divisions))).all()
@@ -373,9 +380,10 @@ async def setup(
     user5.update({'profession_id': profession_to_delete_id, 'division_id': division3_id})
 
     for user in [user1, user2, user3, user4, user5]:
+        payload = user
         response = await async_client.post(
             '/api/v1/auth/register',
-            json=user,
+            json=payload,
             headers={'Authorization': f'Bearer {superuser_token}'},
         )
         assert response.status_code == 201

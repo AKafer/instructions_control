@@ -26,6 +26,7 @@ from web.instructions.services import (
     update_instruction_in_db,
 )
 from web.journals.services import remove_lines_to_journals_for_delete_ins
+from web.journals.services import get_full_link as get_full_link_signature
 
 from web.users.users import (
     current_superuser,
@@ -220,13 +221,18 @@ async def get_my_instructions(
 ):
     if user.is_superuser:
         return {'detail': 'This endpoint is only for users'}
-    instructions = user.instructions
+    instructions = list(user.instructions)
+    instructions_for_show = []
     for instruction in instructions:
         if instruction.filename is not None:
             instruction.link = get_full_link(request, instruction.filename)
         instruction.journal = None
         for journal in instruction.journals:
             if journal.user_uuid == user.id:
+                if journal.signature is not None:
+                    journal.link = get_full_link_signature(request, journal.signature)
                 instruction.journal = journal
                 break
-    return instructions
+        if instruction.journal.actual:
+            instructions_for_show.append(instruction)
+    return instructions_for_show

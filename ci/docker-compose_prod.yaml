@@ -8,7 +8,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
-      - ./.env
+      - ./.env_prod
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready" ]
       interval: 10s
@@ -28,10 +28,9 @@ services:
       && python3 /app/src/scripts/create_user.py
       && python3 /app/src/run.py --port=8500"
     env_file:
-      - .env
+      - .env_prod
     volumes:
         - ./files:/app/src/static
-        - ./logs:/app/src/logs
     depends_on:
       db:
         condition: service_healthy

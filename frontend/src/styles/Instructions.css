@@ -1,0 +1,17 @@
+/* styles/Instructions.css */
+.instructions-container {
+  padding: 20px;
+}
+
+.create-form {
+  margin-bottom: 20px;
+}
+
+.create-form input {
+  margin-right: 10px;
+  padding: 5px;
+}
+
+.create-form label {
+  margin-right: 10px;
+}

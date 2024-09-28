@@ -33,15 +33,3 @@ class Instructions(BaseModel):
         secondary='rules',
         back_populates="instructions",
     )
-
-
-    # def __setattr__(self, key, value):
-    #     pattern = r"^\d+--\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\w+$"
-    #     if type(value) == str:
-    #         if key == 'filename' and not re.match(pattern, value):
-    #             print(f"Value {value} is not match pattern and not updated")
-    #             return
-    #         else:
-    #             super().__setattr__(key, value)
-    #     else:
-    #         super().__setattr__(key, value)

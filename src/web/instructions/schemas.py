@@ -5,6 +5,14 @@ from fastapi_users import models
 
 from pydantic import BaseModel, Field
 
+class Histories(BaseModel):
+    id: int
+    date: datetime
+    link: str | None = None
+    signature: str | None = Field(None, exclude=True)
+
+    class Config:
+        orm_mode = True
 
 class Journal(BaseModel):
     id: int
@@ -14,6 +22,8 @@ class Journal(BaseModel):
     remain_days: int | None = None
     link: str | None = None
     signature: str | None = Field(None, exclude=True)
+    actual: bool
+    histories: list[Histories]
 
     class Config:
         orm_mode = True
@@ -32,10 +42,8 @@ class Instruction(BaseModel):
         orm_mode = True
 
 
-
 class InstructionForUser(Instruction):
     journal: Journal | None
-
 
 
 class InstructionCreateInput(BaseModel):
