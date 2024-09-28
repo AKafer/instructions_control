@@ -22,3 +22,4 @@ class Histories(BaseModel):
 
 
     journal = sa.orm.relationship('Journals', lazy='selectin')
+    user = sa.orm.relationship('User', lazy='selectin')

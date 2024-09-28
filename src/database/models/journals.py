@@ -30,6 +30,7 @@ class Journals(BaseModel):
 
     instruction = sa.orm.relationship('Instructions', back_populates='journals', lazy='selectin')
     histories = sa.orm.relationship('Histories', back_populates='journal', lazy='selectin')
+    user = sa.orm.relationship('User', lazy='selectin')
 
 
     @hybrid_property

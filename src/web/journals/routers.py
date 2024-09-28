@@ -11,14 +11,14 @@ from starlette import status
 from starlette.exceptions import HTTPException
 from starlette.responses import StreamingResponse
 
-from database.models import User, Histories
+from database.models import User, Histories, Instructions
 from database.models.journals import Journals
 from dependencies import get_db_session
 from main_schemas import ResponseErrorBody
 from web.exceptions import BulkChecksError
 from web.journals.filters import JornalsFilter
-from web.journals.services import save_file, collect_full_links, check_for_bulk_operation
-from web.journals.shemas import Journal, BulkUpdateJournalsInput
+from web.journals.services import save_file, collect_full_links, check_for_bulk_operation, get_book
+from web.journals.shemas import Journal, BulkUpdateJournalsInput, ReportInput
 from web.users.users import current_user, current_superuser
 
 router = APIRouter(prefix='/journals', tags=['journals'])
@@ -163,8 +163,8 @@ async def bulk_update_journals(
     return {'detail': f'{i} journals updated'}
 
 
-@router.get(
-    '/download_excel',
+@router.post(
+    '/get_report',
     responses={
         status.HTTP_404_NOT_FOUND: {
             'model': ResponseErrorBody,
@@ -172,21 +172,44 @@ async def bulk_update_journals(
     },
     dependencies=[Depends(current_superuser)],
 )
-async def download_excel(
-    user: User = Depends(current_user),
+async def get_report(
+    request: Request,
+    input_data: ReportInput,
+    db_session: AsyncSession = Depends(get_db_session),
 ):
-    wb = Workbook()
-    ws = wb.active
-
-    ws.append(['id', 'user_uuid', 'instruction_id', 'last_date_read', 'signature'])
-    ws.append(['1', 'xxxxxxxxxxx', '15', '2024-10-10', 'file.jpg'])
-
-    excel_io = BytesIO()
-    wb.save(excel_io)
-    excel_io.seek(0)
-
-    return StreamingResponse(
-        BytesIO(excel_io.getvalue()),
-        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        headers={'Content-Disposition': 'attachment; filename="journals.xlsx"'}
+    query = select(Instructions).where(Instructions.id == input_data.instruction_id)
+    instruction = await db_session.scalar(query)
+    if instruction is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'Instruction with id {input_data.instruction_id} not found',
+        )
+    if input_data.profession_id is not None:
+        query = select(User).where(User.profession_id == input_data.profession_id)
+    elif input_data.user_uuid_list is not None:
+        query = select(User).where(User.id.in_(input_data.user_uuid_list))
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='You must provide profession_id or user_uuid_list',
+        )
+    users = (await db_session.scalars(query)).all()
+    wb = await get_book(
+        instruction,
+        users,
+        input_data.with_history,
+        input_data.like_file,
+        request,
     )
+
+    if input_data.like_file:
+        excel_io = BytesIO()
+        wb.save(excel_io)
+        excel_io.seek(0)
+        return StreamingResponse(
+            BytesIO(excel_io.getvalue()),
+            media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            headers={'Content-Disposition': 'attachment; filename="journals.xlsx"'}
+        )
+
+    return wb

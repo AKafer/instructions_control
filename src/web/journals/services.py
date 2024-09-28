@@ -2,10 +2,13 @@ import logging
 import os
 import uuid
 from datetime import datetime
+from typing import Sequence
 
 import aiofiles as aiof
 from fastapi import UploadFile, Request
-from sqlalchemy import and_, delete, select, update
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment
+from sqlalchemy import and_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import Journals, User, Instructions
@@ -42,7 +45,9 @@ async def check_for_bulk_operation(
     len_users_ids = len(users_ids)
     if len_user_uuids_list != len_users_ids:
         raise BulkChecksError('Some users not found')
-    query = select(Instructions).where(Instructions.id == bulk_update.instruction_id)
+    query = select(Instructions).where(
+        Instructions.id == bulk_update.instruction_id
+    )
     instruction = await db_session.scalar(query)
     if instruction is None:
         raise BulkChecksError('Instruction not found')
@@ -50,10 +55,13 @@ async def check_for_bulk_operation(
 
 def collect_full_links(journal: Journals, request: Request) -> None:
     from web.instructions.services import get_full_link as get_full_link_ins
+
     if journal.signature is not None:
         journal.link = get_full_link(request, journal.signature)
     if journal.instruction.filename is not None:
-        journal.instruction.link = get_full_link_ins(request, journal.instruction.filename)
+        journal.instruction.link = get_full_link_ins(
+            request, journal.instruction.filename
+        )
     for history in journal.histories:
         if history.signature is not None:
             history.link = get_full_link(request, history.signature)
@@ -75,21 +83,33 @@ async def get_or_create_journals(
             exist_instructions_ids.append(journal.instruction_id)
 
     if exist_journals_ids:
-        query = update(Journals).where(
-            and_(
-                Journals.id.in_(exist_journals_ids),
-                Journals.actual == False,
+        query = (
+            update(Journals)
+            .where(
+                and_(
+                    Journals.id.in_(exist_journals_ids),
+                    Journals.actual == False,
+                )
             )
-        ).values(actual=True)
+            .values(actual=True)
+        )
         await db_session.execute(query)
     if list_to_delete:
-        query = update(Journals).where(Journals.id.in_(list_to_delete)).values(actual=False)
+        query = (
+            update(Journals)
+            .where(Journals.id.in_(list_to_delete))
+            .values(actual=False)
+        )
         await db_session.execute(query)
     list_to_create = list(set(instructions_ids) - set(exist_instructions_ids))
     for instruction_id in list_to_create:
-        journal = Journals(instruction_id=instruction_id, user_uuid=user_uuid, actual=True)
+        journal = Journals(
+            instruction_id=instruction_id, user_uuid=user_uuid, actual=True
+        )
         db_session.add(journal)
-        logger.info(f'Created new journal for user {user_uuid} and instruction {instruction_id}')
+        logger.info(
+            f'Created new journal for user {user_uuid} and instruction {instruction_id}'
+        )
     await db_session.commit()
 
 
@@ -105,7 +125,9 @@ async def actualize_journals_for_user(
             logger.info(f'Actualized journals for user {user.id}')
 
 
-def get_full_link(request: Request, filename: str) -> str:
+def get_full_link(request: Request, filename: str | None) -> str | None:
+    if filename is None:
+        return None
     base_url = BASE_URL or str(request.base_url)
     return f'{base_url}{STATIC_FOLDER}/{SIGNATURES_FOLDER}/{filename}'
 
@@ -196,3 +218,90 @@ async def delete_file(filename: str) -> None:
     except FileNotFoundError:
         logger.error(f'Signature {filename} not found for deleting')
         pass
+
+
+async def get_book(
+    instruction: Instructions,
+    users: Sequence[User],
+    with_history: bool,
+    like_file: bool,
+    request: Request,
+) -> Workbook | list[dict]:
+    report_list = []
+    wb = Workbook()
+    ws = wb.active
+    ws.merge_cells('A1:Z1')
+    ws.column_dimensions['A'].width = 40
+    ws.column_dimensions['B'].width = 20
+    ws.column_dimensions['C'].width = 20
+    ws.column_dimensions['D'].width = 20
+
+    a1 = ws.cell(row=1, column=1)
+    a1.value = instruction.title
+    a1.font = Font(bold=True)
+    a1.alignment = Alignment(horizontal="left")
+
+    ws.append(['Работник', 'Дата ознакомления', 'Подпись электронная', 'Подпись'])
+
+    for user in users:
+        user_journal = None
+        for journal in user.journals:
+            if journal.instruction_id == instruction.id:
+                user_journal = journal
+                break
+        if user_journal is None:
+            continue
+        if with_history:
+            if user_journal is not None:
+                if user_journal.histories:
+                    for history in user_journal.histories:
+                        ws.append(
+                            [
+                                f'{user.last_name} {user.name} {user.father_name}',
+                                str(history.date) if history.date else '',
+                                'Да' if history.signature else 'Нет',
+                            ]
+                        )
+                        report_list.append(
+                            {
+                                'user': f'{user.last_name} {user.name} {user.father_name}',
+                                'date': history.date,
+                                'signature': get_full_link(request, history.signature),
+                            }
+                        )
+                else:
+                    ws.append(
+                        [
+                            f'{user.last_name} {user.name} {user.father_name}',
+                            str(user_journal.last_date_read) if user_journal.last_date_read else '',
+                            'Да' if user_journal.signature else 'Нет',
+                        ]
+                    )
+                    report_list.append(
+                        {
+                            'user': f'{user.last_name} {user.name} {user.father_name}',
+                            'date': user_journal.last_date_read,
+                            'signature': get_full_link(request, user_journal.signature),
+                        }
+                    )
+        else:
+            ws.append(
+                [
+                    f'{user.last_name} {user.name} {user.father_name}',
+                    str(user_journal.last_date_read) if user_journal.last_date_read else '',
+                    'Да' if user_journal.signature else 'Нет',
+                ]
+            )
+            report_list.append(
+                {
+                    'user': f'{user.last_name} {user.name} {user.father_name}',
+                    'date': user_journal.last_date_read,
+                    'signature': get_full_link(request, user_journal.signature),
+                }
+            )
+    if like_file:
+        return wb
+    return report_list
+
+
+

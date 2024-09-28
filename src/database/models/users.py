@@ -50,17 +50,25 @@ class User(SQLAlchemyBaseUserTableUUID, BaseModel):
         secondary='journals',
         back_populates="users",
         lazy='selectin',
-
     )
     profession = relationship(
         "Professions",
         back_populates="users",
         lazy='selectin',
     )
-
     division = relationship(
         "Divisions",
         back_populates="users",
+        lazy='selectin',
+    )
+    histories = relationship(
+        "Histories",
+        back_populates="user",
+        lazy='selectin',
+    )
+    journals = relationship(
+        "Journals",
+        back_populates="user",
         lazy='selectin',
     )
 

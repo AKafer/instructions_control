@@ -31,6 +31,15 @@ class Journal(BaseModel):
     class Config:
         orm_mode = True
 
+
 class BulkUpdateJournalsInput(BaseModel):
     user_uuids_list: list[str]
     instruction_id: int
+
+
+class ReportInput(BaseModel):
+    instruction_id: int
+    profession_id: int | None = None
+    user_uuid_list: list[str] | None = None
+    with_history: bool = False
+    like_file: bool = False
