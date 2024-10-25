@@ -33,3 +33,8 @@ class Instructions(BaseModel):
         secondary='rules',
         back_populates="instructions",
     )
+
+    tests = relationship(
+        "Tests",
+        lazy='selectin',
+    )
