@@ -10,8 +10,8 @@ class Templates(BaseModel):
     id = sa.Column(sa.BigInteger, primary_key=True)
     content = sa.Column(sa.JSON, nullable=True)
 
-class Answers(BaseModel):
-    __tablename__ = 'answers'
+class Questions(BaseModel):
+    __tablename__ = 'questions'
 
     id = sa.Column(sa.BigInteger, primary_key=True)
     question = sa.Column(sa.Text(), nullable=False)
@@ -24,7 +24,7 @@ class Answers(BaseModel):
     )
     test = relationship(
         "Tests",
-        back_populates="answers",
+        back_populates="questions",
         lazy='selectin',
     )
 
@@ -32,7 +32,7 @@ class Tests(BaseModel):
     __tablename__ = 'tests'
 
     id = sa.Column(sa.BigInteger, primary_key=True)
-    title = sa.Column(sa.String(64), nullable=False, unique=True)
+    title = sa.Column(sa.String(64), nullable=False)
     description = sa.Column(sa.Text(), nullable=True)
     success_rate = sa.Column(sa.Integer, nullable=False)
     instruction_id = sa.Column(
@@ -45,7 +45,7 @@ class Tests(BaseModel):
         back_populates="tests",
         lazy='selectin',
     )
-    answers = relationship(
-        "Answers",
+    questions = relationship(
+        "Questions",
         lazy='selectin',
     )

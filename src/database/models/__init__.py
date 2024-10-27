@@ -8,7 +8,7 @@ __all__ = [
     "Divisions",
     "Histories",
     "Tests",
-    "Answers",
+    "Questions",
     "Templates",
 ]
 
@@ -20,4 +20,4 @@ from .users import User
 from .journals import Journals
 from .divisions import Divisions
 from .histories import Histories
-from .tests import Tests, Answers, Templates
+from .tests import Tests, Questions, Templates

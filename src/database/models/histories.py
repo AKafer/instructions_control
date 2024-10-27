@@ -20,6 +20,5 @@ class Histories(BaseModel):
     signature = sa.Column(String(length=320), nullable=True)
     instruction_title = sa.Column(String(length=640), nullable=True)
 
-
     journal = sa.orm.relationship('Journals', lazy='selectin')
     user = sa.orm.relationship('User', lazy='selectin')
