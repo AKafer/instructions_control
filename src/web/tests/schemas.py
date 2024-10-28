@@ -48,6 +48,14 @@ class TestUpdateInput(BaseModel):
         description="Допустимые значения: от 0 до 100"
     )
 
+class QuestionUserAnswers(BaseModel):
+    question_id: int
+    answer: int
+
+
+class TestPassInput(BaseModel):
+    user_answers: list[QuestionUserAnswers]
+
 
 class Test(BaseModel):
     id: int
