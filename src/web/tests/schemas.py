@@ -1,3 +1,6 @@
+import uuid
+from datetime import datetime
+
 from pydantic import BaseModel, Json, conint, Field
 
 
@@ -64,6 +67,21 @@ class Test(BaseModel):
     success_rate: int
     instruction_id: int
     questions: list[Question]
+
+    class Config:
+        orm_mode = True
+
+
+class History(BaseModel):
+    id: int
+    type: str
+    user_uuid: str | uuid.UUID
+    journal_id: int
+    instruction_id: int | None
+    test_id: int | None
+    date: str | datetime
+    signature: str | None
+    additional_data: dict
 
     class Config:
         orm_mode = True

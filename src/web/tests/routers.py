@@ -1,13 +1,10 @@
-import json
-
-import sqlalchemy
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from starlette.responses import Response
 
-from database.models import Histories, User
+from database.models import User
 from database.models.tests import Templates, Tests, Questions
 from dependencies import get_db_session
 from starlette.exceptions import HTTPException
@@ -18,15 +15,14 @@ from web.tests.schemas import (
     TestCreateInput,
     Test,
     TestUpdateInput,
-    TemplateInput, QuestionCreateInput, Question, TestPassInput
+    TemplateInput, QuestionCreateInput, Question, TestPassInput, History
 )
-from web.tests.services import update_test_in_db
+from web.tests.services import update_test_in_db, calculate_test_result
 from web.users.users import current_superuser, current_user
 
 router = APIRouter(
     prefix='/tests',
     tags=['tests'],
-    dependencies=[Depends(current_superuser)],
 )
 
 
@@ -42,6 +38,7 @@ router = APIRouter(
             'model': ResponseErrorBody,
         },
     },
+    dependencies=[Depends(current_superuser)]
 )
 async def get_template_by_id(
     template_id: int, db_session: AsyncSession = Depends(get_db_session)
@@ -68,6 +65,7 @@ async def get_template_by_id(
             'model': ResponseErrorBody,
         },
     },
+    dependencies=[Depends(current_superuser)]
 )
 async def create_template(
     input_data: TemplateInput,
@@ -88,6 +86,7 @@ async def create_template(
             'model': ResponseErrorBody,
         },
     },
+    dependencies=[Depends(current_superuser)]
 )
 async def delete_template(
     template_id: int,
@@ -105,7 +104,11 @@ async def delete_template(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.get('/tests', response_model=list[Test])
+@router.get(
+    '/tests',
+    response_model=list[Test],
+    dependencies=[Depends(current_superuser)]
+)
 async def get_all_tests(
     db_session: AsyncSession = Depends(get_db_session),
 ):
@@ -125,6 +128,7 @@ async def get_all_tests(
             'model': ResponseErrorBody,
         },
     },
+    dependencies=[Depends(current_superuser)]
 )
 async def get_test_by_id(
     test_id: int, db_session: AsyncSession = Depends(get_db_session)
@@ -151,6 +155,7 @@ async def get_test_by_id(
             'model': ResponseErrorBody,
         },
     },
+    dependencies=[Depends(current_superuser)]
 )
 async def create_test(
     input_data: TestCreateInput,
@@ -174,6 +179,7 @@ async def create_test(
             'model': ResponseErrorBody,
         },
     },
+    dependencies=[Depends(current_superuser)]
 )
 async def update_test(
     test_id: int,
@@ -200,6 +206,7 @@ async def update_test(
             'model': ResponseErrorBody,
         },
     },
+    dependencies=[Depends(current_superuser)]
 )
 async def delete_test(
     test_id: int,
@@ -219,7 +226,7 @@ async def delete_test(
 
 @router.post(
     '/tests/pass/{test_id:int}',
-    response_model=Test,
+    response_model=History,
     status_code=status.HTTP_201_CREATED,
     responses={
         status.HTTP_400_BAD_REQUEST: {
@@ -231,7 +238,7 @@ async def delete_test(
     },
     dependencies=[Depends(current_user)]
 )
-async def create_test(
+async def pass_test(
     test_id: int,
     input_data: TestPassInput,
     db_session: AsyncSession = Depends(get_db_session),
@@ -239,30 +246,13 @@ async def create_test(
 ):
     query = select(Tests).filter(Tests.id == test_id)
     test = await db_session.scalar(query)
-    questions_dict = {q.id : q for q in test.questions}
-    correct_answers = 0
-
-    for user_answer in input_data.user_answers:
-        question = questions_dict.get(user_answer.question_id)
-        if question.correct_answer == user_answer.answer:
-            correct_answers += 1
-    rate = correct_answers / len(test.questions) * 100
-    passed = rate >= test.success_rate
-
-    db_test = Tests(**input_data.dict())
-    db_session.add(db_test)
-
-    history = Histories(
-        user_uuid=user.id,
-        type=Histories.Type.DATE_RENEWAL,
-        journal_id=journal.id,
-        date=datetime.utcnow(),
-        instruction_id=journal.instruction.id,
-        additional_data={'instruction_title': journal.instruction.title},
-    )
-    await db_session.commit()
-    await db_session.refresh(db_test)
-    return db_test
+    if test is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'Test with id {test_id} not found',
+        )
+    history = await calculate_test_result(test, input_data, db_session, user)
+    return history
 
 
 @router.post(
@@ -277,6 +267,7 @@ async def create_test(
             'model': ResponseErrorBody,
         },
     },
+    dependencies=[Depends(current_superuser)]
 )
 async def create_question(
     input_data: QuestionCreateInput,
@@ -297,6 +288,7 @@ async def create_question(
             'model': ResponseErrorBody,
         },
     },
+    dependencies=[Depends(current_superuser)]
 )
 async def delete_question(
     question_id: int,

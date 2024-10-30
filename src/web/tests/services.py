@@ -1,6 +1,9 @@
+from datetime import datetime
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import Tests
+from database.models import Tests, User, Histories
+from web.tests.schemas import TestPassInput
 
 
 async def update_test_in_db(
@@ -13,3 +16,44 @@ async def update_test_in_db(
     await db_session.commit()
     await db_session.refresh(test)
     return test
+
+async def calculate_test_result(
+    test: Tests,
+    input_data: TestPassInput,
+    db_session: AsyncSession,
+    user: User,
+) -> Histories:
+    questions_dict = {q.id: q for q in test.questions}
+    correct_answers = 0
+    instruction = test.instruction
+    for journal in instruction.journals:
+        if journal.user_uuid == user.id:
+            journal = journal
+            break
+
+    for user_answer in input_data.user_answers:
+        question = questions_dict.get(user_answer.question_id)
+        if question.correct_answer == user_answer.answer:
+            correct_answers += 1
+    rate = round(correct_answers / len(test.questions) * 100, 1)
+    passed = rate >= test.success_rate
+
+    history = Histories(
+        user_uuid=user.id,
+        type=Histories.Type.TEST_EXECUTION,
+        journal_id=journal.id,
+        date=datetime.utcnow(),
+        instruction_id=instruction.id,
+        test_id=test.id,
+        additional_data={
+            'instruction_title': instruction.title,
+            'test_title': test.title,
+            'rate': rate,
+            'success_rate': test.success_rate,
+            'passed': passed,
+        },
+    )
+    db_session.add(history)
+    await db_session.commit()
+    await db_session.refresh(history)
+    return history
