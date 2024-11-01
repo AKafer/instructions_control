@@ -235,13 +235,22 @@ async def get_book(
     ws.column_dimensions['B'].width = 20
     ws.column_dimensions['C'].width = 20
     ws.column_dimensions['D'].width = 20
+    ws.column_dimensions['E'].width = 20
+    ws.column_dimensions['F'].width = 20
 
     a1 = ws.cell(row=1, column=1)
     a1.value = instruction.title
     a1.font = Font(bold=True)
     a1.alignment = Alignment(horizontal="left")
 
-    ws.append(['Работник', 'Дата ознакомления', 'Подпись электронная', 'Подпись'])
+    ws.append([
+        'Работник',
+        'Дата ознакомления',
+        'Подпись электронная',
+        'Подпись',
+        'Тип',
+        'Дополнительные данные'
+    ])
 
     for user in users:
         user_journal = None
@@ -255,11 +264,20 @@ async def get_book(
             if user_journal is not None:
                 if user_journal.histories:
                     for history in user_journal.histories:
+                        passed = ''
+                        if history.type == history.type.TEST_EXECUTION:
+                            if history.additional_data.get('passed'):
+                                passed = 'Пройден'
+                            else:
+                                passed = 'Не пройден'
                         ws.append(
                             [
                                 f'{user.last_name} {user.name} {user.father_name}',
                                 str(history.date) if history.date else '',
                                 'Да' if history.signature else 'Нет',
+                                '',
+                                'Тест' if history.type == history.type.TEST_EXECUTION else 'Ознакомление',
+                                passed,
                             ]
                         )
                         report_list.append(
@@ -267,6 +285,8 @@ async def get_book(
                                 'user': f'{user.last_name} {user.name} {user.father_name}',
                                 'date': history.date,
                                 'signature': get_full_link(request, history.signature),
+                                'type': 'Тест' if history.type == history.type.TEST_EXECUTION else 'Ознакомление',
+                                'passed': passed,
                             }
                         )
                 else:
@@ -275,6 +295,7 @@ async def get_book(
                             f'{user.last_name} {user.name} {user.father_name}',
                             str(user_journal.last_date_read) if user_journal.last_date_read else '',
                             'Да' if user_journal.signature else 'Нет',
+
                         ]
                     )
                     report_list.append(

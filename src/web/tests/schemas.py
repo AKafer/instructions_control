@@ -1,11 +1,16 @@
 import uuid
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, Json, conint, Field
 
 
 class TemplateInput(BaseModel):
-    content: list[dict]
+    content: Any = Field(...)
+
+    class Config:
+        arbitrary_types_allowed = True
+        extra = 'allow'
 
 
 class Template(BaseModel):

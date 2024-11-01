@@ -1,7 +1,12 @@
+import json
+import logging
+import re
+
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
+from starlette.requests import Request
 from starlette.responses import Response
 
 from database.models import User
@@ -25,6 +30,8 @@ router = APIRouter(
     tags=['tests'],
 )
 
+logger = logging.getLogger('control')
+
 
 
 @router.get(
@@ -46,6 +53,7 @@ async def get_template_by_id(
     query = select(Templates).filter(Templates.id == template_id)
     template = await db_session.scalar(query)
     if template is None:
+        logger.error(f'Template with id {template_id} not found')
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f'Template with id {template_id} not found',
@@ -68,10 +76,21 @@ async def get_template_by_id(
     dependencies=[Depends(current_superuser)]
 )
 async def create_template(
-    input_data: TemplateInput,
+    request: Request,
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    db_template = Templates(**input_data.dict())
+    raw_body = await request.body()
+    raw_text = raw_body.decode("utf-8")
+    try:
+        match = re.search(r'(\[.*?\])', raw_text, re.DOTALL)
+        content = match.group(1)
+        db_template = Templates(content=json.loads(content))
+    except (json.JSONDecodeError, AttributeError) as e:
+        logger.error(f'Invalid JSON format: {e}')
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Invalid JSON format',
+        )
     db_session.add(db_template)
     await db_session.commit()
     await db_session.refresh(db_template)
