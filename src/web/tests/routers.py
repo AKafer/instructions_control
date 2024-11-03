@@ -20,7 +20,10 @@ from web.tests.schemas import (
     TestCreateInput,
     Test,
     TestUpdateInput,
-    TemplateInput, QuestionCreateInput, Question, TestPassInput, History
+    QuestionCreateInput,
+    Question,
+    TestPassInput,
+    History,
 )
 from web.tests.services import update_test_in_db, calculate_test_result
 from web.users.users import current_superuser, current_user
@@ -31,7 +34,6 @@ router = APIRouter(
 )
 
 logger = logging.getLogger('control')
-
 
 
 @router.get(
@@ -45,7 +47,7 @@ logger = logging.getLogger('control')
             'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)],
 )
 async def get_template_by_id(
     template_id: int, db_session: AsyncSession = Depends(get_db_session)
@@ -73,14 +75,14 @@ async def get_template_by_id(
             'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)],
 )
 async def create_template(
     request: Request,
     db_session: AsyncSession = Depends(get_db_session),
 ):
     raw_body = await request.body()
-    raw_text = raw_body.decode("utf-8")
+    raw_text = raw_body.decode('utf-8')
     try:
         match = re.search(r'(\[.*?\])', raw_text, re.DOTALL)
         content = match.group(1)
@@ -105,7 +107,7 @@ async def create_template(
             'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)],
 )
 async def delete_template(
     template_id: int,
@@ -126,7 +128,7 @@ async def delete_template(
 @router.get(
     '/tests',
     response_model=list[Test],
-    dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)],
 )
 async def get_all_tests(
     db_session: AsyncSession = Depends(get_db_session),
@@ -147,7 +149,7 @@ async def get_all_tests(
             'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)],
 )
 async def get_test_by_id(
     test_id: int, db_session: AsyncSession = Depends(get_db_session)
@@ -174,7 +176,7 @@ async def get_test_by_id(
             'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)],
 )
 async def create_test(
     input_data: TestCreateInput,
@@ -198,7 +200,7 @@ async def create_test(
             'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)],
 )
 async def update_test(
     test_id: int,
@@ -225,7 +227,7 @@ async def update_test(
             'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)],
 )
 async def delete_test(
     test_id: int,
@@ -255,13 +257,13 @@ async def delete_test(
             'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_user)]
+    dependencies=[Depends(current_user)],
 )
 async def pass_test(
     test_id: int,
     input_data: TestPassInput,
     db_session: AsyncSession = Depends(get_db_session),
-    user: User = Depends(current_user)
+    user: User = Depends(current_user),
 ):
     query = select(Tests).filter(Tests.id == test_id)
     test = await db_session.scalar(query)
@@ -286,7 +288,7 @@ async def pass_test(
             'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)],
 )
 async def create_question(
     input_data: QuestionCreateInput,
@@ -307,7 +309,7 @@ async def create_question(
             'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_superuser)]
+    dependencies=[Depends(current_superuser)],
 )
 async def delete_question(
     question_id: int,

@@ -1,16 +1,7 @@
 import uuid
 from datetime import datetime
-from typing import Any
 
-from pydantic import BaseModel, Json, conint, Field
-
-
-class TemplateInput(BaseModel):
-    content: Any = Field(...)
-
-    class Config:
-        arbitrary_types_allowed = True
-        extra = 'allow'
+from pydantic import BaseModel, conint, Field
 
 
 class Template(BaseModel):
@@ -42,8 +33,7 @@ class TestCreateInput(BaseModel):
     title: str
     description: str | None = None
     success_rate: conint(ge=0, le=100) = Field(
-        ...,
-        description="Допустимые значения: от 0 до 100"
+        ..., description='Допустимые значения: от 0 до 100'
     )
     instruction_id: int
 
@@ -52,9 +42,9 @@ class TestUpdateInput(BaseModel):
     title: str | None = None
     description: str | None = None
     success_rate: conint(ge=0, le=100) | None = Field(
-        None,
-        description="Допустимые значения: от 0 до 100"
+        None, description='Допустимые значения: от 0 до 100'
     )
+
 
 class QuestionUserAnswers(BaseModel):
     question_id: int
