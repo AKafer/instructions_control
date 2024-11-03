@@ -6,6 +6,10 @@ __all__ = [
     "User",
     "Journals",
     "Divisions",
+    "Histories",
+    "Tests",
+    "Questions",
+    "Templates",
 ]
 
 from database.orm import BaseModel
@@ -16,3 +20,4 @@ from .users import User
 from .journals import Journals
 from .divisions import Divisions
 from .histories import Histories
+from .tests import Tests, Questions, Templates

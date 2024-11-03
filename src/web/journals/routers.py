@@ -2,8 +2,7 @@ from datetime import datetime
 from io import BytesIO
 
 from fastapi import Depends, APIRouter, UploadFile, File, Request
-from openpyxl import Workbook
-from sqlalchemy import select, and_, update
+from sqlalchemy import select, and_
 from fastapi_pagination import Page
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi_pagination.ext.sqlalchemy import paginate
@@ -17,7 +16,12 @@ from dependencies import get_db_session
 from main_schemas import ResponseErrorBody
 from web.exceptions import BulkChecksError
 from web.journals.filters import JornalsFilter
-from web.journals.services import save_file, collect_full_links, check_for_bulk_operation, get_book
+from web.journals.services import (
+    save_file,
+    collect_full_links,
+    check_for_bulk_operation,
+    get_book,
+)
 from web.journals.shemas import Journal, BulkUpdateJournalsInput, ReportInput
 from web.users.users import current_user, current_superuser
 
@@ -104,12 +108,16 @@ async def update_journal(
     journal.last_date_read = datetime.utcnow()
     history = Histories(
         user_uuid=user.id,
+        type=Histories.Type.DATE_RENEWAL,
         journal_id=journal.id,
         date=datetime.utcnow(),
-        instruction_title=journal.instruction.title,
+        instruction_id=journal.instruction.id,
+        additional_data={'instruction_title': journal.instruction.title},
     )
     if file is not None:
-        generated_filename = await save_file(new_file=file, journal=journal, user=user)
+        generated_filename = await save_file(
+            new_file=file, journal=journal, user=user
+        )
         journal.signature = generated_filename
         history.signature = generated_filename
     db_session.add(history)
@@ -136,15 +144,12 @@ async def bulk_update_journals(
     except BulkChecksError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Bulk update error: {str(e)}'
+            detail=f'Bulk update error: {str(e)}',
         )
-    query = (
-        select(Journals)
-        .where(
-            and_(
-                Journals.instruction_id == update_input.instruction_id,
-                Journals.user_uuid.in_(update_input.user_uuids_list),
-            )
+    query = select(Journals).where(
+        and_(
+            Journals.instruction_id == update_input.instruction_id,
+            Journals.user_uuid.in_(update_input.user_uuids_list),
         )
     )
     journals = await db_session.scalars(query)
@@ -153,9 +158,11 @@ async def bulk_update_journals(
         journal.last_date_read = datetime.utcnow()
         history = Histories(
             user_uuid=journal.user_uuid,
+            type=Histories.Type.DATE_RENEWAL,
             journal_id=journal.id,
             date=datetime.utcnow(),
-            instruction_title=journal.instruction.title,
+            instruction_id=journal.instruction.id,
+            additional_data={'instruction_title': journal.instruction.title},
         )
         db_session.add(history)
         i += 1
@@ -177,7 +184,9 @@ async def get_report(
     input_data: ReportInput,
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    query = select(Instructions).where(Instructions.id == input_data.instruction_id)
+    query = select(Instructions).where(
+        Instructions.id == input_data.instruction_id
+    )
     instruction = await db_session.scalar(query)
     if instruction is None:
         raise HTTPException(
@@ -185,7 +194,9 @@ async def get_report(
             detail=f'Instruction with id {input_data.instruction_id} not found',
         )
     if input_data.profession_id is not None:
-        query = select(User).where(User.profession_id == input_data.profession_id)
+        query = select(User).where(
+            User.profession_id == input_data.profession_id
+        )
     elif input_data.user_uuid_list is not None:
         query = select(User).where(User.id.in_(input_data.user_uuid_list))
     else:
@@ -209,7 +220,9 @@ async def get_report(
         return StreamingResponse(
             BytesIO(excel_io.getvalue()),
             media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            headers={'Content-Disposition': 'attachment; filename="journals.xlsx"'}
+            headers={
+                'Content-Disposition': 'attachment; filename="journals.xlsx"'
+            },
         )
 
     return wb
