@@ -1,33 +1,49 @@
-FROM python:3.10.2-bullseye
+# Stage 1: Build
+FROM python:3.10-slim as build
 LABEL authors="s-storozhuk"
 
-RUN apt-get update && apt-get upgrade -y && \
-  apt-get -y install \
-    pip \
-    bash \
-    expect \
+# Устанавливаем необходимые системные зависимости
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
-    htop \
-    iputils-ping \
-    python3-aiofiles \
-    vim \
     openssl \
-    libssl-dev \
-  && apt-get clean
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir /app
+# Устанавливаем Poetry
+RUN pip install --no-cache-dir poetry==1.4.0
 
-RUN pip install --no-cache poetry==1.4.0
+# Устанавливаем рабочую директорию
+WORKDIR /app
 
+# Копируем зависимости
 COPY pyproject.toml poetry.lock /app/
-COPY src/ /app/src
-RUN mkdir /app/src/logs
-RUN touch /app/src/logs/app.log
 
-ENV PYTHONPATH "${PYTHONPATH}:/app/src"
+# Устанавливаем зависимости (без dev-зависимостей)
+RUN poetry config virtualenvs.create false && poetry install --no-dev
+
+# Stage 2: Final
+FROM python:3.10-slim
+LABEL authors="s-storozhuk"
+
+# Устанавливаем необходимые системные зависимости
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Копируем приложение из build-этапа
+COPY --from=build /app /app
+
+# Создаём папку для логов
+RUN mkdir -p /app/src/logs && touch /app/src/logs/app.log
+
+# Настраиваем переменные окружения
+ENV PYTHONPATH="/app/src"
 ENV PYTHONUNBUFFERED=TRUE
 
-RUN cd /app && poetry config virtualenvs.create false && poetry install
-
+# Устанавливаем рабочую директорию
 WORKDIR /app/src
+
+# Команда по умолчанию
+CMD ["python", "main.py"]

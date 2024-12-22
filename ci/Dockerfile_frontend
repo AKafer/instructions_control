@@ -1,29 +1,40 @@
-FROM node:18-bullseye
+# Stage 1: Build
+FROM node:18-alpine as build
 
-WORKDIR /frontend/
+# Устанавливаем рабочую директорию
+WORKDIR /frontend
 
-RUN apt-get update && apt-get upgrade -y && \
-  apt-get -y install \
-    pip \
+# Устанавливаем необходимые пакеты
+RUN apk add --no-cache \
     bash \
-    expect \
     curl \
     git \
-    htop \
-    iputils-ping \
-    python3-aiofiles \
-    vim \
     openssl \
-    libssl-dev \
-  && apt-get clean
+    libssl1.1
 
-COPY frontend/src/ /frontend/src
-COPY frontend/public/ /frontend/public
+# Копируем только необходимые файлы
 COPY frontend/package.json /frontend/
-
 RUN npm install
 
-# Добавьте шаг сборки
+# Копируем исходный код
+COPY frontend/src /frontend/src
+COPY frontend/public /frontend/public
+
+# Сборка фронтенда
 RUN npm run build
 
+# Stage 2: Final
+FROM node:18-alpine
+
+# Устанавливаем рабочую директорию
+WORKDIR /frontend
+
+# Копируем только собранный артефакт
+COPY --from=build /frontend/build /frontend/build
+
+# Устанавливаем только зависимости для продакшена
+COPY frontend/package.json /frontend/
+RUN npm install --production
+
+# Запуск приложения
 CMD ["npm", "start"]
