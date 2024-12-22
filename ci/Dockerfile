@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
     openssl \
+    libssl-dev \
+    libpq-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -20,14 +22,14 @@ WORKDIR /app
 COPY pyproject.toml poetry.lock /app/
 
 # Устанавливаем зависимости (без dev-зависимостей)
-RUN poetry config virtualenvs.create false && poetry install --no-dev
+RUN poetry config virtualenvs.create false && poetry install --only main
 
 # Stage 2: Final
 FROM python:3.10-slim
-LABEL authors="s-storozhuk"
 
 # Устанавливаем необходимые системные зависимости
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
     curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
