@@ -24,8 +24,8 @@ WORKDIR /app
 # Копируем зависимости
 COPY pyproject.toml poetry.lock /app/
 
-# Устанавливаем зависимости (без dev-зависимостей)
-RUN poetry config virtualenvs.create false && poetry install --only main
+# Устанавливаем зависимости
+RUN poetry config virtualenvs.create false && poetry install --no-dev
 
 # Stage 2: Final
 FROM python:3.10-slim
@@ -37,8 +37,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Копируем приложение из build-этапа
+# Копируем приложение и зависимости из build-этапа
 COPY --from=build /app /app
+COPY --from=build /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=build /usr/local/bin /usr/local/bin
 
 # Создаём папку для логов
 RUN mkdir -p /app/src/logs && touch /app/src/logs/app.log
