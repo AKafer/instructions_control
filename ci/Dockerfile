@@ -9,6 +9,7 @@ RUN apt-get update && apt-get upgrade -y && \
     curl \
     git \
     htop \
+    iputils-ping \
     python3-aiofiles \
     vim \
     openssl \
@@ -21,6 +22,8 @@ RUN pip install --no-cache poetry==1.4.0
 
 COPY pyproject.toml poetry.lock /app/
 COPY src/ /app/src
+RUN mkdir /app/src/logs
+RUN touch /app/src/logs/app.log
 
 ENV PYTHONPATH "${PYTHONPATH}:/app/src"
 ENV PYTHONUNBUFFERED=TRUE
