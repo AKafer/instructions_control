@@ -49,6 +49,3 @@ ENV PYTHONUNBUFFERED=TRUE
 
 # Устанавливаем рабочую директорию
 WORKDIR /app/src
-
-# Команда по умолчанию
-CMD ["python", "main.py"]
