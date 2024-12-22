@@ -21,17 +21,26 @@ pipeline {
         }
         stage("update docker backend image") {
             steps {
-                echo " ============== start building image =================="
+                echo " ============== start building backend image =================="
                 dir ('.') {
                 	sh 'docker build -t akafer/ins_control -f  ./ci/Dockerfile .'
                 }
             }
         }
+        stage("update docker frontend image") {
+            steps {
+                echo " ============== start building frontend image =================="
+                dir ('.') {
+                	sh 'docker build -t akafer/ins_control_frontend -f  ./ci/Dockerfile_frontend .'
+                }
+            }
+        }
         stage("docker push") {
             steps {
-                echo " ============== start pushing image =================="
+                echo " ============== start pushing images =================="
                 sh '''
                 docker push akafer/ins_control
+                docker push akafer/ins_control_frontend
                 '''
             }
         }
@@ -47,7 +56,7 @@ pipeline {
         stage("renew server") {
             steps {
                 echo " ============== go to server =================="
-                sh 'ssh root@ub1 "cd /root/app/INS_CONTROL && docker-compose down --remove-orphans && docker pull akafer/ins_control && docker-compose up -d"'
+                sh 'ssh root@ub1 "cd /root/app/INS_CONTROL && docker-compose down --remove-orphans && docker pull akafer/ins_control && docker pull akafer/ins_control_frontend && docker-compose up -d"'
             }
         }
     }
