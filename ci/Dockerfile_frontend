@@ -1,16 +1,14 @@
-# Stage 1: Build
-FROM node:18-alpine as build
+FROM node:18-slim as build
 
 # Устанавливаем рабочую директорию
 WORKDIR /frontend
 
 # Устанавливаем необходимые пакеты
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     bash \
     curl \
     git \
-    openssl \
-    libssl1.1
+    openssl
 
 # Копируем только необходимые файлы
 COPY frontend/package.json /frontend/
@@ -24,7 +22,7 @@ COPY frontend/public /frontend/public
 RUN npm run build
 
 # Stage 2: Final
-FROM node:18-alpine
+FROM node:18-slim
 
 # Устанавливаем рабочую директорию
 WORKDIR /frontend

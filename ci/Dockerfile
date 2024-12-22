@@ -9,6 +9,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     libssl-dev \
     libpq-dev \
+    gcc \
+    make \
+    build-essential \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
