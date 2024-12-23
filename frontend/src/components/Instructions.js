@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import DataTable from 'react-data-table-component';
-import '../styles/Instructions.css'; // Убедитесь, что этот файл существует и подключен
+import '../styles/Instructions.css';
+import { apiBaseUrl } from './Home';
 
-const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || `http://0.0.0.0:8700`;
+
 
 const Instructions = () => {
   const [instructions, setInstructions] = useState([]);

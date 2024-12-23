@@ -1,3 +1,4 @@
+# Stage 1: Build
 FROM node:18-slim as build
 
 # Устанавливаем рабочую директорию
@@ -10,11 +11,13 @@ RUN apt-get update && apt-get install -y \
     git \
     openssl
 
-# Копируем только необходимые файлы
-COPY frontend/package.json /frontend/
+# Копируем файлы package.json и package-lock.json
+COPY frontend/package.json frontend/package-lock.json /frontend/
+
+# Устанавливаем зависимости
 RUN npm install
 
-# Копируем исходный код
+# Копируем исходный код и публичные файлы
 COPY frontend/src /frontend/src
 COPY frontend/public /frontend/public
 
@@ -27,12 +30,15 @@ FROM node:18-slim
 # Устанавливаем рабочую директорию
 WORKDIR /frontend
 
-# Копируем только собранный артефакт
+# Копируем только собранные файлы
 COPY --from=build /frontend/build /frontend/build
 
 # Устанавливаем только зависимости для продакшена
-COPY frontend/package.json /frontend/
+COPY frontend/package.json frontend/package-lock.json /frontend/
 RUN npm install --production
 
+# Настройка порта (опционально)
+ENV PORT=3000
+
 # Запуск приложения
-CMD ["npm", "start"]
+CMD ["npx", "serve", "-s", "build", "-l", "3000"]

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import '../styles/HomePage.css';
 
-const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || `http://0.0.0.0:8700`;
+export const apiBaseUrl = 'http://localhost:8500';
 
 const Home = () => {
   const [instructions, setInstructions] = useState([]);

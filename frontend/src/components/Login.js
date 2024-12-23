@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode'; // Исправленный импорт
+import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
-import '../styles/LoginPage.css'; // Импорт стилей
-
-const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'http://0.0.0.0:8700';
+import '../styles/LoginPage.css';
+import { apiBaseUrl } from './Home';
 
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('');
