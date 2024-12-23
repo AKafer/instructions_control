@@ -28,7 +28,7 @@ services:
       && python3 /app/src/scripts/create_user.py
       && python3 /app/src/run.py --port=8500"
     env_file:
-      - .env_prod
+      - .env
     volumes:
         - ./files:/app/src/static
     depends_on:
