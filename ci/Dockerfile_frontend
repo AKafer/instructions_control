@@ -27,6 +27,9 @@ RUN npm run build
 # Stage 2: Final
 FROM node:18-slim
 
+# Устанавливаем необходимые системные утилиты
+RUN apt-get update && apt-get install -y gettext && apt-get clean
+
 # Устанавливаем рабочую директорию
 WORKDIR /frontend
 
@@ -37,8 +40,8 @@ COPY --from=build /frontend/build /frontend/build
 COPY frontend/package.json frontend/package-lock.json /frontend/
 RUN npm install --production
 
-# Настройка порта (опционально)
+# Настройка порта
 ENV PORT=3000
 
-# Запуск приложения
+# Запуск приложения с подменой переменных
 CMD ["npx", "serve", "-s", "build", "-l", "3000"]

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
 import '../styles/LoginPage.css';
-import { apiBaseUrl } from './Home';
+import { apiBaseUrl } from '../config';
 
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('');

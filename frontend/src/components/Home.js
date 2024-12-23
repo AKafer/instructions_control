@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import '../styles/HomePage.css';
+import { apiBaseUrl } from '../config';
 
-export const apiBaseUrl = 'http://localhost:8500';
 
 const Home = () => {
   const [instructions, setInstructions] = useState([]);
