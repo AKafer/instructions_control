@@ -1,9 +1,9 @@
 .admin-header {
+  background-color: #cce6ff; /* Голубой фон для шапки */
+  padding: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
-  background-color: #f0f0f0;
 }
 
 .admin-header h1 {
@@ -22,4 +22,3 @@
 .admin-header button:hover {
   background-color: #0056b3;
 }
-

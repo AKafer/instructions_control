@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '../httpClient';
 import '../styles/HomePage.css';
 import { apiBaseUrl } from '../config';
 
@@ -122,7 +122,7 @@ const Home = () => {
               className="acknowledge-button"
               onClick={() => setSelectedInstructionId(instruction.id)}
             >
-              Acknowledge
+              Ознакомиться
             </button>
 
             {/* Signature submission form */}

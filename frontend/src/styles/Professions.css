@@ -1,52 +1,118 @@
-.professions-container {
+.professions-wrapper {
   padding: 20px;
 }
 
-.professions-container h2 {
+.professions-header {
+  background-color: #cce6ff; /* голубенькая шапка */
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.professions-header h2 {
+  margin: 0;
+}
+
+.professions-buttons {
+  display: flex;
+  gap: 10px;
   margin-bottom: 20px;
 }
 
-.add-profession-button {
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
+.professions-buttons button {
+  padding: 8px 16px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  margin-bottom: 20px;
+  background-color: #007bff;
+  color: #fff;
 }
 
-.add-profession-button:hover {
-  background-color: #0056b3;
+.professions-buttons button:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
 }
 
 .form-container {
   margin-bottom: 20px;
 }
 
-.form-container h3 {
-  margin-bottom: 10px;
-}
-
-.form-container input,
-.form-container textarea {
-  display: block;
-  width: 100%;
-  margin-bottom: 10px;
-  padding: 10px;
+.outlined-box {
   border: 1px solid #ccc;
+  padding: 15px;
   border-radius: 4px;
+  background-color: #f9f9f9;
 }
 
-.form-container button {
-  padding: 10px 20px;
-  background-color: #28a745;
-  color: white;
+.field {
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ошибки при создании (title обязательно) */
+.field.error label {
+  color: red;
+  font-weight: 600;
+}
+
+.field.error input,
+.field.error textarea {
+  border: 1px solid red;
+}
+
+.error-hint {
+  color: red;
+  font-size: 0.85em;
+  margin-top: 4px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* Модалка подтверждения удаления */
+.confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.confirm-box {
+  background: #fff;
+  padding: 20px;
+  border-radius: 6px;
+  min-width: 300px;
+}
+
+.confirm-box p {
+  margin-bottom: 20px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.confirm-actions button {
+  padding: 6px 12px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  background-color: #007bff;
+  color: #fff;
 }
 
-.form-container button:hover {
-  background-color: #218838;
+.confirm-actions button:hover {
+  background-color: #0056b3;
 }

@@ -1,19 +1,44 @@
 import React from 'react';
+import { Link, Routes, Route } from 'react-router-dom';
+import '../styles/AdminHeader.css';  // Голубая шапка
+import '../styles/AdminMenu.css';    // Вертикальное меню
 import Professions from './Professions';
+import Instructions from './Instructions'; // <-- Импортируем инструкции
 
 const Admin = () => {
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  };
+
   return (
     <div>
       <header className="admin-header">
-        <h1>Admin Dashboard</h1>
-        <button onClick={() => {
-          localStorage.removeItem('token');
-          window.location.href = '/login';
-        }}>
-          Logout
-        </button>
+        <h1>Панель администратора</h1>
+        <button onClick={handleLogout}>Logout</button>
       </header>
-      <Professions />
+
+      {/* Меню (вертикальные синие прямоугольники) */}
+      <nav className="admin-menu">
+        <Link to="professions" className="admin-menu-item">
+          Профессии
+        </Link>
+        <Link to="instructions" className="admin-menu-item">
+          Инструкции
+        </Link>
+        <Link to="tests" className="admin-menu-item">
+          Тесты
+        </Link>
+      </nav>
+
+      {/* Вложенные роуты */}
+      <div style={{ marginTop: '20px' }}>
+        <Routes>
+          <Route path="professions" element={<Professions />} />
+          <Route path="instructions" element={<Instructions />} />
+          {/* <Route path="tests" element={<Tests />} /> */}
+        </Routes>
+      </div>
     </div>
   );
 };

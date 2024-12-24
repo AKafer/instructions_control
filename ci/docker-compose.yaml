@@ -16,6 +16,8 @@ services:
       retries: 3
     networks:
       - control
+    ports:
+      - "5433:5432"
 
   app:
     container_name: control_app
