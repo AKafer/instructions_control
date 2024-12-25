@@ -22,6 +22,7 @@ RUN pip install --no-cache poetry==1.4.0
 
 COPY pyproject.toml poetry.lock /app/
 COPY src/ /app/src
+RUN rm -rf /app/src/logs
 RUN mkdir /app/src/logs
 RUN touch /app/src/logs/app.log
 

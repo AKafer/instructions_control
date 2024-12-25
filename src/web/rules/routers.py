@@ -11,6 +11,7 @@ from starlette.exceptions import HTTPException
 from main_schemas import ResponseErrorBody
 from web.exceptions import ItemNotFound, DuplicateError
 from web.journals.services import add_lines_to_journals_for_new_rule, remove_lines_to_journals_for_delete_rule
+from web.rules.filters import RulesFilter
 from web.rules.schemas import Rule, RuleCreateInput
 from web.rules.services import check_constraints
 from web.users.users import current_superuser
@@ -20,9 +21,11 @@ router = APIRouter(prefix="/rules", tags=["rules"], dependencies=[Depends(curren
 
 @router.get("/", response_model=list[Rule])
 async def get_all_rules(
+    rules_filter: RulesFilter = Depends(RulesFilter),
     db_session: AsyncSession = Depends(get_db_session),
 ):
     query = select(Rules).order_by(Rules.id.desc())
+    query = rules_filter.filter(query)
     rules = await db_session.execute(query)
     return rules.scalars().all()
 

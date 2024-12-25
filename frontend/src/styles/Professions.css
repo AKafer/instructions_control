@@ -15,7 +15,7 @@
 
 .professions-buttons {
   display: flex;
-  gap: 10px;
+  gap: 10px; /* Промежуток между кнопками */
   margin-bottom: 20px;
 }
 
@@ -115,4 +115,78 @@
 
 .confirm-actions button:hover {
   background-color: #0056b3;
+}
+
+/* Добавленные стили для react-select */
+.react-select__menu {
+  z-index: 1000; /* Обеспечивает отображение меню поверх других элементов */
+}
+
+.react-select__control {
+  min-height: 38px;
+}
+
+.react-select__menu-list {
+  max-height: 300px; /* Ограничение высоты меню */
+  overflow-y: auto;
+}
+
+.react-select__option {
+  padding: 10px;
+}
+
+.react-select__option--is-focused {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.react-select__option--is-selected {
+  background-color: #0056b3;
+  color: #fff;
+}
+
+/* Стили для выбранных значений (тэги) */
+.react-select__multi-value {
+  background-color: #e0e0e0;
+}
+
+.react-select__multi-value__label {
+  color: #333;
+}
+
+.react-select__multi-value__remove {
+  color: #666;
+}
+
+.react-select__multi-value__remove:hover {
+  background-color: #ccc;
+  color: #000;
+}
+
+/* Дополнительные стили для улучшения визуального восприятия */
+.react-select__control {
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.react-select__control--is-focused {
+  border-color: #007bff;
+  box-shadow: 0 0 0 1px #007bff;
+}
+
+.react-select__placeholder {
+  color: #888;
+}
+
+.react-select__indicator-separator {
+  display: none;
+}
+
+.react-select__dropdown-indicator {
+  color: #007bff;
+}
+
+.react-select__multi-value__remove:hover {
+  background-color: #bbb;
+  color: #fff;
 }

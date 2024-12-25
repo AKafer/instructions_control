@@ -39,26 +39,48 @@ const Instructions = () => {
 
   // ------------------ HOOK: При загрузке компонента ------------------
   useEffect(() => {
-    fetchInstructions();
+    fetchAllInstructions();
   }, []);
 
-  // ------------------ ФУНКЦИЯ ПОЛУЧЕНИЯ СПИСКА (возвращает массив) ------------------
-  const fetchInstructions = async () => {
+  // ------------------ ФУНКЦИЯ ЗАГРУЗКИ ВСЕХ ИНСТРУКЦИЙ ------------------
+  const fetchAllInstructions = async (inputValue = '') => {
     setLoading(true);
+    const token = localStorage.getItem('token');
+    let page = 1;
+    const size = 50; // Размер страницы
+    let allInstructions = [];
+    let hasMore = true;
+
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${apiBaseUrl}/api/v1/instructions/`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        },
-      });
-      const updatedItems = response.data.items || [];
-      setInstructions(updatedItems);
-      return updatedItems; // <-- возвращаем, чтобы использовать после обновления
+      while (hasMore) {
+        const response = await axios.get(`${apiBaseUrl}/api/v1/instructions/`, {
+          params: { page, size, search: inputValue },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
+        });
+
+        const data = response.data.items || [];
+        const formattedData = data.map((instruction) => ({
+          ...instruction,
+          link: instruction.link || '', // Убедитесь, что поле link существует
+        }));
+
+        allInstructions = [...allInstructions, ...formattedData];
+
+        // Проверяем, есть ли ещё страницы
+        if (data.length < size) {
+          hasMore = false;
+        } else {
+          page += 1;
+        }
+      }
+
+      setInstructions(allInstructions);
+      console.log('Все инструкции загружены:', allInstructions);
     } catch (error) {
-      console.error('Error fetching instructions:', error);
-      return [];
+      console.error('Ошибка при загрузке инструкций:', error);
     } finally {
       setLoading(false);
     }
@@ -115,7 +137,7 @@ const Instructions = () => {
       });
 
       // Обновляем список
-      await fetchInstructions();
+      await fetchAllInstructions();
 
       // Сбрасываем форму и ошибки
       setNewTitle('');
@@ -126,7 +148,7 @@ const Instructions = () => {
       setCreateErrors({ title: false, file: false });
       setShowCreateForm(false);
     } catch (error) {
-      console.error('Error creating instruction:', error);
+      console.error('Ошибка при создании инструкции:', error);
     }
   };
 
@@ -156,6 +178,10 @@ const Instructions = () => {
       formData.append('iteration', editIteration);
 
       // Если нужно редактировать файл, тоже append('file', ...)
+      // Например:
+      // if (newFile) {
+      //   formData.append('file', newFile);
+      // }
 
       await axios.patch(
         `${apiBaseUrl}/api/v1/instructions/${selectedInstruction.id}`,
@@ -169,19 +195,12 @@ const Instructions = () => {
       );
 
       // После успешного PATCH — список с обновлёнными данными
-      const updatedItems = await fetchInstructions();
-
-      // Находим в updatedItems ту же инструкцию
-      const updated = updatedItems.find(
-        (item) => item.id === selectedInstruction.id
-      );
-      if (updated) {
-        setSelectedInstruction(updated);
-      }
+      await fetchAllInstructions();
 
       setShowEditForm(false);
+      setSelectedInstruction(null);
     } catch (error) {
-      console.error('Error editing instruction:', error);
+      console.error('Ошибка при редактировании инструкции:', error);
     }
   };
 
@@ -209,10 +228,10 @@ const Instructions = () => {
         }
       );
 
-      const updatedItems = await fetchInstructions();
+      await fetchAllInstructions();
       setSelectedInstruction(null); // сбрасываем выбор
     } catch (error) {
-      console.error('Error deleting instruction:', error);
+      console.error('Ошибка при удалении инструкции:', error);
     } finally {
       // В любом случае скрываем окно подтверждения
       setShowDeleteConfirm(false);
