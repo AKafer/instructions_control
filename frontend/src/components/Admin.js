@@ -1,3 +1,5 @@
+// src/components/Admin.js
+
 import React from 'react';
 import { Link, Routes, Route } from 'react-router-dom';
 import '../styles/AdminHeader.css';  // Голубая шапка
@@ -5,6 +7,7 @@ import '../styles/AdminMenu.css';    // Вертикальное меню
 import Professions from './Professions';
 import Instructions from './Instructions';
 import Divisions from './Divisions';
+import Users from './Users'; // <-- Импортируем Users
 
 const Admin = () => {
   const handleLogout = () => {
@@ -27,8 +30,11 @@ const Admin = () => {
         <Link to="instructions" className="admin-menu-item">
           Инструкции
         </Link>
-        <Link to="divisions" className="admin-menu-item"> {/* Добавляем ссылку на подразделения */}
+        <Link to="divisions" className="admin-menu-item">
           Подразделения
+        </Link>
+        <Link to="users" className="admin-menu-item"> {/* Добавляем ссылку на пользователей */}
+          Пользователи
         </Link>
         <Link to="tests" className="admin-menu-item">
           Тесты
@@ -40,7 +46,8 @@ const Admin = () => {
         <Routes>
           <Route path="professions" element={<Professions />} />
           <Route path="instructions" element={<Instructions />} />
-          <Route path="divisions" element={<Divisions />} /> {/* Добавляем маршрут */}
+          <Route path="divisions" element={<Divisions />} />
+          <Route path="users" element={<Users />} /> {/* Добавляем маршрут */}
           {/* <Route path="tests" element={<Tests />} /> */}
         </Routes>
       </div>
