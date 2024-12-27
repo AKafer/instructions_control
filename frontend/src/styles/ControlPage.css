@@ -1,0 +1,256 @@
+/* src/styles/ControlPage.css */
+
+.control-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  background: linear-gradient(
+    135deg,
+    rgba(106, 176, 76, 0.6) 0%,
+    rgba(186, 220, 88, 0.6) 100%
+  );
+  color: #fff;
+  padding: 0 20px 20px 20px; /* Уменьшен верхний отступ с 10px до 0 */
+  box-sizing: border-box;
+}
+
+.control-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 10px; /* Уменьшен отступ снизу с 15px до 10px */
+}
+
+.control-logo {
+  width: 400px; /* Осталось без изменений */
+  margin-bottom: 0;
+}
+
+.logout-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px; /* Уменьшен внутренний отступ с 10px 20px до 8px 16px */
+  cursor: pointer;
+  font-size: 14px; /* Уменьшен размер шрифта с 16px до 14px */
+  transition: background-color 0.3s;
+}
+
+.logout-button:hover {
+  background-color: #0056b3;
+}
+
+.error-message {
+  color: #ff4d4d;
+  margin-bottom: 15px; /* Уменьшен отступ снизу с 20px до 15px */
+  text-align: center;
+  font-size: 16px;
+}
+
+.instructions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 15px; /* Осталось без изменений */
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 15px; /* Уменьшен отступ снизу с 20px до 15px */
+}
+
+.instruction-item {
+  background-color: rgba(255, 255, 255, 0.9); /* Светлый фон */
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  /* Удалена фиксированная высота для адаптивности */
+  overflow: hidden; /* Скрыть переполнение */
+}
+
+.instruction-item.empty-item {
+  background-color: rgba(128, 128, 128, 0.3);
+}
+
+.instruction-details {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.4; /* Уменьшенный межстрочный интервал */
+  /* Удалены overflow и text-overflow для разрешения переноса */
+}
+
+.instruction-details h3 {
+  font-size: 16px; /* Уменьшенный размер шрифта */
+  margin-bottom: 8px;
+  /* Удалены свойства, препятствующие переносу текста */
+  white-space: normal; /* Позволяет переносу на новую строку */
+  overflow: visible; /* Позволяет тексту отображаться полностью */
+  text-overflow: unset; /* Убирает многоточие */
+}
+
+.journal-details {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #555;
+  line-height: 1.2; /* Уменьшенный межстрочный интервал */
+  overflow: hidden; /* Скрыть переполнение */
+  text-overflow: ellipsis;
+}
+
+.acknowledge-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px; /* Уменьшен внутренний отступ с 8px 12px до 6px 12px */
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+  margin-top: 10px;
+}
+
+.acknowledge-button:hover {
+  background-color: #0056b3;
+}
+
+.signature-form {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.signature-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.submit-signature-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.submit-signature-button:hover {
+  background-color: #218838;
+}
+
+.cancel-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.cancel-button:hover {
+  background-color: #0056b3;
+}
+
+.contacts {
+  margin-top: 15px; /* Уменьшенный отступ сверху с 20px до 15px */
+  width: 100%;
+  max-width: 600px;
+  color: #fff;
+  text-align: center;
+}
+
+.contacts h3 {
+  margin-bottom: 8px; /* Уменьшенный отступ снизу с 10px до 8px */
+  font-size: 20px;
+}
+
+.contacts p {
+  margin: 4px 0; /* Уменьшенный отступ с 5px 0 до 4px 0 */
+  font-size: 14px;
+}
+
+.contacts a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.contacts a:hover {
+  text-decoration: underline;
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+  .control-header {
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px; /* Уменьшенный отступ */
+  }
+
+  .control-logo {
+    width: 80%; /* Уменьшенный размер логотипа на мобильных */
+    margin-bottom: 10px;
+  }
+
+  .logout-button {
+    width: 80%;
+    padding: 6px 12px; /* Уменьшенный внутренний отступ */
+    font-size: 14px;
+  }
+
+  .instructions-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px; /* Уменьшенный gap */
+    margin-bottom: 15px; /* Уменьшенный отступ снизу */
+  }
+
+  .instruction-item {
+    padding: 10px;
+  }
+
+  .instruction-details h3 {
+    font-size: 14px;
+    white-space: normal; /* Позволяет заголовкам переноситься */
+    overflow: visible; /* Позволяет тексту отображаться полностью */
+    text-overflow: unset; /* Убирает многоточие */
+  }
+
+  .instruction-details {
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .journal-details {
+    font-size: 10px;
+    line-height: 1.1;
+  }
+
+  .acknowledge-button {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .submit-signature-button,
+  .cancel-button {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .contacts h3 {
+    font-size: 18px;
+  }
+
+  .contacts p {
+    font-size: 12px;
+  }
+}

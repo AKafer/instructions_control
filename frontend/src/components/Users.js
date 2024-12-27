@@ -768,14 +768,19 @@ const Users = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {selectedUser.instructions.map((instr) => (
-                    <tr key={instr.id}>
-                      <td>{instr.title}</td>
-                      <td>{instr.number}</td>
-                      <td>{instr.journal?.valid ? 'Действительна' : 'Не действительна'}</td>
-                      <td>{instr.journal?.remain_days !== undefined ? `${instr.journal.remain_days} дней` : 'Нет'}</td>
-                    </tr>
-                  ))}
+                  {selectedUser.instructions
+                    .filter(
+                      (instr) =>
+                        instr.journal?.actual === true || !instr.journal
+                    )
+                    .map((instr) => (
+                      <tr key={instr.id}>
+                        <td>{instr.title}</td>
+                        <td>{instr.number}</td>
+                        <td>{instr.journal?.valid ? 'Действительна' : 'Не действительна'}</td>
+                        <td>{instr.journal?.remain_days !== undefined ? `${instr.journal.remain_days} дней` : 'Нет'}</td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             ) : (

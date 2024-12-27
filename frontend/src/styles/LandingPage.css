@@ -1,0 +1,77 @@
+/* src/styles/LandingPage.css */
+
+.landing-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100vh;
+  background: linear-gradient(
+    135deg,
+    rgba(106, 176, 76, 0.6) 0%, /* Более голубой с прозрачностью */
+    rgba(186, 220, 88, 0.6) 100% /* Светло-зеленый с прозрачностью */
+  );
+  color: #fff;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.landing-logo {
+  width: 600px;
+  margin-bottom: 20px;
+  margin-top: 0;
+}
+
+.login-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 15px 30px;
+  cursor: pointer;
+  font-size: 18px;
+  margin-bottom: 40px;
+  transition: background-color 0.3s;
+}
+
+.login-button:hover {
+  background-color: #0056b3;
+}
+
+.slogans {
+  margin-bottom: 20px;
+}
+
+.slogans h1 {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.slogans p {
+  font-size: 18px;
+}
+
+.contacts {
+  margin-top: 20px;
+  width: 100%;
+  max-width: 600px;
+  color: #fff;
+  text-align: center;
+}
+
+.contacts h3 {
+  margin-bottom: 10px;
+}
+
+.contacts p {
+  margin: 5px 0;
+}
+
+.contacts a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.contacts a:hover {
+  text-decoration: underline;
+}

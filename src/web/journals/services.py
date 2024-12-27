@@ -138,8 +138,18 @@ async def add_lines_to_journals_for_new_rule(
     query = select(User.id).where(User.profession_id == profession_id)
     users_ids = await db_session.scalars(query)
     for user_id in users_ids:
-        journal = Journals(user_uuid=user_id, instruction_id=instruction_id)
-        db_session.add(journal)
+        query = select(Journals).where(
+            and_(
+                Journals.user_uuid == user_id,
+                Journals.instruction_id == instruction_id
+            )
+        )
+        journal = await db_session.scalar(query)
+        if journal is None:
+            journal = Journals(user_uuid=user_id, instruction_id=instruction_id)
+            db_session.add(journal)
+        else:
+            journal.actual = True
     await db_session.commit()
 
 
