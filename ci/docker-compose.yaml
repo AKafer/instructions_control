@@ -19,6 +19,20 @@ services:
     ports:
       - "5433:5432"
 
+  nginx:
+    container_name: control_nginx
+    image: nginx:stable-alpine
+    restart: on-failure
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - app
+      - frontend
+    networks:
+      - control
+
   app:
     container_name: control_app
     image: akafer/ins_control
@@ -68,11 +82,11 @@ services:
       - app
     networks:
       - control
-    command: >
-      sh -c "
-      echo \"window._env_ = { REACT_APP_API_BASE_URL: '${API_BASE_URL}' };\" > /frontend/build/env-config.js &&
-      cat /frontend/build/env-config.js &&
-      npx serve -s build -l $SERVE_PORT"
+#    command: >
+#      sh -c "
+#      echo \"window._env_ = { REACT_APP_API_BASE_URL: '${API_BASE_URL}' };\" > /frontend/build/env-config.js &&
+#      cat /frontend/build/env-config.js &&
+#      npx serve -s build -l $SERVE_PORT"
 
 volumes:
   postgres_data:

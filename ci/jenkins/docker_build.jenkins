@@ -46,10 +46,12 @@ pipeline {
         }
         stage("copy docker_compose file") {
             steps {
-                echo " ============== copy docker-compose file =================="
+                echo " ============== copy files =================="
                 dir ('./ci') {
-                    sh 'scp docker-compose_prod.yaml root@ub1:/root/app/INS_CONTROL/docker-compose.yaml'
-
+                    sh '''
+                    scp docker-compose_prod.yaml root@ub1:/root/app/INS_CONTROL/docker-compose.yaml
+                    scp nginx.conf root@ub1:/root/app/INS_CONTROL/nginx.conf
+                    '''
                 }
             }
         }
