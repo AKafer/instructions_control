@@ -20,6 +20,7 @@ class QuestionCreateInput(BaseModel):
 
 
 class Question(BaseModel):
+    id: int
     question: str
     answers: list[dict]
     correct_answer: int
