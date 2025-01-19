@@ -1,9 +1,7 @@
-// src/components/Landing.js
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import logo from '../assets/logo.png';
-import '../styles/LandingPage.css';
+import logo from '../../assets/logo.png';
+import './styles.modules.css';
 import { Link } from 'react-router-dom';
 
 const Landing = () => {

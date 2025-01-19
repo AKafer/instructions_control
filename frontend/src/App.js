@@ -2,9 +2,7 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { Admin } from './pages';
-import Login from './components/Login';
-import Landing from './components/Landing';
+import { Admin, Login, Landing } from './pages';
 import Control from './components/Control';
 import PrivateRoute from './components/PrivateRoute'; // Создайте этот компонент
 
@@ -28,7 +26,7 @@ function App() {
           }
         />
 
-        {/* Защищенный маршрут для контроля */}
+
         <Route
           path="/control"
           element={

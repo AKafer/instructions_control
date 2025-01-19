@@ -5,11 +5,11 @@ import Professions from '../../components/Professions';
 import { Instructions } from '../index';
 import Divisions from '../../components/Divisions';
 import Users from '../../components/Users';
-import {Button, ButtonBox, Main} from '../../components'; // Импорт компонента Button
+import {Button, ButtonBox, Main} from '../../components';
 
 const Admin = () => {
   const navigate = useNavigate(); // Инициализация хука
-  const [selectedInstruction, setSelectedInstruction] = useState(null); // Пример состояния
+  const [selectedInstruction, setSelectedInstruction] = useState(null);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -20,7 +20,7 @@ const Admin = () => {
       <header className="admin-header">
         <h1>Панель администратора</h1>
         <Button
-          modifier='style_light-blue'
+          modifier='style_dark-blue'
           clickHandler={handleLogout}
         >
           Logout
