@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import './AdminHeader.css';
 import Professions from '../../components/Professions';
-import { Instructions } from '../index';
+import { Instructions, Tests } from '../index';
 import Divisions from '../../components/Divisions';
 import Users from '../../components/Users';
 import {Button, ButtonBox, Main} from '../../components';
@@ -73,7 +73,7 @@ const Admin = () => {
           <Route path="instructions" element={<Instructions />} />
           <Route path="divisions" element={<Divisions />} />
           <Route path="users" element={<Users />} />
-          {/* <Route path="tests" element={<Tests />} /> */}
+          <Route path="tests" element={<Tests />} />
         </Routes>
       </div>
   </Main>;

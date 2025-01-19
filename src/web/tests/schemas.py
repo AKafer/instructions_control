@@ -56,12 +56,24 @@ class TestPassInput(BaseModel):
     user_answers: list[QuestionUserAnswers]
 
 
+class Instruction(BaseModel):
+    id: int
+    title: str
+    number: str | None = None
+    period: int | None = None
+    iteration: bool = False
+
+    class Config:
+        orm_mode = True
+
+
 class Test(BaseModel):
     id: int
     title: str
     description: str | None = None
     success_rate: int
     instruction_id: int
+    instruction: Instruction
     questions: list[Question]
 
     class Config:
