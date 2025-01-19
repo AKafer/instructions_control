@@ -2,12 +2,12 @@
 
 import React from 'react';
 import { Link, Routes, Route } from 'react-router-dom';
-import '../styles/AdminHeader.css';  // Голубая шапка
-import '../styles/AdminMenu.css';    // Вертикальное меню
-import Professions from './Professions';
-import Instructions from './Instructions';
-import Divisions from './Divisions';
-import Users from './Users'; // <-- Импортируем Users
+import './AdminHeader.css';
+import './AdminMenu.css';
+import Professions from '../../components/Professions';
+import { Instructions } from '../index';
+import Divisions from '../../components/Divisions';
+import Users from '../../components/Users';
 
 const Admin = () => {
   const handleLogout = () => {

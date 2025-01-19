@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import axios from '../httpClient';
+import axios from '../../httpClient';
 import DataTable from 'react-data-table-component';
-import '../styles/Instructions.css';
-import { apiBaseUrl } from '../config';
+import './Instructions.css';
+import { apiBaseUrl } from '../../config';
 
 const Instructions = () => {
   const [instructions, setInstructions] = useState([]);
