@@ -1,45 +1,70 @@
-// src/components/Admin.js
-
-import React from 'react';
-import { Link, Routes, Route } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import './AdminHeader.css';
-import './AdminMenu.css';
 import Professions from '../../components/Professions';
 import { Instructions } from '../index';
 import Divisions from '../../components/Divisions';
 import Users from '../../components/Users';
+import {Button, ButtonBox, Main} from '../../components'; // Импорт компонента Button
 
 const Admin = () => {
+  const navigate = useNavigate(); // Инициализация хука
+  const [selectedInstruction, setSelectedInstruction] = useState(null); // Пример состояния
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     window.location.href = '/login';
   };
 
-  return (
-    <div>
+  return <Main>
       <header className="admin-header">
         <h1>Панель администратора</h1>
-        <button onClick={handleLogout}>Logout</button>
+        <Button
+          modifier='style_light-blue'
+          clickHandler={handleLogout}
+        >
+          Logout
+        </Button>
       </header>
 
       {/* Меню (вертикальные синие прямоугольники) */}
-      <nav className="admin-menu">
-        <Link to="professions" className="admin-menu-item">
+      <ButtonBox>
+        <Button
+          modifier='style_dark-blue'
+          to="professions"
+        >
           Профессии
-        </Link>
-        <Link to="instructions" className="admin-menu-item">
+        </Button>
+
+        <Button
+          modifier='style_dark-blue'
+          to="instructions"
+        >
           Инструкции
-        </Link>
-        <Link to="divisions" className="admin-menu-item">
+        </Button>
+
+        <Button
+          modifier='style_dark-blue'
+          to="divisions"
+        >
           Подразделения
-        </Link>
-        <Link to="users" className="admin-menu-item"> {/* Добавляем ссылку на пользователей */}
+        </Button>
+
+        <Button
+          modifier='style_dark-blue'
+          className="admin-menu-item"
+          to="users"
+        >
           Пользователи
-        </Link>
-        <Link to="tests" className="admin-menu-item">
+        </Button>
+
+        <Button
+          modifier='style_dark-blue'
+          to="tests"
+        >
           Тесты
-        </Link>
-      </nav>
+        </Button>
+      </ButtonBox>
 
       {/* Вложенные роуты */}
       <div style={{ marginTop: '20px' }}>
@@ -47,12 +72,11 @@ const Admin = () => {
           <Route path="professions" element={<Professions />} />
           <Route path="instructions" element={<Instructions />} />
           <Route path="divisions" element={<Divisions />} />
-          <Route path="users" element={<Users />} /> {/* Добавляем маршрут */}
+          <Route path="users" element={<Users />} />
           {/* <Route path="tests" element={<Tests />} /> */}
         </Routes>
       </div>
-    </div>
-  );
+  </Main>;
 };
 
 export default Admin;

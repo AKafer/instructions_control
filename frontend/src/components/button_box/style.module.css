@@ -1,0 +1,7 @@
+.button_box {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  margin: 10px 0;
+  justify-content: flex-start;
+}

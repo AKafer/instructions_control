@@ -3,7 +3,7 @@ import cn from 'classnames'
 
 const Container = ({ children, className }) => {
   return <div className={cn(styles.container, className)}>
-    {children}
+      {children}
   </div>
 }
 

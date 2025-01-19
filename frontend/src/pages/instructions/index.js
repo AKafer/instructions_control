@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import axios from '../../httpClient';
 import DataTable from 'react-data-table-component';
-import './Instructions.css';
+import './styles.modules.css';
 import { apiBaseUrl } from '../../config';
+import { Button, ButtonBox, Container, Main } from '../../components'
+
 
 const Instructions = () => {
   const [instructions, setInstructions] = useState([]);
@@ -160,7 +162,7 @@ const Instructions = () => {
     setEditNumber(selectedInstruction.number || '');
     setEditPeriod(selectedInstruction.period || '');
     setEditIteration(!!selectedInstruction.iteration);
-    setShowEditForm(true);
+    setShowEditForm(!showEditForm);
   };
 
   // Сохранить изменения (PATCH multipart/form-data)
@@ -281,7 +283,7 @@ const Instructions = () => {
   };
 
   // ------------------ РЕНДЕР ------------------
-  return (
+  return <Container>
     <div className="instructions-wrapper">
       {/* Голубая шапка */}
       <div className="instructions-header">
@@ -289,23 +291,25 @@ const Instructions = () => {
       </div>
 
       {/* Кнопки */}
-      <div className="instructions-buttons">
-        <button
-          onClick={() => {
-            // При нажатии "Создать" скрываем форму редактирования
-            setShowCreateForm(true);
+      <ButtonBox>
+        <Button
+          modifier='style_dark-blue'
+          clickHandler={() => {
+            setShowCreateForm(!showCreateForm);
             setShowEditForm(false);
           }}
-        >
-          Создать
-        </button>
-        <button onClick={handleEditClick} disabled={!selectedInstruction}>
-          Редактировать
-        </button>
-        <button onClick={handleDeleteClick} disabled={!selectedInstruction}>
-          Удалить
-        </button>
-      </div>
+        >Создать</Button>
+        <Button
+          modifier='style_dark-blue'
+          clickHandler={handleEditClick}
+          disabled={!selectedInstruction}
+        >Редактировать</Button>
+        <Button
+          modifier='style_dark-blue'
+          clickHandler={handleDeleteClick}
+          disabled={!selectedInstruction}
+        >Удалить</Button>
+      </ButtonBox>
 
       {/* Форма создания (если showCreateForm == true) */}
       {showCreateForm && (
@@ -488,7 +492,7 @@ const Instructions = () => {
         </div>
       )}
     </div>
-  );
+  </Container>;
 };
 
 export default Instructions;

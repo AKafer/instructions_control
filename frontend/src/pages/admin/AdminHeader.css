@@ -1,24 +1,25 @@
 .admin-header {
-  background-color: #cce6ff; /* Голубой фон для шапки */
-  padding: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: flex;                 /* Включаем Flexbox */
+  justify-content: space-between; /* Размещаем элементы по краям */
+  align-items: center;           /* Выравниваем элементы по вертикали по центру */
+  padding: 20px;                 /* Добавляем отступы для эстетики */
+  background-color: #cce6ff;        /* Пример фона хедера */
+  color: #fff;                   /* Цвет текста */
 }
 
-.admin-header h1 {
-  margin: 0;
-}
+/*.admin-header h1 {*/
+/*  margin: 0;*/
+/*}*/
 
-.admin-header button {
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
+/*.admin-header button {*/
+/*  padding: 10px 20px;*/
+/*  background-color: #007bff;*/
+/*  color: white;*/
+/*  border: none;*/
+/*  border-radius: 4px;*/
+/*  cursor: pointer;*/
+/*}*/
 
-.admin-header button:hover {
-  background-color: #0056b3;
-}
+/*.admin-header button:hover {*/
+/*  background-color: #0056b3;*/
+/*}*/
