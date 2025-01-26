@@ -73,7 +73,7 @@ class UserCreate(schemas.BaseUserCreate):
     number: str | None
     started_work: datetime | None
     changed_profession: datetime | None
-    additional_features: AdditionalFeatures
+    additional_features: AdditionalFeatures | None
 
 
 class UserUpdate(schemas.BaseUserUpdate):
@@ -92,7 +92,7 @@ class UserUpdate(schemas.BaseUserUpdate):
     number: str | None
     started_work: datetime | None
     changed_profession: datetime | None
-    additional_features: AdditionalFeatures
+    additional_features: AdditionalFeatures | None
 
 
 class InstructionForUserList(BaseModel):
