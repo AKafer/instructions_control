@@ -22,6 +22,20 @@ class Division(BaseModel):
     class Config:
         orm_mode = True
 
+class AdditionalFeatures(BaseModel):
+    gender: str | None
+    height: int | None
+    clothing_size: int | None
+    shoe_size: int | None
+    head_size: int | None
+    mask_size: int | None
+    gloves_size: int | None
+    mitten_size: int | None
+
+    class Config:
+        extra = Extra.allow
+
+
 class UserRead(schemas.BaseUser[uuid.UUID]):
     email: EmailStr
     name: str
@@ -37,6 +51,10 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
     is_active: bool = Field(True, exclude=True)
     is_verified: bool = Field(False, exclude=True)
     is_superuser: bool = Field(False, exclude=True)
+    number: str | None
+    started_work: datetime | None
+    changed_profession: datetime | None
+    additional_features: AdditionalFeatures
 
 
 class UserCreate(schemas.BaseUserCreate):
@@ -52,6 +70,10 @@ class UserCreate(schemas.BaseUserCreate):
     is_active: bool = Field(True, exclude=True)
     is_verified: bool = Field(False, exclude=True)
     is_superuser: bool = Field(False, exclude=True)
+    number: str | None
+    started_work: datetime | None
+    changed_profession: datetime | None
+    additional_features: AdditionalFeatures
 
 
 class UserUpdate(schemas.BaseUserUpdate):
@@ -67,6 +89,10 @@ class UserUpdate(schemas.BaseUserUpdate):
     is_active: bool = Field(True, exclude=True)
     is_verified: bool = Field(False, exclude=True)
     is_superuser: bool = Field(False, exclude=True)
+    number: str | None
+    started_work: datetime | None
+    changed_profession: datetime | None
+    additional_features: AdditionalFeatures
 
 
 class InstructionForUserList(BaseModel):
@@ -91,3 +117,7 @@ class UserListRead(schemas.BaseUser[uuid.UUID]):
     is_active: bool = Field(True, exclude=True)
     is_verified: bool = Field(False, exclude=True)
     is_superuser: bool = Field(False, exclude=True)
+    number: str | None
+    started_work: datetime | None
+    changed_profession: datetime | None
+    additional_features: AdditionalFeatures

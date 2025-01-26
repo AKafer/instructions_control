@@ -7,7 +7,23 @@ from database.models import User, Professions, Divisions
 from database.orm import Session
 from web.instructions.services import get_full_link as get_full_link_ins
 from web.journals.services import get_full_link as get_full_link_sign
+from web.users.schemas import UserUpdate
 
+
+async def merge_additional_features(
+    user: User, user_update: UserUpdate
+) -> UserUpdate:
+    new_addf = user_update.additional_features
+    old_addf = user.additional_features
+    if new_addf is not None:
+        for key, value in old_addf.items():
+            if hasattr(new_addf, key):
+                param = getattr(new_addf, key)
+                if param is None:
+                    setattr(new_addf, key, value)
+            else:
+                setattr(new_addf, key, value)
+    return user_update
 
 async def peak_personal_journal(request: Request, user: User) -> User:
     if not user.is_superuser:

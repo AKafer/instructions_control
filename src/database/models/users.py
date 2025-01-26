@@ -1,10 +1,8 @@
-from datetime import datetime
-
 from fastapi import Depends
 
 
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
-from sqlalchemy import String, Boolean, ForeignKey, func
+from sqlalchemy import String, Boolean, ForeignKey, JSON
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import expression
@@ -44,6 +42,12 @@ class User(SQLAlchemyBaseUserTableUUID, BaseModel):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    number: Mapped[str] = mapped_column(String(length=320), nullable=True)
+    started_work: Mapped[str] = mapped_column(DateTime(timezone=True), nullable=True)
+    changed_profession: Mapped[str] = mapped_column(DateTime(timezone=True), nullable=True)
+    additional_features: Mapped[dict] = mapped_column(JSON, nullable=True, server_default='{}')
+
 
     instructions = relationship(
         "Instructions",

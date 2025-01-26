@@ -20,7 +20,7 @@ from dependencies import get_db_session
 from web.journals.services import actualize_journals_for_user
 from web.users.filters import UsersFilter
 from web.users.schemas import UserRead, UserUpdate, UserListRead
-from web.users.services import peak_personal_journal
+from web.users.services import peak_personal_journal, merge_additional_features
 from web.users.users import (
     current_active_user,
     current_superuser,
@@ -151,6 +151,9 @@ async def update_user(
     db_session: AsyncSession = Depends(get_db_session),
 ):
     try:
+        user_update = await merge_additional_features(
+            user, user_update
+        )
         user = await user_manager.update(
             user_update, user, safe=False, request=request
         )
