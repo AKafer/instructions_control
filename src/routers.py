@@ -9,33 +9,35 @@ from web.divisions.routers import router as divisions_router
 from web.tests.routers import router as tests_router
 from web.histories.routers import router as histories_router
 from web.activities.routers import router as activities_router
+from web.material_types.routers import router as material_types_router
 
 from main_schemas import ResponseErrorBody
 from web.users.schemas import UserRead, UserCreate
 from web.users.users import fastapi_users, auth_backend, current_superuser
 
 api_v1_router = APIRouter(
-    prefix="/api/v1",
+    prefix='/api/v1',
     dependencies=[],
     responses={
         status.HTTP_401_UNAUTHORIZED: {
-            "model": ResponseErrorBody,
-
+            'model': ResponseErrorBody,
         },
         status.HTTP_422_UNPROCESSABLE_ENTITY: {
-            "model": ResponseErrorBody,
-        }
-    }
+            'model': ResponseErrorBody,
+        },
+    },
 )
 
 api_v1_router.include_router(
-    fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["auth"]
+    fastapi_users.get_auth_router(auth_backend),
+    prefix='/auth/jwt',
+    tags=['auth'],
 )
 api_v1_router.include_router(
     fastapi_users.get_register_router(UserRead, UserCreate),
-    prefix="/auth",
-    tags=["auth"],
-    dependencies=[Depends(current_superuser)]
+    prefix='/auth',
+    tags=['auth'],
+    dependencies=[Depends(current_superuser)],
 )
 api_v1_router.include_router(users_router)
 api_v1_router.include_router(journals_router)
@@ -46,6 +48,7 @@ api_v1_router.include_router(rules_router)
 api_v1_router.include_router(tests_router)
 api_v1_router.include_router(histories_router)
 api_v1_router.include_router(activities_router)
+api_v1_router.include_router(material_types_router)
 
 
 # api_v1_router.include_router(
@@ -66,5 +69,3 @@ api_v1_router.include_router(activities_router)
 #     prefix="/users",
 #     tags=["users"],
 # )
-
-

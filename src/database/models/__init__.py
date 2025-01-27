@@ -1,16 +1,17 @@
 __all__ = [
-    "Activities",
-    "BaseModel",
-    "Divisions",
-    "Histories",
-    "Instructions",
-    "Journals",
-    "Professions",
-    "Questions",
-    "Rules",
-    "Tests",
-    "Templates",
-    "User",
+    'Activities',
+    'BaseModel',
+    'Divisions',
+    'Histories',
+    'Instructions',
+    'Journals',
+    'MaterialTypes',
+    'Professions',
+    'Questions',
+    'Rules',
+    'Tests',
+    'Templates',
+    'User',
 ]
 
 from database.orm import BaseModel
@@ -23,3 +24,4 @@ from .divisions import Divisions
 from .histories import Histories
 from .tests import Tests, Questions, Templates
 from .activities import Activities
+from .material_types import MaterialTypes
