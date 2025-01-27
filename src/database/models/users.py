@@ -42,12 +42,11 @@ class User(SQLAlchemyBaseUserTableUUID, BaseModel):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-
     number: Mapped[str] = mapped_column(String(length=320), nullable=True)
     started_work: Mapped[str] = mapped_column(DateTime(timezone=True), nullable=True)
     changed_profession: Mapped[str] = mapped_column(DateTime(timezone=True), nullable=True)
     additional_features: Mapped[dict] = mapped_column(JSON, nullable=True, server_default='{}')
-
+    activity_id: Mapped[str] = mapped_column(ForeignKey("activities.id", ondelete='SET NULL'), nullable=True)
 
     instructions = relationship(
         "Instructions",
@@ -73,6 +72,11 @@ class User(SQLAlchemyBaseUserTableUUID, BaseModel):
     journals = relationship(
         "Journals",
         back_populates="user",
+        lazy='selectin',
+    )
+    activity = relationship(
+        "Activities",
+        back_populates="users",
         lazy='selectin',
     )
 

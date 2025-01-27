@@ -8,6 +8,7 @@ from web.journals.routers import router as journals_router
 from web.divisions.routers import router as divisions_router
 from web.tests.routers import router as tests_router
 from web.histories.routers import router as histories_router
+from web.activities.routers import router as activities_router
 
 from main_schemas import ResponseErrorBody
 from web.users.schemas import UserRead, UserCreate
@@ -44,6 +45,7 @@ api_v1_router.include_router(ins_router)
 api_v1_router.include_router(rules_router)
 api_v1_router.include_router(tests_router)
 api_v1_router.include_router(histories_router)
+api_v1_router.include_router(activities_router)
 
 
 # api_v1_router.include_router(
