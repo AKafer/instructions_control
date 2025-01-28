@@ -15,3 +15,8 @@ class Activities(BaseModel):
         "User",
         back_populates="activity",
     )
+    norm = relationship(
+        "Norms",
+        back_populates="activity",
+        uselist=False
+    )

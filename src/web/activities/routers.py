@@ -30,8 +30,8 @@ async def get_all_activities(
     db_session: AsyncSession = Depends(get_db_session),
 ):
     query = select(Activities).order_by(Activities.id.desc())
-    professions = await db_session.execute(query)
-    return professions.scalars().all()
+    activities = await db_session.execute(query)
+    return activities.scalars().all()
 
 
 @router.get(

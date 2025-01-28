@@ -22,3 +22,8 @@ class Professions(BaseModel):
         "User",
         back_populates="profession",
     )
+    norm = relationship(
+        "Norms",
+        back_populates="profession",
+    )
+

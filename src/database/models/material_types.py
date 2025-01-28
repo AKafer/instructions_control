@@ -45,3 +45,5 @@ class MaterialTypes(BaseModel):
     unit_of_measurement = sa.Column(
         sa.Enum(Units, name='unit_of_measurement'), nullable=False
     )
+
+    norms_materials = sa.orm.relationship('NormMaterials', back_populates='material_type')
