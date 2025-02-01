@@ -73,6 +73,8 @@ class User(SQLAlchemyBaseUserTableUUID, BaseModel):
         "Journals",
         back_populates="user",
         lazy='selectin',
+        cascade="all, delete, delete-orphan",
+        single_parent=True,
     )
     activity = relationship(
         "Activities",

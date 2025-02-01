@@ -19,7 +19,9 @@ class Instructions(BaseModel):
 
     journals = sa.orm.relationship(
         'Journals',
-        lazy='selectin'
+        lazy='selectin',
+        cascade = "all, delete, delete-orphan",
+        single_parent = True,
     )
 
     users = relationship(

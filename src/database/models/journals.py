@@ -28,10 +28,24 @@ class Journals(BaseModel):
 
     sa.UniqueConstraint('user_uuid', 'instruction_id', name='uix_2')
 
-    instruction = sa.orm.relationship('Instructions', back_populates='journals', lazy='selectin')
-    histories = sa.orm.relationship('Histories', back_populates='journal', lazy='selectin')
-    user = sa.orm.relationship('User', lazy='selectin')
-
+    instruction = sa.orm.relationship(
+        'Instructions',
+        back_populates='journals',
+        lazy='selectin',
+        passive_deletes=True
+    )
+    user = sa.orm.relationship(
+        'User',
+        lazy='selectin',
+        passive_deletes=True
+    )
+    histories = sa.orm.relationship(
+        'Histories',
+        back_populates='journal',
+        lazy='selectin',
+        cascade="all, delete, delete-orphan",
+        single_parent=True,
+    )
 
     @hybrid_property
     def valid(self):

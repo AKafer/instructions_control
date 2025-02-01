@@ -41,5 +41,13 @@ class Histories(BaseModel):
     signature = sa.Column(String(length=320), nullable=True)
     additional_data = sa.Column(sa.JSON, nullable=True)
 
-    journal = sa.orm.relationship('Journals', lazy='selectin')
-    user = sa.orm.relationship('User', lazy='selectin')
+    journal = sa.orm.relationship(
+        'Journals',
+        lazy='selectin',
+        passive_deletes=True
+    )
+    user = sa.orm.relationship(
+        'User',
+        lazy='selectin',
+        passive_deletes=True
+    )
