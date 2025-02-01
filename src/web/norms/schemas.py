@@ -57,8 +57,13 @@ class NormMaterialCreateInput(BaseModel):
     npa_link: str | None = None
     description: str | None = None
 
+class NormMaterialList(BaseModel):
+    material_type_ids: list[int]
 
 class NormCreateInput(BaseModel):
     title: str
     profession_id: int | None = None
     activity_id: int | None = None
+
+class NormUpdateInput(BaseModel):
+    title: str

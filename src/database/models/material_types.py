@@ -47,3 +47,10 @@ class MaterialTypes(BaseModel):
     )
 
     norms_materials = sa.orm.relationship('NormMaterials', back_populates='material_type')
+    materials = sa.orm.relationship(
+        'Materials',
+        back_populates='material_type',
+        lazy='selectin',
+        cascade="all, delete, delete-orphan",
+        single_parent=True,
+    )

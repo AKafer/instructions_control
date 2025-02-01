@@ -1,6 +1,5 @@
 from fastapi import Depends
 
-
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
 from sqlalchemy import String, Boolean, ForeignKey, JSON
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -80,6 +79,13 @@ class User(SQLAlchemyBaseUserTableUUID, BaseModel):
         "Activities",
         back_populates="users",
         lazy='selectin',
+    )
+    materials = relationship(
+        "Materials",
+        back_populates="user",
+        lazy='selectin',
+        cascade="all, delete, delete-orphan",
+        single_parent=True,
     )
 
 

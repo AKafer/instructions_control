@@ -1,17 +1,24 @@
 import sqlalchemy
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from sqlalchemy import select, Delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from starlette.responses import Response
 
 from database.models import Norms, NormMaterials
-from database.models.material_types import MaterialTypes
 from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
 from main_schemas import ResponseErrorBody
-from web.norms.schemas import Norm, NormCreateInput, NormMaterialCreateInput, NormMaterial
+from web.norms.schemas import (
+    Norm,
+    NormCreateInput,
+    NormMaterialCreateInput,
+    NormMaterial,
+    NormUpdateInput,
+    NormMaterialList,
+)
+from web.norms.services import update_norm_db
 from web.users.users import current_superuser
 
 router = APIRouter(
@@ -30,29 +37,29 @@ async def get_all_norms(
     return norms.scalars().all()
 
 
-# @router.get(
-#     '/{norm_id:int}',
-#     response_model=MaterialType,
-#     responses={
-#         status.HTTP_400_BAD_REQUEST: {
-#             'model': ResponseErrorBody,
-#         },
-#         status.HTTP_404_NOT_FOUND: {
-#             'model': ResponseErrorBody,
-#         },
-#     },
-# )
-# async def get_material_type_by_id(
-#     material_type_id: int, db_session: AsyncSession = Depends(get_db_session)
-# ):
-#     query = select(MaterialTypes).filter(MaterialTypes.id == material_type_id)
-#     material_type = await db_session.scalar(query)
-#     if material_type is None:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail=f'MaterialType with id {material_type} not found',
-#         )
-#     return material_type
+@router.get(
+    '/{norm_id:int}',
+    response_model=Norm,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+        status.HTTP_404_NOT_FOUND: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def get_norm_by_id(
+    norm_id: int, db_session: AsyncSession = Depends(get_db_session)
+):
+    query = select(Norms).filter(Norms.id == norm_id)
+    norm = await db_session.scalar(query)
+    if norm is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'Norm with id {norm_id} not found',
+        )
+    return norm
 
 
 @router.post(
@@ -74,7 +81,10 @@ async def create_norm(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Profession or Activity id must be provided',
         )
-    if norm_input.profession_id is not None and norm_input.activity_id is not None:
+    if (
+        norm_input.profession_id is not None
+        and norm_input.activity_id is not None
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Profession and Activity id cannot be provided together',
@@ -90,6 +100,7 @@ async def create_norm(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f'Error while create new norm: {e}',
         )
+
 
 @router.post(
     '/add_materials/{norm_id:int}',
@@ -116,43 +127,42 @@ async def add_materials_to_norm(
         norm = await db_session.scalar(query)
         return norm
     except sqlalchemy.exc.IntegrityError as e:
-        # raise HTTPException(
-        #     status_code=status.HTTP_400_BAD_REQUEST,
-        #     detail=f'Error while create new norm: {e}',
-        # )
-        raise e
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Error while create new norm: {e}',
+        )
 
 
-# @router.patch(
-#     '/{material_type_id:int}',
-#     response_model=MaterialType,
-#     responses={
-#         status.HTTP_404_NOT_FOUND: {
-#             'model': ResponseErrorBody,
-#         },
-#     },
-# )
-# async def update_material_type(
-#     material_type_id: int,
-#     update_input: MaterialTypeUpdateInput,
-#     db_session: AsyncSession = Depends(get_db_session),
-# ):
-#     query = select(MaterialTypes).where(MaterialTypes.id == material_type_id)
-#     material_type = await db_session.scalar(query)
-#     if material_type is None:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail=f'MaterialType with id {material_type_id} not found',
-#         )
-#     try:
-#         return await update_material_type_db(
-#             db_session, material_type, **update_input.dict(exclude_none=True)
-#         )
-#     except sqlalchemy.exc.IntegrityError as e:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail=f'MaterialType with this title already exists: {e}',
-#         )
+@router.patch(
+    '/{norm_id:int}',
+    response_model=Norm,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def update_norm(
+    norm_id: int,
+    update_input: NormUpdateInput,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    query = select(Norms).where(Norms.id == norm_id)
+    norm = await db_session.scalar(query)
+    if norm is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'Norm with id {norm} not found',
+        )
+    try:
+        return await update_norm_db(
+            db_session, norm, **update_input.dict(exclude_none=True)
+        )
+    except sqlalchemy.exc.IntegrityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Unexpected error while updating: {e}',
+        )
 
 
 @router.delete(
@@ -178,3 +188,40 @@ async def delete_norm(
     await db_session.delete(norm)
     await db_session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.delete(
+    '/delete_materials/{norm_id:int}',
+    status_code=status.HTTP_201_CREATED,
+    response_model=Norm,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def delete_materials_from_norm(
+    norm_id: int,
+    norm_materials: NormMaterialList,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    query = select(Norms).filter(Norms.id == norm_id)
+    norm = await db_session.scalar(query)
+    if norm is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'Norm with id {norm} not found',
+        )
+    try:
+        query = Delete(NormMaterials).filter(
+            NormMaterials.id.in_(norm_materials.material_type_ids)
+        )
+        await db_session.execute(query)
+        await db_session.commit()
+        await db_session.refresh(norm)
+        return norm
+    except sqlalchemy.exc.IntegrityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Error while create new norm: {e}',
+        )

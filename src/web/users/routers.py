@@ -1,3 +1,4 @@
+import sqlalchemy
 from fastapi import (
     APIRouter,
     Depends,
@@ -6,20 +7,22 @@ from fastapi import (
     Response,
     status,
 )
+from fastapi.encoders import jsonable_encoder
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 from fastapi_users import exceptions, models, schemas
 from fastapi_users.manager import BaseUserManager
 from fastapi_users.router.common import ErrorCode, ErrorModel
-from sqlalchemy import select
+from sqlalchemy import select, Delete, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from database.models import User, Instructions
+from database.models import User, Instructions, Materials
 from dependencies import get_db_session
+from main_schemas import ResponseErrorBody
 from web.journals.services import actualize_journals_for_user
 from web.users.filters import UsersFilter
-from web.users.schemas import UserRead, UserUpdate, UserListRead
+from web.users.schemas import UserRead, UserUpdate, UserListRead, AddMaterials, Material, DeleteMaterials
 from web.users.services import peak_personal_journal, merge_additional_features
 from web.users.users import (
     current_active_user,
@@ -203,3 +206,68 @@ async def delete_user(
 ):
     await user_manager.delete(user, request=request)
     return None
+
+
+@router.post(
+    '/materials/{id}',
+    status_code=status.HTTP_201_CREATED,
+    response_model=list[Material],
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def add_materials_to_user(
+    create_material_input: AddMaterials,
+    user=Depends(get_user_or_404),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    try:
+        for material in create_material_input.materials:
+            material.user_id = user.id
+            material = Materials(**material.dict())
+            db_session.add(material)
+        await db_session.commit()
+        query = select(Materials).filter(Materials.user_id == user.id)
+        materials = await db_session.execute(query)
+        return materials.scalars().all()
+    except sqlalchemy.exc.IntegrityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Error while create new materials: {e}',
+        )
+
+
+@router.delete(
+    '/materials/{id}',
+    status_code=status.HTTP_200_OK,
+    response_model=list[Material],
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def delete_materials(
+    delete_materials_input: DeleteMaterials,
+    user=Depends(get_user_or_404),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    try:
+        query = Delete(Materials).filter(
+            and_(
+                Materials.user_id == user.id,
+                Materials.id.in_(delete_materials_input.material_ids)
+            )
+        )
+        await db_session.execute(query)
+        await db_session.commit()
+        query = select(Materials).filter(Materials.user_id == user.id)
+        materials = await db_session.execute(query)
+        return materials.scalars().all()
+    except sqlalchemy.exc.IntegrityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Error while create new materials: {e}',
+        )

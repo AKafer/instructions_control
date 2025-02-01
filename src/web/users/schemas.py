@@ -45,6 +45,49 @@ class AdditionalFeatures(BaseModel):
         extra = Extra.allow
 
 
+class MaterialType(BaseModel):
+    id: int
+    title: str
+    unit_of_measurement: str
+
+    class Config:
+        orm_mode = True
+
+
+class Material(BaseModel):
+    id: int
+    material_type: MaterialType
+    sertificate: str | None
+    start_date: datetime | None
+    period: int | None
+    size: float | None
+    quantity: int | None
+    unit_of_measurement: str | None
+
+    class Config:
+        orm_mode = True
+
+class CreateMaterial(BaseModel):
+    material_type_id: int
+    sertificate: str | None
+    start_date: datetime | None
+    period: int | None
+    size: float | None
+    quantity: int | None
+    unit_of_measurement: str | None
+
+    class Config:
+        extra = Extra.allow
+
+
+class AddMaterials(BaseModel):
+    materials: list[CreateMaterial]
+
+
+class DeleteMaterials(BaseModel):
+    material_ids: list[int]
+
+
 class UserRead(schemas.BaseUser[uuid.UUID]):
     email: EmailStr
     name: str
@@ -65,6 +108,7 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
     started_work: datetime | None
     changed_profession: datetime | None
     additional_features: AdditionalFeatures
+    materials: list[Material] | None
 
 
 class UserCreate(schemas.BaseUserCreate):
@@ -134,3 +178,4 @@ class UserListRead(schemas.BaseUser[uuid.UUID]):
     started_work: datetime | None
     changed_profession: datetime | None
     additional_features: AdditionalFeatures
+    materials: list[Material] | None

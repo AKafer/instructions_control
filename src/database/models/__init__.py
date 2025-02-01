@@ -5,6 +5,7 @@ __all__ = [
     'Histories',
     'Instructions',
     'Journals',
+    'Materials',
     'MaterialTypes',
     'Norms',
     'NormMaterials',
@@ -28,3 +29,4 @@ from .tests import Tests, Questions, Templates
 from .activities import Activities
 from .material_types import MaterialTypes
 from .norms import Norms, NormMaterials
+from .materials import Materials
