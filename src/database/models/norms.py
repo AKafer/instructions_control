@@ -19,30 +19,27 @@ class Norms(BaseModel):
         sa.ForeignKey("activities.id", ondelete="CASCADE"),
         unique=True
     )
-    __table_args__ = (
-        CheckConstraint(
-            "((profession_id IS NOT NULL AND activity_id IS NULL) OR "
-            "(profession_id IS NULL AND activity_id IS NOT NULL))",
-            name='chk_profession_xor_activity'
-        ),
-    )
 
     profession = relationship(
         "Professions",
         back_populates="norm",
         uselist=False,
-        lazy='selectin'
+        lazy='selectin',
+        passive_deletes=True
     )
     activity = relationship(
         "Activities",
         back_populates="norm",
         uselist=False,
-        lazy='selectin'
+        lazy='selectin',
+        passive_deletes=True
     )
     material_norm_types = relationship(
         "NormMaterials",
         back_populates="norm",
-        lazy='selectin'
+        lazy='selectin',
+        cascade = "all, delete, delete-orphan",
+        single_parent = True,
     )
 
 
@@ -66,5 +63,6 @@ class NormMaterials(BaseModel):
     material_type = relationship(
         "MaterialTypes",
         back_populates="norms_materials",
-        lazy='selectin'
+        lazy='selectin',
+        passive_deletes = True
     )

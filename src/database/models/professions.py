@@ -24,6 +24,8 @@ class Professions(BaseModel):
     )
     norm = relationship(
         "Norms",
+        cascade="all, delete, delete-orphan",
+        single_parent=True,
         back_populates="profession",
     )
 

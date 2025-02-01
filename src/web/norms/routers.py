@@ -69,6 +69,16 @@ async def create_norm(
     norm_input: NormCreateInput,
     db_session: AsyncSession = Depends(get_db_session),
 ):
+    if norm_input.profession_id is None and norm_input.activity_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Profession or Activity id must be provided',
+        )
+    if norm_input.profession_id is not None and norm_input.activity_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Profession and Activity id cannot be provided together',
+        )
     try:
         db_norm = Norms(**norm_input.dict())
         db_session.add(db_norm)
