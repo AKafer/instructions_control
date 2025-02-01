@@ -26,6 +26,7 @@ class Questions(BaseModel):
         "Tests",
         back_populates="questions",
         lazy='selectin',
+        passive_deletes=True
     )
 
 class Tests(BaseModel):
@@ -44,8 +45,11 @@ class Tests(BaseModel):
         "Instructions",
         back_populates="tests",
         lazy='selectin',
+        passive_deletes=True
     )
     questions = relationship(
         "Questions",
         lazy='selectin',
+        cascade="all, delete, delete-orphan",
+        single_parent=True
     )

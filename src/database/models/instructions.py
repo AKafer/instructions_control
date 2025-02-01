@@ -37,4 +37,6 @@ class Instructions(BaseModel):
     tests = relationship(
         "Tests",
         lazy='selectin',
+        cascade="all, delete, delete-orphan",
+        single_parent=True,
     )
