@@ -60,7 +60,7 @@ async def get_journal_by_id(
 
 @router.get(
     '/',
-    response_model=Page[Journal],
+    response_model=list[Journal],
     dependencies=[Depends(current_superuser)],
 )
 async def get_all_journals(
@@ -70,10 +70,11 @@ async def get_all_journals(
 ):
     query = select(Journals).order_by(Journals.id.desc())
     query = journals_filter.filter(query)
-    response = await paginate(db_session, query)
-    for journal in response.items:
+    journals = await db_session.execute(query)
+    journals = journals.scalars().all()
+    for journal in journals:
         collect_full_links(journal, request)
-    return response
+    return journals
 
 
 @router.patch(
