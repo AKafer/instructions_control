@@ -2,8 +2,10 @@ import uuid
 import logging
 from typing import Optional, Dict, Any, Union
 
+import sqlalchemy
 from fastapi import Depends, Request, Response
-from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin, models
+from fastapi.security import OAuth2PasswordRequestForm
+from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin, models, exceptions
 from fastapi_users.authentication import (
     AuthenticationBackend,
     BearerTransport,
@@ -11,9 +13,11 @@ from fastapi_users.authentication import (
 )
 from fastapi_users.jwt import generate_jwt
 from fastapi_users.db import SQLAlchemyUserDatabase
+from sqlalchemy import select, func
 
 import settings
 from database.models.users import User, get_user_db
+from database.orm import Session
 from web.journals.services import (
     actualize_journals_for_user,
     remove_lines_to_journals_for_delete_user,
@@ -68,6 +72,55 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             logger.debug(f'Superuser {user.id} has logged in.')
         else:
             await actualize_journals_for_user(user)
+
+    async def get_by_phone(self, phone: str) -> User:
+        query = select(User).where(User.phone_number == phone.lower())
+        async with Session() as db_session:
+            result = await db_session.execute(query)
+            try:
+                user = result.unique().scalar_one()
+            except sqlalchemy.exc.MultipleResultsFound:
+                raise exceptions.UserNotExists()
+            if user is None:
+                raise exceptions.UserNotExists()
+            return user
+
+    async def authenticate(
+        self, credentials: OAuth2PasswordRequestForm
+    ) -> Optional[models.UP]:
+        """
+        Authenticate and return a user following an email and a password.
+
+        Will automatically upgrade password hash if necessary.
+
+        :param credentials: The user credentials.
+        """
+        identifier = credentials.username
+        try:
+            if "@" in identifier:
+                print('EMAIL')
+                user = await self.get_by_email(identifier)
+            else:
+                print('PHONE')
+                user = await self.get_by_phone(identifier)
+        except exceptions.UserNotExists:
+            # Run the hasher to mitigate timing attack
+            # Inspired from Django: https://code.djangoproject.com/ticket/20760
+            self.password_helper.hash(credentials.password)
+            return None
+
+        verified, updated_password_hash = self.password_helper.verify_and_update(
+            credentials.password, user.hashed_password
+        )
+        if not verified:
+            return None
+        # Update password hash to a more robust one if needed
+        if updated_password_hash is not None:
+            await self.user_db.update(user, {"hashed_password": updated_password_hash})
+
+        return user
+
+
 
 
 async def get_user_manager(
