@@ -22,26 +22,32 @@ pipeline {
         stage("update docker backend image") {
             steps {
                 echo " ============== start building backend image =================="
-                dir ('.') {
-                	sh 'docker build -t akafer/ins_control -f  ./ci/Dockerfile .'
+                timeout(time: 10, unit: 'MINUTES') {
+                    dir ('.') {
+                	    sh 'docker build -t akafer/ins_control -f  ./ci/Dockerfile .'
+                    }
                 }
             }
         }
         stage("update docker frontend image") {
             steps {
                 echo " ============== start building frontend image =================="
-                dir ('.') {
-                	sh 'docker build -t akafer/ins_control_frontend -f  ./ci/Dockerfile_frontend .'
+                timeout(time: 10, unit: 'MINUTES') {
+                    dir ('.') {
+                	    sh 'docker build -t akafer/ins_control_frontend -f  ./ci/Dockerfile_frontend .'
+                    }
                 }
             }
         }
         stage("docker push") {
             steps {
                 echo " ============== start pushing images =================="
-                sh '''
-                docker push akafer/ins_control
-                docker push akafer/ins_control_frontend
-                '''
+                timeout(time: 10, unit: 'MINUTES') {
+                    sh '''
+                    docker push akafer/ins_control
+                    docker push akafer/ins_control_frontend
+                    '''
+                }
             }
         }
         stage("copy docker_compose file") {
