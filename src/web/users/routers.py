@@ -35,7 +35,7 @@ router = APIRouter(prefix='/users', tags=['users'])
 
 @router.get(
     '/',
-    response_model=Page[UserListRead],
+    response_model=list[UserListRead],
     dependencies=[Depends(current_superuser)],
 )
 async def get_all_users(
@@ -44,8 +44,8 @@ async def get_all_users(
 ):
     query = select(User).options(joinedload(User.instructions).joinedload(Instructions.journals))
     query = user_filter.filter(query)
-    return await paginate(db_session, query)
-
+    users = await db_session.execute(query)
+    return users.scalars().unique().all()
 
 
 async def get_user_or_404(

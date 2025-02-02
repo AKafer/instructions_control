@@ -39,7 +39,7 @@ router = APIRouter(prefix='/instructions', tags=['insructions'])
 
 @router.get(
     '/',
-    response_model=Page[Instruction],
+    response_model=list[Instruction],
     dependencies=[Depends(current_superuser)],
 )
 async def get_all_instructions(
@@ -47,8 +47,9 @@ async def get_all_instructions(
     db_session: AsyncSession = Depends(get_db_session),
 ):
     query = select(Instructions).order_by(Instructions.id.desc())
-    ins = await paginate(db_session, query)
-    for instruction in ins.items:
+    inss = await db_session.execute(query)
+    ins = inss.scalars().all()
+    for instruction in ins:
         if instruction.filename is not None:
             instruction.link = get_full_link(request, instruction.filename)
     return ins
