@@ -269,5 +269,5 @@ async def delete_materials(
     except sqlalchemy.exc.IntegrityError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Error while create new materials: {e}',
+            detail=f'Error while delete materials: {e}',
         )
