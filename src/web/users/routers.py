@@ -7,9 +7,6 @@ from fastapi import (
     Response,
     status,
 )
-from fastapi.encoders import jsonable_encoder
-from fastapi_pagination import Page
-from fastapi_pagination.ext.sqlalchemy import paginate
 from fastapi_users import exceptions, models, schemas
 from fastapi_users.manager import BaseUserManager
 from fastapi_users.router.common import ErrorCode, ErrorModel
@@ -22,7 +19,14 @@ from dependencies import get_db_session
 from main_schemas import ResponseErrorBody
 from web.journals.services import actualize_journals_for_user
 from web.users.filters import UsersFilter
-from web.users.schemas import UserRead, UserUpdate, UserListRead, AddMaterials, Material, DeleteMaterials
+from web.users.schemas import (
+    UserRead,
+    UserUpdate,
+    UserListRead,
+    AddMaterials,
+    Material,
+    DeleteMaterials,
+)
 from web.users.services import peak_personal_journal, merge_additional_features
 from web.users.users import (
     current_active_user,
@@ -42,7 +46,9 @@ async def get_all_users(
     user_filter: UsersFilter = Depends(UsersFilter),
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    query = select(User).options(joinedload(User.instructions).joinedload(Instructions.journals))
+    query = select(User).options(
+        joinedload(User.instructions).joinedload(Instructions.journals)
+    )
     query = user_filter.filter(query)
     users = await db_session.execute(query)
     return users.scalars().unique().all()
@@ -57,7 +63,7 @@ async def get_user_or_404(
 ) -> models.UP:
     try:
         parsed_id = user_manager.parse_id(id)
-        user =  await user_manager.get(parsed_id)
+        user = await user_manager.get(parsed_id)
         return await peak_personal_journal(request, user)
     except (exceptions.UserNotExists, exceptions.InvalidID) as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from e
@@ -154,9 +160,7 @@ async def update_user(
     db_session: AsyncSession = Depends(get_db_session),
 ):
     try:
-        user_update = await merge_additional_features(
-            user, user_update
-        )
+        user_update = await merge_additional_features(user, user_update)
         user = await user_manager.update(
             user_update, user, safe=False, request=request
         )
@@ -258,7 +262,7 @@ async def delete_materials(
         query = Delete(Materials).filter(
             and_(
                 Materials.user_id == user.id,
-                Materials.id.in_(delete_materials_input.material_ids)
+                Materials.id.in_(delete_materials_input.material_ids),
             )
         )
         await db_session.execute(query)
