@@ -1,8 +1,9 @@
-FROM python:3.10.2-bullseye
+FROM python:3.10.2-slim-bullseye
 LABEL authors="s-storozhuk"
 
 RUN apt-get update && apt-get upgrade -y && \
   apt-get -y install \
+    libpq-dev gcc \
     pip \
     bash \
     expect \
@@ -14,7 +15,7 @@ RUN apt-get update && apt-get upgrade -y && \
     vim \
     openssl \
     libssl-dev \
-  && apt-get clean
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /app
 
