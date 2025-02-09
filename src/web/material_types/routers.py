@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Dict
 
 import sqlalchemy
 from fastapi import APIRouter, Depends
@@ -17,8 +17,7 @@ from web.material_types.schemas import (
     MaterialTypeCreateInput,
     MaterialTypeUpdateInput, CalculateNeedInput,
 )
-from web.material_types.services import update_material_type_db
-from web.norms.services import calculate_need_process
+from web.material_types.services import update_material_type_db, calculate_need_process
 from web.users.users import current_superuser
 
 router = APIRouter(
@@ -64,7 +63,7 @@ async def get_material_type_by_id(
 
 @router.post(
     '/calculate_need}',
-    response_model=dict[int, dict[str, Union[str, dict[str, Union[int, dict[str, int]]]]]],
+    response_model=dict,
     responses={
         status.HTTP_400_BAD_REQUEST: {
             'model': ResponseErrorBody,

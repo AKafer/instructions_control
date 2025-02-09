@@ -164,7 +164,6 @@ async def update_norm_material(
         )
 
 
-
 @router.patch(
     '/{norm_id:int}',
     response_model=Norm,
