@@ -18,6 +18,18 @@ async def update_norm_db(
     return norm
 
 
+async def update_norm_material_db(
+    db_session: AsyncSession,
+    norm_material: NormMaterials,
+    **update_data: dict
+) -> NormMaterials:
+    for field, value in update_data.items():
+        setattr(norm_material, field, value)
+    await db_session.commit()
+    await db_session.refresh(norm_material)
+    return norm_material
+
+
 async def _get_norm_materials(
     db_session: AsyncSession,
     material_ids: list[int],
@@ -86,7 +98,7 @@ def _calculate_material_need(
         int, dict[str, Union[str, dict[str, Union[int, dict[str, int]]]]]
     ] = {}
     for material_id, norm_materials_list in nm_by_material_id.items():
-        size_type_for_material = 'with_size'
+        size_type_for_material = 'no_size_type'
         total_need = 0
         size_distribution = defaultdict(int)
         for nm in norm_materials_list:

@@ -15,9 +15,9 @@ from web.norms.schemas import (
     NormCreateInput,
     NormMaterialCreateInput,
     NormUpdateInput,
-    NormMaterialList,
+    NormMaterialList, NormMaterialUpdateInput, NormMaterial,
 )
-from web.norms.services import update_norm_db
+from web.norms.services import update_norm_db, update_norm_material_db
 from web.users.users import current_superuser
 
 router = APIRouter(
@@ -130,6 +130,39 @@ async def add_materials_to_norm(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f'Error while create new norm: {e}',
         )
+
+
+@router.patch(
+    '/{norm_material_id:int}',
+    response_model=NormMaterial,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def update_norm_material(
+    norm_material_id: int,
+    update_input: NormMaterialUpdateInput,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    query = select(NormMaterials).where(NormMaterials.id == norm_material_id)
+    norm_material = await db_session.scalar(query)
+    if norm_material is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'NormMatrerial with id {norm_material_id} not found',
+        )
+    try:
+        return await update_norm_material_db(
+            db_session, norm_material, **update_input.dict(exclude_none=True)
+        )
+    except sqlalchemy.exc.IntegrityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Unexpected error while updating: {e}',
+        )
+
 
 
 @router.patch(

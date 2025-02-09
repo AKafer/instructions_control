@@ -62,6 +62,14 @@ class NormMaterialCreateInput(BaseModel):
     size_type: SizeType | None = None
 
 
+class NormMaterialUpdateInput(BaseModel):
+    quantity: float | None = None
+    period: int | None = None
+    npa_link: str | None = None
+    description: str | None = None
+    size_type: SizeType | None = None
+
+
 class NormMaterialList(BaseModel):
     material_type_ids: list[int]
 
