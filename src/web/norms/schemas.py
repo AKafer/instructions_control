@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 
 from database.models.material_types import MaterialTypes
+from database.models.norms import SizeType
+
 
 class Profession(BaseModel):
     id: int
@@ -34,6 +36,7 @@ class NormMaterial(BaseModel):
     period: int | None = None
     npa_link: str | None = None
     description: str | None = None
+    size_type: SizeType | None = None
 
     class Config:
         orm_mode = True
@@ -56,6 +59,8 @@ class NormMaterialCreateInput(BaseModel):
     period: int | None = None
     npa_link: str | None = None
     description: str | None = None
+    size_type: SizeType | None = None
+
 
 class NormMaterialList(BaseModel):
     material_type_ids: list[int]

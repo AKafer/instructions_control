@@ -20,3 +20,7 @@ class MaterialTypeCreateInput(BaseModel):
 class MaterialTypeUpdateInput(BaseModel):
     title: str | None = None
     unit_of_measurement: MaterialTypes.Units | None = None
+
+
+class CalculateNeedInput(BaseModel):
+    list_of_material_ids: list[int]

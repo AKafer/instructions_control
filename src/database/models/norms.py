@@ -1,9 +1,19 @@
+import enum
 
 import sqlalchemy as sa
 from sqlalchemy import CheckConstraint
 from sqlalchemy.orm import relationship
 
 from database.orm import BaseModel
+
+
+class SizeType(str, enum.Enum):
+    clothing_size = "clothing_size"
+    shoe_size = "shoe_size"
+    head_size = "head_size"
+    mask_size = "mask_size"
+    gloves_size = "gloves_size"
+    mitten_size = "mitten_size"
 
 
 class Norms(BaseModel):
@@ -60,6 +70,10 @@ class NormMaterials(BaseModel):
     npa_link = sa.Column(sa.String(320), nullable=True)
     description = sa.Column(sa.Text, nullable=True)
     norm = relationship("Norms", back_populates="material_norm_types")
+    size_type = sa.Column(
+        sa.Enum(SizeType, name="size_type_enum"),
+        nullable=True
+    )
     material_type = relationship(
         "MaterialTypes",
         back_populates="norms_materials",

@@ -1,3 +1,5 @@
+from typing import Union
+
 import sqlalchemy
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
@@ -13,9 +15,10 @@ from main_schemas import ResponseErrorBody
 from web.material_types.schemas import (
     MaterialType,
     MaterialTypeCreateInput,
-    MaterialTypeUpdateInput,
+    MaterialTypeUpdateInput, CalculateNeedInput,
 )
 from web.material_types.services import update_material_type_db
+from web.norms.services import calculate_need_process
 from web.users.users import current_superuser
 
 router = APIRouter(
@@ -57,6 +60,25 @@ async def get_material_type_by_id(
             detail=f'MaterialType with id {material_type} not found',
         )
     return material_type
+
+
+@router.post(
+    '/calculate_need}',
+    response_model=dict[int, dict[str, Union[str, dict[str, Union[int, dict[str, int]]]]]],
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+        status.HTTP_404_NOT_FOUND: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def calculate_need(
+    calculate_input: CalculateNeedInput,
+    db_session: AsyncSession = Depends(get_db_session)
+):
+    return await calculate_need_process(db_session, calculate_input)
 
 
 @router.post(

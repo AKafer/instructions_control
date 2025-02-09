@@ -14,7 +14,6 @@ from web.norms.schemas import (
     Norm,
     NormCreateInput,
     NormMaterialCreateInput,
-    NormMaterial,
     NormUpdateInput,
     NormMaterialList,
 )
