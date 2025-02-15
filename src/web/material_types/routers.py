@@ -15,9 +15,9 @@ from main_schemas import ResponseErrorBody
 from web.material_types.schemas import (
     MaterialType,
     MaterialTypeCreateInput,
-    MaterialTypeUpdateInput, CalculateNeedInput,
+    MaterialTypeUpdateInput, CalculateNeedInput, TableFormat,
 )
-from web.material_types.services import update_material_type_db, calculate_need_process
+from web.material_types.services import update_material_type_db, calculate_need_process, calculate_table_process
 from web.users.users import current_superuser
 
 router = APIRouter(
@@ -62,7 +62,7 @@ async def get_material_type_by_id(
 
 
 @router.post(
-    '/calculate_need}',
+    '/calculate_need/{with_height}',
     response_model=dict,
     responses={
         status.HTTP_400_BAD_REQUEST: {
@@ -75,9 +75,39 @@ async def get_material_type_by_id(
 )
 async def calculate_need(
     calculate_input: CalculateNeedInput,
-    db_session: AsyncSession = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session),
+    with_height: bool = False
 ):
-    return await calculate_need_process(db_session, calculate_input)
+    return await calculate_need_process(
+        db_session,
+        calculate_input.list_of_material_ids,
+        with_height
+    )
+
+
+@router.post(
+    '/calculate_table/{material_type_id:int}',
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+        status.HTTP_404_NOT_FOUND: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def calculate_table(
+    material_type_id: int,
+    table_format: TableFormat,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    return await calculate_table_process(
+        db_session,
+        material_type_id,
+        table_format.size_range,
+        table_format.height_range,
+        table_format.like_file
+    )
 
 
 @router.post(
