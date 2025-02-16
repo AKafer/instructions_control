@@ -25,7 +25,7 @@ class MaterialTypeUpdateInput(BaseModel):
 
 
 class CalculateNeedInput(BaseModel):
-    list_of_material_ids: list[int]
+    with_height: bool = False
 
 
 class TableFormat(BaseModel):

@@ -98,7 +98,7 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
     phone_number: str | None
     profession: Profession | None
     division: Division | None
-    activity: Activity | None
+    activities: list[Activity] | None
     created_at: datetime
     updated_at: datetime | None
     instructions: list[InstructionForUser]
@@ -173,7 +173,6 @@ class UserCreate(schemas.BaseUserCreate):
     started_work: CustomDateTime | None
     changed_profession: CustomDateTime | None
     additional_features: AdditionalFeatures | None
-    activity_id: int | None
 
 
 class UserUpdate(schemas.BaseUserUpdate):
@@ -193,7 +192,6 @@ class UserUpdate(schemas.BaseUserUpdate):
     started_work: CustomDateTime | None
     changed_profession: CustomDateTime | None
     additional_features: AdditionalFeatures | None
-    activity_id: int | None
 
 
 class InstructionForUserList(BaseModel):
@@ -211,7 +209,6 @@ class UserListRead(schemas.BaseUser[uuid.UUID]):
     last_name: str
     father_name: str | None
     profession_id: int | None
-    activity_id: int | None
     division_id: int | None
     telegram_id: str | None
     phone_number: str | None

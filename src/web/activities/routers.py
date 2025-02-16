@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from starlette.responses import Response
 
-from database.models.activities import Activities
+from database.models import Activities, ActivityRegistry
 from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
@@ -13,7 +13,7 @@ from main_schemas import ResponseErrorBody
 from web.activities.schemas import (
     Activity,
     ActivityCreateInput,
-    ActivityUpdateInput,
+    ActivityUpdateInput, ActivitiesCreateRelationInput,
 )
 from web.activities.services import update_activity_db
 from web.users.users import current_superuser
@@ -170,3 +170,34 @@ async def delete_activity(
     await db_session.delete(activity)
     await db_session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+    '/create_relations',
+    status_code=status.HTTP_201_CREATED,
+    response_model=str,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def create_relations(
+    create_input: ActivitiesCreateRelationInput,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    try:
+        for user_id in create_input.user_ids:
+            for activity_id in create_input.activity_ids:
+                db_activity_registry = ActivityRegistry(activity_id=activity_id, user_id=user_id)
+                db_session.add(db_activity_registry)
+        await db_session.commit()
+        return Response(status_code=status.HTTP_201_CREATED, content='All relations created')
+    except sqlalchemy.exc.IntegrityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Unexpected problem while crate relations: {e}',
+        )
+
+
+

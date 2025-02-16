@@ -62,7 +62,7 @@ async def get_material_type_by_id(
 
 
 @router.post(
-    '/calculate_need/{with_height}',
+    '/calculate_need/{material_type_id:int}',
     response_model=dict,
     responses={
         status.HTTP_400_BAD_REQUEST: {
@@ -74,14 +74,14 @@ async def get_material_type_by_id(
     },
 )
 async def calculate_need(
+    material_type_id: int,
     calculate_input: CalculateNeedInput,
     db_session: AsyncSession = Depends(get_db_session),
-    with_height: bool = False
 ):
     return await calculate_need_process(
         db_session,
-        calculate_input.list_of_material_ids,
-        with_height
+        material_type_id,
+        calculate_input.with_height
     )
 
 

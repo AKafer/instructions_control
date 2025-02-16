@@ -20,3 +20,8 @@ class ActivityCreateInput(BaseModel):
 class ActivityUpdateInput(BaseModel):
     title: str | None = None
     description: str | None = None
+
+
+class ActivitiesCreateRelationInput(BaseModel):
+    activity_ids: list[int]
+    user_ids: list[str]

@@ -13,11 +13,32 @@ class Activities(BaseModel):
 
     users = relationship(
         "User",
-        back_populates="activity",
+        secondary='activity_registry',
+        back_populates="activities",
+        lazy='selectin'
     )
+
     norm = relationship(
         "Norms",
         cascade="all, delete, delete-orphan",
         single_parent=True,
         back_populates="activity",
     )
+
+
+class ActivityRegistry(BaseModel):
+    __tablename__ = 'activity_registry'
+
+    id = sa.Column(sa.BigInteger, primary_key=True)
+    activity_id = sa.Column(
+        sa.ForeignKey("activities.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    user_id = sa.Column(
+        sa.ForeignKey("user.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    sa.UniqueConstraint('activity_id', 'user_id', name='uix_3')
+
+

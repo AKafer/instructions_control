@@ -3,11 +3,14 @@ from datetime import datetime
 
 from pydantic import BaseModel, Extra
 
+from database.models.material_types import SizeType
+
 
 class MaterialType(BaseModel):
     id: int
     title: str
     unit_of_measurement: str
+    size_type: SizeType | None = None
 
     class Config:
         orm_mode = True

@@ -45,7 +45,6 @@ class User(SQLAlchemyBaseUserTableUUID, BaseModel):
     started_work: Mapped[str] = mapped_column(DateTime(timezone=True), nullable=True)
     changed_profession: Mapped[str] = mapped_column(DateTime(timezone=True), nullable=True)
     additional_features: Mapped[dict] = mapped_column(JSON, nullable=True, server_default='{}')
-    activity_id: Mapped[str] = mapped_column(ForeignKey("activities.id", ondelete='SET NULL'), nullable=True)
 
     instructions = relationship(
         "Instructions",
@@ -75,10 +74,11 @@ class User(SQLAlchemyBaseUserTableUUID, BaseModel):
         cascade="all, delete, delete-orphan",
         single_parent=True,
     )
-    activity = relationship(
+    activities = relationship(
         "Activities",
         back_populates="users",
         lazy='selectin',
+        secondary='activity_registry',
     )
     materials = relationship(
         "Materials",

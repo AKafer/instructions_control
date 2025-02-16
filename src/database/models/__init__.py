@@ -1,5 +1,6 @@
 __all__ = [
     'Activities',
+    'ActivityRegistry',
     'BaseModel',
     'Divisions',
     'Histories',
@@ -26,7 +27,7 @@ from .journals import Journals
 from .divisions import Divisions
 from .histories import Histories
 from .tests import Tests, Questions, Templates
-from .activities import Activities
+from .activities import Activities, ActivityRegistry
 from .material_types import MaterialTypes
 from .norms import Norms, NormMaterials
 from .materials import Materials

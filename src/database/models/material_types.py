@@ -1,8 +1,18 @@
+import enum
 from enum import Enum
 
 import sqlalchemy as sa
 
 from database.orm import BaseModel
+
+
+class SizeType(str, enum.Enum):
+    clothing_size = "clothing_size"
+    shoe_size = "shoe_size"
+    head_size = "head_size"
+    mask_size = "mask_size"
+    gloves_size = "gloves_size"
+    mitten_size = "mitten_size"
 
 
 class MaterialTypes(BaseModel):
@@ -45,8 +55,13 @@ class MaterialTypes(BaseModel):
     unit_of_measurement = sa.Column(
         sa.Enum(Units, name='unit_of_measurement'), nullable=False
     )
+    size_type = sa.Column(
+        sa.Enum(SizeType, name="size_type_enum"),
+        nullable=True
+    )
 
     norms_materials = sa.orm.relationship('NormMaterials', back_populates='material_type')
+
     materials = sa.orm.relationship(
         'Materials',
         back_populates='material_type',
