@@ -22,6 +22,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         debug=True,
         docs_url='/api/v1/docs',
+        openapi_url="/api/openapi.json",
     )
     setup_routes(app)
     add_pagination(app)
