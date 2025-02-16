@@ -1,6 +1,6 @@
 import sqlalchemy
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from sqlalchemy import select, delete, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from starlette.responses import Response
@@ -13,7 +13,7 @@ from main_schemas import ResponseErrorBody
 from web.activities.schemas import (
     Activity,
     ActivityCreateInput,
-    ActivityUpdateInput, ActivitiesCreateRelationInput,
+    ActivityUpdateInput, ActivitiesCreateRelationInput, ActivitiesDeleteRelationInput,
 )
 from web.activities.services import update_activity_db
 from web.users.users import current_superuser
@@ -173,7 +173,7 @@ async def delete_activity(
 
 
 @router.post(
-    '/create_relations',
+    '/relations/create',
     status_code=status.HTTP_201_CREATED,
     response_model=str,
     responses={
@@ -197,6 +197,37 @@ async def create_relations(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f'Unexpected problem while crate relations: {e}',
+        )
+
+
+@router.delete(
+    '/relations/delete',
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def delete_relations(
+    delete_input: ActivitiesDeleteRelationInput,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    try:
+
+        query = delete(ActivityRegistry).where(
+            and_(
+                ActivityRegistry.user_id.in_(delete_input.user_ids),
+                ActivityRegistry.activity_id.in_(delete_input.activity_ids),
+            )
+        )
+        await db_session.execute(query)
+        await db_session.commit()
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    except sqlalchemy.exc.IntegrityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Unexpected problem while deleting relations: {e}',
         )
 
 

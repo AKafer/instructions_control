@@ -25,3 +25,8 @@ class ActivityUpdateInput(BaseModel):
 class ActivitiesCreateRelationInput(BaseModel):
     activity_ids: list[int]
     user_ids: list[str]
+
+
+class ActivitiesDeleteRelationInput(BaseModel):
+    activity_ids: list[int]
+    user_ids: list[str]
