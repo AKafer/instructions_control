@@ -2,13 +2,14 @@ from typing import List
 
 from pydantic import BaseModel, Field
 
-from database.models.material_types import MaterialTypes
+from database.models.material_types import MaterialTypes, SizeType
 
 
 class MaterialType(BaseModel):
     id: int
     title: str
     unit_of_measurement: MaterialTypes.Units
+    size_type: SizeType | None = None
 
     class Config:
         orm_mode = True
@@ -17,11 +18,13 @@ class MaterialType(BaseModel):
 class MaterialTypeCreateInput(BaseModel):
     title: str | None = None
     unit_of_measurement: MaterialTypes.Units | None = None
+    size_type: SizeType | None = None
 
 
 class MaterialTypeUpdateInput(BaseModel):
     title: str | None = None
     unit_of_measurement: MaterialTypes.Units | None = None
+    size_type: SizeType | None = None
 
 
 class CalculateNeedInput(BaseModel):
@@ -29,6 +32,7 @@ class CalculateNeedInput(BaseModel):
 
 
 class TableFormat(BaseModel):
+    like_file: bool = False
     size_range: List[str] = Field(
         example=[
             "0-40",
@@ -53,4 +57,3 @@ class TableFormat(BaseModel):
             "201-1000"
         ]
     )
-    like_file: bool = False
