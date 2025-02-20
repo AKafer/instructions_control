@@ -30,7 +30,7 @@ services:
     env_file:
       - ./.env
     volumes:
-        - ./files:/app/src/static
+        - /var/www/ins_control/files:/app/src/static
     depends_on:
       db:
         condition: service_healthy
