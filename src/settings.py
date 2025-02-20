@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_FOLDER = 'api/static'
+STATIC_FOLDER = 'static'
 INSTRUCTIONS_FOLDER = 'instructions'
 SIGNATURES_FOLDER = 'signatures'
 UPLOAD_DIR = os.path.join(BASE_DIR, STATIC_FOLDER)

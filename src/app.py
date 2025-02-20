@@ -26,7 +26,7 @@ def create_app() -> FastAPI:
     )
     setup_routes(app)
     add_pagination(app)
-    app.mount(f"/{settings.STATIC_FOLDER}", StaticFiles(directory='static'), name='static')
+    app.mount(f"/api/{settings.STATIC_FOLDER}", StaticFiles(directory='static'), name='static')
     logging_config.dictConfig(settings.LOGGING)
     app.add_middleware(
         CORSMiddleware,

@@ -34,7 +34,7 @@ async def update_instruction_in_db(
 
 def get_full_link(request: Request, filename: str) -> str:
     base_url = BASE_URL or str(request.base_url)
-    return f'{base_url}{STATIC_FOLDER}/{INSTRUCTIONS_FOLDER}/{filename}'
+    return f'{base_url}api/{STATIC_FOLDER}/{INSTRUCTIONS_FOLDER}/{filename}'
 
 
 async def save_file(new_file: UploadFile, instruction: Instructions) -> str:

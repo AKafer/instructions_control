@@ -129,7 +129,7 @@ def get_full_link(request: Request, filename: str | None) -> str | None:
     if filename is None:
         return None
     base_url = BASE_URL or str(request.base_url)
-    return f'{base_url}{STATIC_FOLDER}/{SIGNATURES_FOLDER}/{filename}'
+    return f'{base_url}api/{STATIC_FOLDER}/{SIGNATURES_FOLDER}/{filename}'
 
 
 async def add_lines_to_journals_for_new_rule(
