@@ -1,0 +1,71 @@
+#!groovy
+// Run docker build
+properties([disableConcurrentBuilds()])
+
+pipeline {
+    agent any
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
+        timestamps()
+    }
+    stages {
+        stage("docker login") {
+            steps {
+                echo " ============== docker login =================="
+                withCredentials([usernamePassword(credentialsId: 'dockerhub_akafer', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh """
+                    docker login -u $USERNAME -p $PASSWORD
+                    """
+                }
+            }
+        }
+        stage("update docker backend image") {
+            steps {
+                echo " ============== start building backend image =================="
+                timeout(time: 10, unit: 'MINUTES') {
+                    dir ('.') {
+                	    sh 'docker build -t akafer/ins_control -f  ./ci/Dockerfile .'
+                    }
+                }
+            }
+        }
+        stage("update docker frontend image") {
+            steps {
+                echo " ============== start building frontend image =================="
+                timeout(time: 10, unit: 'MINUTES') {
+                    dir ('.') {
+                	    sh 'docker build -t akafer/ins_control_frontend -f  ./ci/Dockerfile_frontend .'
+                    }
+                }
+            }
+        }
+        stage("docker push") {
+            steps {
+                echo " ============== start pushing images =================="
+                timeout(time: 10, unit: 'MINUTES') {
+                    sh '''
+                    docker push akafer/ins_control
+                    docker push akafer/ins_control_frontend
+                    '''
+                }
+            }
+        }
+        stage("copy docker_compose file") {
+            steps {
+                echo " ============== copy files =================="
+                dir ('./ci') {
+                    sh '''
+                    scp docker-compose_prod.yaml root@ub2:/root/app/INS_CONTROL/docker-compose.yaml
+                    scp nginx.conf root@ub2:/root/app/INS_CONTROL/nginx.conf
+                    '''
+                }
+            }
+        }
+        stage("renew server") {
+            steps {
+                echo " ============== go to server =================="
+                sh 'ssh root@ub2 "cd /root/app/INS_CONTROL && docker-compose down --remove-orphans && docker pull akafer/ins_control && docker pull akafer/ins_control_frontend && docker-compose up -d"'
+            }
+        }
+    }
+}
