@@ -17,15 +17,14 @@ RUN apt-get update && apt-get upgrade -y && \
     libssl-dev \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir /app
-
 RUN pip install --no-cache poetry==1.4.0
 
 COPY pyproject.toml poetry.lock /app/
 COPY src/ /app/src
-RUN rm -rf /app/src/logs
-RUN mkdir /app/src/logs
-RUN touch /app/src/logs/app.log
+RUN rm -rf /app/src/logs && rm -rf /app/src/static
+RUN mkdir /app/src/logs && touch /app/src/logs/app.log
+RUN mkdir -p /app/src/static && \
+    mkdir -p /app/src/static/instructions /app/src/static/signatures /app/src/static/templates
 
 ENV PYTHONPATH "${PYTHONPATH}:/app/src"
 ENV PYTHONUNBUFFERED=TRUE

@@ -30,7 +30,10 @@ services:
     env_file:
       - ./.env
     volumes:
-        - /var/www/ins_control/files:/app/src/static
+        - /var/www/ins_control/files/instructions:/app/src/static/instructions
+        - /var/www/ins_control/files/signatures:/app/src/static/signatures
+        - /var/www/ins_control/files/templates:/app/src/static/templates
+        - ./logs:/app/src/logs
     depends_on:
       db:
         condition: service_healthy

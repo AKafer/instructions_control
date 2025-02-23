@@ -10,9 +10,11 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_FOLDER = 'static'
 INSTRUCTIONS_FOLDER = 'instructions'
 SIGNATURES_FOLDER = 'signatures'
+TEMPLATES_FOLDER = 'templates'
 UPLOAD_DIR = os.path.join(BASE_DIR, STATIC_FOLDER)
 INSTRUCTIONS_DIR = os.path.join(UPLOAD_DIR, INSTRUCTIONS_FOLDER)
 SIGNATURES_DIR = os.path.join(UPLOAD_DIR, SIGNATURES_FOLDER)
+TEMPLATES_DIR = os.path.join(UPLOAD_DIR, 'templates')
 
 
 BASE_URL = os.getenv('BASE_URL')

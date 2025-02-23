@@ -6,6 +6,7 @@ __all__ = [
     'Histories',
     'Instructions',
     'Journals',
+    'FileTemplates',
     'Materials',
     'MaterialTypes',
     'Norms',
@@ -31,3 +32,4 @@ from .activities import Activities, ActivityRegistry
 from .material_types import MaterialTypes
 from .norms import Norms, NormMaterials
 from .materials import Materials
+from .file_templates import FileTemplates

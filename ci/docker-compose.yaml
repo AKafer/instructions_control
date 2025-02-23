@@ -46,7 +46,9 @@ services:
     env_file:
       - .env
     volumes:
-        - ./files:/app/src/static
+        - ./files/instructions:/app/src/static/instructions
+        - ./files/signatures:/app/src/static/signatures
+        - ./files/templates:/app/src/static/templates
         - ./logs:/app/src/logs
     depends_on:
       db:
