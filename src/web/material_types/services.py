@@ -1,14 +1,15 @@
-from io import BytesIO
 from collections import defaultdict
-from typing import List, Dict, Tuple, Union
-from sqlalchemy.orm import selectinload
+from io import BytesIO
+from typing import Dict, List, Tuple, Union
+
 import openpyxl
-from database.models import NormMaterials, Norms, User, ActivityRegistry
-from database.models.material_types import MaterialTypes
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from starlette.responses import StreamingResponse
 
+from database.models import ActivityRegistry, NormMaterials, Norms, User
+from database.models.material_types import MaterialTypes
 
 
 async def update_material_type_db(
@@ -66,7 +67,7 @@ async def _get_users_for_norms(
         .where(
             or_(
                 User.profession_id.in_(profession_ids),
-                ActivityRegistry.activity_id.in_(activity_ids)
+                ActivityRegistry.activity_id.in_(activity_ids),
             )
         )
         .distinct(User.id)
@@ -88,6 +89,36 @@ async def _get_users_for_norms(
     return prof_users_map, act_users_map
 
 
+def _get_need_excel_file(result: dict) -> StreamingResponse:
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'NeedData'
+    ws.cell(row=1, column=1, value=result['size_type'].value)
+    ws.cell(row=1, column=2, value='Norm')
+    ws.cell(row=1, column=3, value='Given')
+    ws.cell(row=1, column=4, value='Need')
+    row_idx = 2
+    ws.cell(row=row_idx, column=1, value='Total')
+    ws.cell(row=row_idx, column=2, value=result['result']['total']['norm'])
+    ws.cell(row=row_idx, column=3, value=result['result']['total']['given'])
+    ws.cell(row=row_idx, column=4, value=result['result']['total']['need'])
+    row_idx = 3
+    for size, data in result['result']['structure'].items():
+        ws.cell(row=row_idx, column=1, value=size)
+        ws.cell(row=row_idx, column=2, value=data['norm'])
+        ws.cell(row=row_idx, column=3, value=data['given'])
+        ws.cell(row=row_idx, column=4, value=data['need'])
+        row_idx += 1
+    bio = BytesIO()
+    wb.save(bio)
+    bio.seek(0)
+    return StreamingResponse(
+        BytesIO(bio.getvalue()),
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': 'attachment; filename="structure.xlsx"'},
+    )
+
+
 def _calculate_material_need(
     material_type: 'MaterialTypes',
     norm_materials: List['NormMaterials'],
@@ -95,9 +126,9 @@ def _calculate_material_need(
     prof_users_map: Dict[int, List['User']],
     act_users_map: Dict[int, List['User']],
     with_height: bool = False,
-) -> Dict[str, Union[str, Dict[str, Dict[str, Dict[str, int]]]]]:
-
-
+) -> Dict[
+    str, Union[str, Dict[str, Dict[str, Dict[str, int]]]]
+] | StreamingResponse:
     all_users = set()
     size_type_for_material = material_type.size_type or 'no_size_type'
 
@@ -126,7 +157,9 @@ def _calculate_material_need(
         if norm.activity_id is not None:
             users_list.extend(act_users_map.get(norm.activity_id, []))
 
-        for user in set(users_list):  # set, чтобы не дублировать, если пересекается
+        for user in set(
+            users_list
+        ):  # set, чтобы не дублировать, если пересекается
             user_norm_sum[user] += nm.quantity
 
     for user in all_users:
@@ -205,7 +238,7 @@ def _calculate_material_need(
         total_given = sum(s['given'] for s in structure.values())
         total_need = sum(s['need'] for s in structure.values())
 
-    return {
+    result = {
         'size_type': size_type_for_material,
         'result': {
             'total': {
@@ -216,6 +249,10 @@ def _calculate_material_need(
             'structure': structure,
         },
     }
+    if with_height:
+        return result
+    return _get_need_excel_file(result)
+
 
 async def _get_material_type(
     db_session: AsyncSession, material_type_id: int
@@ -227,15 +264,13 @@ async def _get_material_type(
 
 async def calculate_need_process(
     db_session: AsyncSession,
-    material_type_id: id,
+    material_type_id: bool = False,
     with_height: bool = False,
-) -> Dict[str, Union[str, Dict[str, Dict[str, Dict[str, int]]]]]:
-    material_type = await _get_material_type(
-        db_session, material_type_id
-    )
-    norm_materials = await _get_norm_materials(
-        db_session, material_type_id
-    )
+) -> Dict[
+    str, Union[str, Dict[str, Dict[str, Dict[str, int]]]]
+] | StreamingResponse:
+    material_type = await _get_material_type(db_session, material_type_id)
+    norm_materials = await _get_norm_materials(db_session, material_type_id)
     if not norm_materials:
         return {}
     norms_by_id = await _get_norms_for_materials(db_session, norm_materials)
@@ -259,7 +294,7 @@ def _parse_range_str(range_str: str) -> Tuple[int, int]:
     return start, end
 
 
-def _get_excel_file(
+def _get_table_excel_file(
     table_data: dict,
     extended_size_range: List[str],
     extended_height_range: List[str],
@@ -284,7 +319,7 @@ def _get_excel_file(
     return StreamingResponse(
         BytesIO(bio.getvalue()),
         media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        headers={'Content-Disposition': 'attachment; filename="needs.xlsx"'},
+        headers={'Content-Disposition': 'attachment; filename="needs_table.xlsx"'},
     )
 
 
@@ -353,7 +388,7 @@ async def calculate_table_process(
             table_data[matched_size_range][matched_height_range] += needed
 
     if like_file:
-        return _get_excel_file(
+        return _get_table_excel_file(
             table_data, extended_size_range, extended_height_range
         )
     return table_data

@@ -1,0 +1,2 @@
+class BindToManyError(Exception):
+    pass

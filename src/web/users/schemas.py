@@ -106,6 +106,9 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
     is_verified: bool = Field(False, exclude=True)
     is_superuser: bool = Field(False, exclude=True)
     number: str | None
+    inn: str | None
+    snils: str | None
+    date_of_birth: datetime | None
     started_work: datetime | None
     changed_profession: datetime | None
     additional_features: AdditionalFeatures
@@ -169,7 +172,10 @@ class UserCreate(schemas.BaseUserCreate):
     is_active: bool = Field(True, exclude=True)
     is_verified: bool = Field(False, exclude=True)
     is_superuser: bool = Field(False, exclude=True)
-    number: str | None
+    number: str | None = None
+    inn: str | None = None
+    snils: str | None = None
+    date_of_birth: datetime | None
     started_work: CustomDateTime | None
     changed_profession: CustomDateTime | None
     additional_features: AdditionalFeatures | None
@@ -188,7 +194,10 @@ class UserUpdate(schemas.BaseUserUpdate):
     is_active: bool = Field(True, exclude=True)
     is_verified: bool = Field(False, exclude=True)
     is_superuser: bool = Field(False, exclude=True)
-    number: str | None
+    number: str | None = None
+    inn: str | None = None
+    snils: str | None = None
+    date_of_birth: datetime | None
     started_work: CustomDateTime | None
     changed_profession: CustomDateTime | None
     additional_features: AdditionalFeatures | None
@@ -217,6 +226,9 @@ class UserListRead(schemas.BaseUser[uuid.UUID]):
     is_verified: bool = Field(False, exclude=True)
     is_superuser: bool = Field(False, exclude=True)
     number: str | None
+    inn: str | None
+    snils: str | None
+    date_of_birth: datetime | None
     started_work: datetime | None
     changed_profession: datetime | None
     additional_features: AdditionalFeatures

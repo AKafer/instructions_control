@@ -16,3 +16,9 @@ class Rule(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class RuleCreateManyInput(BaseModel):
+    instruction_id: int
+    profession_ids: list[int] | None = None
+    bind_to_all: bool = False

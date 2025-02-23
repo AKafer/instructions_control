@@ -11,9 +11,10 @@ from starlette.exceptions import HTTPException
 from main_schemas import ResponseErrorBody
 from web.exceptions import ItemNotFound, DuplicateError
 from web.journals.services import add_lines_to_journals_for_new_rule, remove_lines_to_journals_for_delete_rule
+from web.rules.exceptions import BindToManyError
 from web.rules.filters import RulesFilter
-from web.rules.schemas import Rule, RuleCreateInput
-from web.rules.services import check_constraints
+from web.rules.schemas import Rule, RuleCreateInput, RuleCreateManyInput
+from web.rules.services import check_constraints, bind_to_many_professions
 from web.users.users import current_superuser
 
 router = APIRouter(prefix="/rules", tags=["rules"], dependencies=[Depends(current_superuser)])
@@ -59,7 +60,15 @@ async def get_rule_by_id(
 @router.post(
     "/",
     status_code=status.HTTP_201_CREATED,
-    response_model=Rule
+    response_model=Rule,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": ResponseErrorBody,
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": ResponseErrorBody,
+        },
+    },
 )
 async def create_rule(
     rule_input: RuleCreateInput,
@@ -88,6 +97,38 @@ async def create_rule(
     await add_lines_to_journals_for_new_rule(
         db_session, rule_input.profession_id, rule_input.instruction_id)
     return db_rule
+
+
+@router.post(
+    "/to_many",
+    status_code=status.HTTP_201_CREATED,
+    response_model=str,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": ResponseErrorBody,
+        },
+    },
+)
+async def create_rule(
+    rule_input: RuleCreateManyInput,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    try:
+        await bind_to_many_professions(
+            db_session,
+            rule_input.instruction_id,
+            rule_input.profession_ids,
+            rule_input.bind_to_all
+        )
+    except BindToManyError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    return Response(
+        status_code=status.HTTP_201_CREATED,
+        content="Rules created"
+    )
 
 
 @router.patch(

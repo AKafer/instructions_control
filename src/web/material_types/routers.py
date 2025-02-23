@@ -63,7 +63,6 @@ async def get_material_type_by_id(
 
 @router.post(
     '/calculate_need/{material_type_id:int}',
-    response_model=dict,
     responses={
         status.HTTP_400_BAD_REQUEST: {
             'model': ResponseErrorBody,
