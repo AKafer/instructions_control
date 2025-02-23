@@ -103,7 +103,7 @@ def _get_need_excel_file(result: dict) -> StreamingResponse:
     ws.cell(row=row_idx, column=3, value=result['result']['total']['given'])
     ws.cell(row=row_idx, column=4, value=result['result']['total']['need'])
     row_idx = 3
-    for size, data in result['result']['structure'].items():
+    for size, data in sorted(result['result']['structure'].items()):
         ws.cell(row=row_idx, column=1, value=size)
         ws.cell(row=row_idx, column=2, value=data['norm'])
         ws.cell(row=row_idx, column=3, value=data['given'])
