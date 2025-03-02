@@ -15,10 +15,10 @@ UPLOAD_DIR = os.path.join(BASE_DIR, STATIC_FOLDER)
 INSTRUCTIONS_DIR = os.path.join(UPLOAD_DIR, INSTRUCTIONS_FOLDER)
 SIGNATURES_DIR = os.path.join(UPLOAD_DIR, SIGNATURES_FOLDER)
 TEMPLATES_DIR = os.path.join(UPLOAD_DIR, 'templates')
-
+OUTPUT_DIR = "/tmp/generated_docs"
+ZIP_NAME = "documents.zip"
 
 BASE_URL = os.getenv('BASE_URL')
-
 
 DATABASE_POOL_SIZE = os.getenv('DB_POOL_SIZE', default=20)
 DATABASE_POOL_MAX_OVERFLOW = os.getenv('DB_POOL_MAX_OVERFLOW', default=5)

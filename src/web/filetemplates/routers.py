@@ -1,17 +1,25 @@
-from fastapi import File, UploadFile, APIRouter, Depends, Request
-from sqlalchemy import select, delete
+import io
+import os
+import zipfile
 
+from database.models.file_templates import FileTemplates
+from dependencies import get_db_session
+from fastapi import APIRouter, Depends, File, Request, UploadFile
+from main_schemas import ResponseErrorBody
+from settings import OUTPUT_DIR, TEMPLATES_DIR
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from starlette.exceptions import HTTPException
 from starlette.responses import Response
-
-from database.models.file_templates import FileTemplates
-from dependencies import get_db_session
-from main_schemas import ResponseErrorBody
-from web.filetemplates.schemas import FileTemplate
-from web.filetemplates.services import save_file, get_full_link, delete_file
-
+from web.filetemplates.schemas import FileTemplate, RequestModel
+from web.filetemplates.services import (
+    delete_file,
+    delete_files,
+    get_full_link,
+    run_generated_file,
+    save_file,
+)
 from web.users.users import current_superuser
 
 router = APIRouter(prefix='/file_templates', tags=['file_templates'])
@@ -29,8 +37,7 @@ router = APIRouter(prefix='/file_templates', tags=['file_templates'])
     dependencies=[Depends(current_superuser)],
 )
 async def get_all_file_templates(
-    request: Request,
-    db_session: AsyncSession = Depends(get_db_session)
+    request: Request, db_session: AsyncSession = Depends(get_db_session)
 ):
     query = select(FileTemplates)
     result = await db_session.execute(query)
@@ -62,7 +69,7 @@ async def create_file_template(
             detail='File must be provided',
         )
     file_name = file.filename
-    query = select(FileTemplates).where(FileTemplates.file_name==file_name)
+    query = select(FileTemplates).where(FileTemplates.file_name == file_name)
     result = await db_session.execute(query)
     file_template = result.scalar()
     if file_template is not None:
@@ -90,8 +97,7 @@ async def create_file_template(
     dependencies=[Depends(current_superuser)],
 )
 async def delete_file_template(
-    file_template_id:int,
-    db_session: AsyncSession = Depends(get_db_session)
+    file_template_id: int, db_session: AsyncSession = Depends(get_db_session)
 ):
     query = select(FileTemplates).where(FileTemplates.id == file_template_id)
     result = await db_session.execute(query)
@@ -106,3 +112,45 @@ async def delete_file_template(
     await db_session.execute(query)
     await db_session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+    '/generate-docs',
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+    },
+    dependencies=[Depends(current_superuser)],
+)
+async def generate_docs(request_data: RequestModel):
+    memory_buffer = io.BytesIO()
+    generated_files = []
+    for doc in request_data.documents:
+        template_path = os.path.join(TEMPLATES_DIR, doc.template)
+        if not os.path.exists(template_path):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f'Шаблон {doc.template} не найден',
+            )
+        output_path = os.path.join(OUTPUT_DIR, doc.template)
+        run_generated_file(request_data, doc, template_path, output_path)
+        generated_files.append(output_path)
+
+    with zipfile.ZipFile(
+        memory_buffer, 'w', compression=zipfile.ZIP_DEFLATED
+    ) as zf:
+        for file_path in generated_files:
+            arcname = os.path.basename(file_path)
+            zf.write(file_path, arcname=arcname)
+
+    delete_files(generated_files)
+    memory_buffer.seek(0)
+    zip_data = memory_buffer.read()
+
+    return Response(
+        content=zip_data,
+        media_type='application/zip',
+        headers={'Content-Disposition': 'attachment; filename=documents.zip'},
+    )
