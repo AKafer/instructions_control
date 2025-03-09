@@ -22,7 +22,6 @@ class Materials(BaseModel):
     period = sa.Column(sa.Integer, nullable=True)
     number_of_document = sa.Column(sa.String(320), nullable=True)
     quantity = sa.Column(sa.Integer, nullable=True)
-    unit_of_measurement = sa.Column(sa.String(320), nullable=True)
 
     user = relationship(
         "User",
