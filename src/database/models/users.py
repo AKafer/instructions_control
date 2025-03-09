@@ -90,6 +90,13 @@ class User(SQLAlchemyBaseUserTableUUID, BaseModel):
         cascade="all, delete, delete-orphan",
         single_parent=True,
     )
+    documents = relationship(
+        "Documents",
+        back_populates="user",
+        lazy='selectin',
+        cascade="all, delete, delete-orphan",
+        single_parent=True,
+    )
 
 
 async def get_user_db(session: AsyncSession = Depends(get_db_session)):

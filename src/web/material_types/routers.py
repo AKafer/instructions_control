@@ -32,8 +32,8 @@ async def get_all_material_types(
     db_session: AsyncSession = Depends(get_db_session),
 ):
     query = select(MaterialTypes).order_by(MaterialTypes.id.desc())
-    professions = await db_session.execute(query)
-    return professions.scalars().all()
+    material_types = await db_session.execute(query)
+    return material_types.scalars().all()
 
 
 @router.get(

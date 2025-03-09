@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List
 
 from pydantic import BaseModel, Field
@@ -8,11 +9,12 @@ from database.models.material_types import MaterialTypes, SizeType
 class MaterialType(BaseModel):
     id: int
     title: str
-    unit_of_measurement: MaterialTypes.Units
+    unit_of_measurement: MaterialTypes.Units | None = None
     size_type: SizeType | None = None
 
     class Config:
         orm_mode = True
+        use_enum_values = True
 
 
 class MaterialTypeCreateInput(BaseModel):

@@ -13,6 +13,8 @@ from web.material_types.routers import router as material_types_router
 from web.norms.routers import router as norms_router
 from web.materials.routers import router as materials_router
 from web.filetemplates.routers import router as file_templates_router
+from web.document_types.routers import router as document_types_router
+from web.documents.routers import router as documents_router
 
 from main_schemas import ResponseErrorBody
 from web.users.schemas import UserRead, UserCreate
@@ -55,6 +57,8 @@ api_v1_router.include_router(material_types_router)
 api_v1_router.include_router(norms_router)
 api_v1_router.include_router(materials_router)
 api_v1_router.include_router(file_templates_router)
+api_v1_router.include_router(document_types_router)
+api_v1_router.include_router(documents_router)
 
 
 # api_v1_router.include_router(

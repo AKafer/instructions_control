@@ -3,6 +3,8 @@ __all__ = [
     'ActivityRegistry',
     'BaseModel',
     'Divisions',
+    'Documents',
+    'DocumentTypes',
     'Histories',
     'Instructions',
     'Journals',
@@ -33,3 +35,5 @@ from .material_types import MaterialTypes
 from .norms import Norms, NormMaterials
 from .materials import Materials
 from .file_templates import FileTemplates
+from .documents import Documents
+from .document_types import DocumentTypes
