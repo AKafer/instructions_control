@@ -60,9 +60,8 @@ class Material(BaseModel):
     sertificate: str | None
     start_date: datetime | None
     period: int | None
-    size: float | None
+    number_of_document: str | None
     quantity: int | None
-    unit_of_measurement: str | None
 
     class Config:
         orm_mode = True
