@@ -286,6 +286,67 @@ async def calculate_need_process(
         with_height=with_height,
     )
 
+async def calculate_need_all_materials_simple(db_session: AsyncSession) -> Dict[str, Dict[str, Union[int, Dict[str, int]]]]:
+    material_types_query = select(MaterialTypes)
+    material_types = (await db_session.scalars(material_types_query)).all()
+
+    results = {}
+
+    for material_type in material_types:
+        norm_materials = await _get_norm_materials(db_session, material_type.id)
+        if not norm_materials:
+            continue
+        norms_by_id = await _get_norms_for_materials(db_session, norm_materials)
+        if not norms_by_id:
+            continue
+
+        prof_users_map, act_users_map = await _get_users_for_norms(db_session, norms_by_id)
+
+        all_users = set()
+        for nm in norm_materials:
+            norm = norms_by_id.get(nm.norm_id)
+            if not norm:
+                continue
+            if norm.profession_id is not None:
+                all_users.update(prof_users_map.get(norm.profession_id, []))
+            if norm.activity_id is not None:
+                all_users.update(act_users_map.get(norm.activity_id, []))
+
+        total_norm = 0
+        total_given = 0
+
+        for user in all_users:
+            user_norm_sum = 0
+            for nm in norm_materials:
+                norm = norms_by_id.get(nm.norm_id)
+                if not norm:
+                    continue
+                if norm.profession_id == user.profession_id or (
+                    norm.activity_id
+                    and any(act.id == norm.activity_id for act in user.activities)
+                ):
+                    user_norm_sum += nm.quantity
+            total_norm += user_norm_sum
+
+            user_given_sum = 0
+            for um in user.materials:
+                if um.material_type_id == material_type.id:
+                    user_given_sum += um.quantity
+            total_given += user_given_sum
+
+        total_need = max(total_norm - total_given, 0)
+
+        results[material_type.title] = {
+            "id": material_type.id,
+            "data": {
+                "norm": total_norm,
+                "given": total_given,
+                "need": total_need,
+            },
+        }
+
+    return results
+
 
 def _parse_range_str(range_str: str) -> Tuple[int, int]:
     parts = range_str.split('-')

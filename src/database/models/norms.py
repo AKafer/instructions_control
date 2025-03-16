@@ -57,7 +57,12 @@ class NormMaterials(BaseModel):
     period = sa.Column(sa.Integer, nullable=True)
     npa_link = sa.Column(sa.String(320), nullable=True)
     description = sa.Column(sa.Text, nullable=True)
-    norm = relationship("Norms", back_populates="material_norm_types")
+
+    norm = relationship(
+        "Norms",
+        back_populates="material_norm_types"
+    )
+
     material_type = relationship(
         "MaterialTypes",
         back_populates="norms_materials",

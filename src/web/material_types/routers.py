@@ -17,7 +17,8 @@ from web.material_types.schemas import (
     MaterialTypeCreateInput,
     MaterialTypeUpdateInput, CalculateNeedInput, TableFormat,
 )
-from web.material_types.services import update_material_type_db, calculate_need_process, calculate_table_process
+from web.material_types.services import update_material_type_db, calculate_need_process, calculate_table_process, \
+    calculate_need_all_materials_simple
 from web.users.users import current_superuser
 
 router = APIRouter(
@@ -82,6 +83,24 @@ async def calculate_need(
         material_type_id,
         calculate_input.with_height
     )
+
+
+@router.post(
+    '/calculate_need_all',
+    response_model=dict,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+        status.HTTP_404_NOT_FOUND: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def calculate_need_all(
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    return await calculate_need_all_materials_simple(db_session)
 
 
 @router.post(

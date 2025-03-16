@@ -53,6 +53,23 @@ class CreateMaterial(BaseModel):
         extra = Extra.allow
 
 
+class MaterialData(BaseModel):
+    material_type_id: int
+    sertificate: str | None
+    start_date: datetime | None
+    period: int | None
+    quantity: int | None
+
+
+class CreateMaterialBulk(BaseModel):
+    user_id: str
+    number_of_document: str | None
+    materials_data: list[MaterialData]
+
+    class Config:
+        extra = Extra.allow
+
+
 class UpdateMaterial(BaseModel):
     sertificate: str | None
     start_date: datetime | None
