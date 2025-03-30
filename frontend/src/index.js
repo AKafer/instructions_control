@@ -1,11 +1,31 @@
-// index.js
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './App';
+import {createBrowserRouter, RouterProvider} from 'react-router-dom';
+import './index.css';
+import {AuthLayout} from './layouts/AuthLayout';
+import Landing from './pages/landing/Landing';
+import Login from './pages/login/Login';
+
+const router = createBrowserRouter([
+	{
+		path: '/',
+		element: <AuthLayout/>,
+		children: [
+			{
+				path: '/',
+				element: <Landing/>
+			},
+			{
+				path: '/login',
+				element: <Login/>
+			}
+		]
+	}
+]);
 
 ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
+	<React.StrictMode>
+		<RouterProvider router={router}/>
+	</React.StrictMode>,
+	document.getElementById('root')
 );

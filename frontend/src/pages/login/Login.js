@@ -4,7 +4,7 @@ import { jwtDecode } from 'jwt-decode';
 import { useNavigate, Link } from 'react-router-dom';
 import { apiBaseUrl } from '../../config';
 import logo from '../../assets/logo.png';
-import './styles.modules.css';
+import styles from './Login.modules.css';
 import { Html5Qrcode } from 'html5-qrcode';
 
 
@@ -272,7 +272,7 @@ const Login = () => {
 						ref={qrScannerRef}
 						style={{ width: '400px', margin: '0 auto' }}
 					/>
-					<button onClick={handleCancelQR} className="cancel-qr-button">
+					<button onClick={handleCancelQR} className={styles['cancel-qr-button']}>
             Отмена
 					</button>
 				</div>

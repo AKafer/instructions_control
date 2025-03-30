@@ -28,7 +28,20 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "plugins": ["react-refresh"],
+    "rules": {
+      "no-unused-vars": ["error", { "varsIgnorePattern": "^[A-Z_]" }],
+      "react-refresh/only-export-components": [
+        "warn",
+        { "allowConstantExport": true }
+      ],
+      "semi": ["error", "always", { "omitLastInOneLineBlock": false }],
+      "comma-dangle": ["error", "never"],
+      "quotes": ["error", "single"],
+      "react/prop-types": 0,
+      "indent": ["error", "tab"]
+    }
   },
   "browserslist": {
     "production": [

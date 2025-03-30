@@ -10,49 +10,49 @@ import { Table } from 'antd';
  * @param {object} fetchOptions - дополнительные опции для fetch.
  */
 const useTableData = ({ endpoint, initialPage = 1, initialPageSize = 10, usePagination = true, fetchOptions = {} }) => {
-  const [data, setData] = useState([]);
-  const [pagination, setPagination] = useState({
-    current: initialPage,
-    pageSize: initialPageSize,
-    total: 0,
-  });
-  const [loading, setLoading] = useState(false);
+	const [data, setData] = useState([]);
+	const [pagination, setPagination] = useState({
+		current: initialPage,
+		pageSize: initialPageSize,
+		total: 0
+	});
+	const [loading, setLoading] = useState(false);
 
-  const fetchData = async (page = initialPage, pageSize = initialPageSize) => {
-    setLoading(true);
-    try {
-      // Формируем URL с параметрами, если используется пагинация
-      const url = new URL(endpoint);
-      if (usePagination) {
-        url.searchParams.append('page', page);
-        url.searchParams.append('pageSize', pageSize);
-      }
-      const response = await fetch(url.toString(), fetchOptions);
-      const json = await response.json();
-      // Ожидается, что API вернёт объект вида: { data: [...], total: <число> }
-      setData(json.data);
-      if (usePagination) {
-        setPagination(prev => ({
-          ...prev,
-          current: page,
-          pageSize,
-          total: json.total,
-        }));
-      }
-    } catch (error) {
-      console.error('Ошибка при загрузке данных:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+	const fetchData = async (page = initialPage, pageSize = initialPageSize) => {
+		setLoading(true);
+		try {
+			// Формируем URL с параметрами, если используется пагинация
+			const url = new URL(endpoint);
+			if (usePagination) {
+				url.searchParams.append('page', page);
+				url.searchParams.append('pageSize', pageSize);
+			}
+			const response = await fetch(url.toString(), fetchOptions);
+			const json = await response.json();
+			// Ожидается, что API вернёт объект вида: { data: [...], total: <число> }
+			setData(json.data);
+			if (usePagination) {
+				setPagination(prev => ({
+					...prev,
+					current: page,
+					pageSize,
+					total: json.total
+				}));
+			}
+		} catch (error) {
+			console.error('Ошибка при загрузке данных:', error);
+		} finally {
+			setLoading(false);
+		}
+	};
 
-  // Загружаем данные при изменении эндпойнта
-  useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [endpoint]);
+	// Загружаем данные при изменении эндпойнта
+	useEffect(() => {
+		fetchData();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [endpoint]);
 
-  return { data, pagination, loading, fetchData };
+	return { data, pagination, loading, fetchData };
 };
 
 /**
@@ -68,40 +68,41 @@ const useTableData = ({ endpoint, initialPage = 1, initialPageSize = 10, usePagi
  * @param {object} [props.tableProps={}] - Дополнительные пропсы для компонента Table.
  */
 const UniversalTable = ({
-  endpoint,
-  columns,
-  usePagination = true,
-  initialPage = 1,
-  initialPageSize = 10,
-  fetchOptions = {},
-  tableProps = {},
+	endpoint,
+	columns,
+	usePagination = true,
+	initialPage = 1,
+	initialPageSize = 10,
+	fetchOptions = {},
+	tableProps = {}
 }) => {
-  const { data, pagination, loading, fetchData } = useTableData({
-    endpoint,
-    initialPage,
-    initialPageSize,
-    usePagination,
-    fetchOptions,
-  });
+	const { data, pagination, loading, fetchData } = useTableData({
+		endpoint,
+		initialPage,
+		initialPageSize,
+		usePagination,
+		fetchOptions
+	});
 
-  // Обработчик смены страницы или изменения размера страницы
-  const handleTableChange = (paginationConfig) => {
-    if (usePagination) {
-      fetchData(paginationConfig.current, paginationConfig.pageSize);
-    }
-  };
+	// Обработчик смены страницы или изменения размера страницы
+	const handleTableChange = (paginationConfig) => {
+		if (usePagination) {
+			fetchData(paginationConfig.current, paginationConfig.pageSize);
+		}
+	};
 
-  return (
-    <Table
-      columns={columns}
-      dataSource={data}
-      loading={loading}
-      rowKey="id" // предполагается, что каждая запись имеет уникальное поле id; при необходимости можно параметризировать
-      onChange={handleTableChange}
-      pagination={usePagination ? pagination : false}
-      {...tableProps}
-    />
-  );
+	return (
+		<Table
+			columns={columns}
+			dataSource={data}
+			loading={loading}
+			rowKey="id" // предполагается, что каждая запись имеет уникальное поле id; при необходимости можно параметризировать
+			onChange={handleTableChange}
+			pagination={usePagination ? pagination : false}
+			{...tableProps}
+		/>
+	);
 };
+
 
 export default UniversalTable;
