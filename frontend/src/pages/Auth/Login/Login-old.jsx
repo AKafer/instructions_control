@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { useNavigate, Link } from 'react-router-dom';
-import { apiBaseUrl } from '../../config';
-import logo from '../../assets/logo.png';
+import { apiBaseUrl } from '../../../config';
+import logo from '../../../assets/logo.png';
 import styles from './Login.modules.css';
 import { Html5Qrcode } from 'html5-qrcode';
 

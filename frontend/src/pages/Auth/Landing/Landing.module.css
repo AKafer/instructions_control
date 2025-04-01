@@ -22,12 +22,11 @@
   text-align: center;
 }
 
-.login-button {
+.button {
   width: auto;
   align-self: center;
   margin-bottom: 2rem;
   padding: 0.5rem 1rem;
-  cursor: pointer;
 }
 
 .contacts {

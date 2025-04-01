@@ -1,10 +1,12 @@
 import React from 'react';
 import {useNavigate} from 'react-router-dom';
 import styles from './Landing.module.css';
+import Button from '../../../components/Button/Button';
 
 const Landing = () => {
 	const navigate = useNavigate();
 	const handleLoginClick = () => {
+		console.log('go to login');
 		navigate('/login');
 	};
 
@@ -15,9 +17,11 @@ const Landing = () => {
 				<p>Ваш надежный партнер в управлении учетными данными</p>
 			</div>
 
-			<button className="login-button" onClick={handleLoginClick}>
-        		Войти
-			</button>
+			<div className={styles['button']}>
+				<Button onClick={handleLoginClick}>
+        			Начать работу
+				</Button>
+			</div>
 			<div className={styles['contacts']}>
 				<h3>Контакты</h3>
 				<p>Email: <a href="mailto:i@aarsenev.ru">i@aarsenev.ru</a></p>

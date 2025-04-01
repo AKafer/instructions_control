@@ -18,6 +18,8 @@ __all__ = [
     'Rules',
     'Tests',
     'Templates',
+    'TrainingModules',
+    'TrainingModuleProgresses',
     'User',
 ]
 
@@ -37,3 +39,4 @@ from .materials import Materials
 from .file_templates import FileTemplates
 from .documents import Documents
 from .document_types import DocumentTypes
+from .training_modules import TrainingModules, TrainingModuleProgresses

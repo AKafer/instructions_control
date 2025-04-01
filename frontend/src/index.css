@@ -1,5 +1,5 @@
 :root {
-    --font_default: "Noto Sans";
+    --font_default: "Noto Sans", sans-serif;
     --color_text_default: rgba(1, 75, 98, 1);
     --color_text_default_rgb: 1, 75, 98;
     --color_alert_default: rgba(250, 181, 21, 1);

@@ -1,7 +1,4 @@
-import re
-
 import sqlalchemy as sa
-from sqlalchemy import event
 from sqlalchemy.orm import relationship
 
 from database.orm import BaseModel, Session
@@ -38,6 +35,13 @@ class Instructions(BaseModel):
 
     tests = relationship(
         "Tests",
+        lazy='selectin',
+        cascade="all, delete, delete-orphan",
+        single_parent=True,
+    )
+    training_modules = relationship(
+        "TrainingModules",
+        back_populates="instruction",
         lazy='selectin',
         cascade="all, delete, delete-orphan",
         single_parent=True,

@@ -1,0 +1,20 @@
+.button {
+    font-family: var(--font_default), sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color_text_default);
+    text-align: center;
+    line-height: 2.0;
+    width: 180px;
+    border: 1px solid var(--color_primary_default);
+    border-radius: 3px;
+    padding: 5px;
+    background: none transparent;
+    cursor: pointer;
+    user-select: none;
+}
+
+.button:hover {
+    background: var(--color_primary_default);
+    color: var(--color_primary_contrast_default);
+}
