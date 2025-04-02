@@ -1,10 +1,12 @@
 import React from 'react';
 import styles from './Button.module.css';
+import cn from 'classnames';
 
 const Button = ({
 	children,
 	onClick,
-	disabled
+	disabled,
+	className
 }) => {
 	const handleClick = (e) => {
 		if (disabled) {
@@ -19,7 +21,7 @@ const Button = ({
 
 	return (
 		<button
-			className={styles['button']}
+			className={cn(styles.button, className)}
 			disabled={disabled}
 			onClick={handleClick}
 		>

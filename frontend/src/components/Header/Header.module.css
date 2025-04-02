@@ -1,0 +1,65 @@
+.header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 80px; /* высота шапки */
+  padding: 0 20px;
+  background-color: var(--color_background_default);
+  border-bottom: 1px solid var(--color_primary_default);
+}
+
+.logo {
+  flex: 0 0 auto;
+}
+
+.logo img {
+  height: 60px;
+  width: auto;
+  margin: 0;
+}
+
+.menu {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  /* Меню будет строго по центру шапки */
+}
+
+.menu-item {
+  text-decoration: none;
+  color: var(--color_text_default, #014b62);
+  font-family: var(--font_default), sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.menu-item:hover {
+  text-decoration: none;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.icons {
+  flex: 0 0 auto;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.icons button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.icons img {
+  height: 32px;
+  width: auto;
+}
