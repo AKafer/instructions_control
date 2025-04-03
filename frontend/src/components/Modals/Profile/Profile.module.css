@@ -1,0 +1,32 @@
+.help {
+    display: flex;
+	flex-direction: column;
+    align-items: center;
+}
+
+.content {
+    font-family: var(--font_default), sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: normal;
+    color: var(--color_text_default);
+    max-width: 400px;
+    padding: 40px;
+}
+
+.icon {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  vertical-align: middle;
+}
+
+.text {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
+.telegramButton:hover .icon {
+    filter: invert(0.5) sepia(1) saturate(3) hue-rotate(180deg);
+}

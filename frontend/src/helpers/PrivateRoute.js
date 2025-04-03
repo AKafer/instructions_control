@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import {JWT_STORAGE_KEY} from './constants'; 
+import {EMAIL_STORAGE_KEY, JWT_STORAGE_KEY} from './constants';
 
 
 const PrivateRoute = ({ children, adminOnly = false }) => {
@@ -29,6 +29,8 @@ const PrivateRoute = ({ children, adminOnly = false }) => {
 
 	let isAdmin = false;
 	isAdmin = !!decoded.is_superuser;
+
+
 
 	if (adminOnly && !isAdmin) {
 		return <Navigate to="/control" replace />;

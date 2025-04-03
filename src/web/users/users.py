@@ -138,6 +138,7 @@ class CustomJWTStrategy(JWTStrategy):
             "sub": str(user.id),
             "aud": self.token_audience,
             "is_superuser": user.is_superuser,
+            'email': user.email,
         }
         return generate_jwt(
             data, self.encode_key, self.lifetime_seconds, algorithm=self.algorithm

@@ -1,10 +1,11 @@
 :root {
     --font_default: "Noto Sans", sans-serif;
     --color_text_default: rgba(1, 75, 98, 1);
+    --color_text_default_trans: rgba(1, 75, 98, 0.4);
     --color_text_default_rgb: 1, 75, 98;
     --color_alert_default: rgba(250, 181, 21, 1);
     --color_alert_default_rgb: 250, 181, 21;
-    --color_primary_default: rgba(3, 115, 148, 1);
+    --color_primary_default: rgba(3, 115, 148, 1);  /*#037394*/
     --color_primary_default_rgb: 3, 115, 148;
     --color_success_default: rgba(23, 219, 78, 1);
     --color_success_default_rgb: 23, 219, 78;
@@ -16,4 +17,5 @@
     --color_destructive_default_rgb: 255, 0, 0;
     --color_primary_contrast_default: rgba(255, 255, 255, 1);
     --color_primary_contrast_default_rgb: 255, 255, 255;
+    --color_element_border: #ccc;
 }
