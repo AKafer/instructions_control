@@ -128,6 +128,14 @@ async def create_training_module(
     try:
         db_tm = TrainingModules(**training_module_input.dict())
         db_session.add(db_tm)
+        users, tm_progresses = await get_users_and_progresses(
+            training_module_input.instruction_id,
+            (db_tm,),
+            db_session
+        )
+        db_tm.applied = len(users)
+        db_tm.passed = 0
+
         if file is not None:
             file_name = await save_file(
                 file,
@@ -176,6 +184,17 @@ async def update_training_module(
     tm =  await update_tm_in_db(
         db_session, tm, **training_module_input.dict(exclude_none=True)
     )
+    users, tm_progresses = await get_users_and_progresses(
+        tm.instruction_id,
+        (tm,),
+        db_session
+    )
+    tm.applied = len(users)
+    passed = 0
+    for tmp in tm_progresses:
+        if tmp.module_id == tm.id:
+            passed += 1 * tmp.is_completed
+    tm.passed = passed
     if file is not None:
         if tm.filename is not None:
             delete_file(tm.filename)

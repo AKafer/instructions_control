@@ -12,8 +12,8 @@ class TrainingModule(BaseModel):
     order_index: int
     link: str | None
     filename: str | None = Field(None, exclude=True)
-    applied: int
-    passed: int
+    applied: int | None
+    passed: int | None
 
     class Config:
         orm_mode = True
