@@ -18,7 +18,7 @@ const Login = () => {
 			params.append('username', email);
 			params.append('password', password);
 			const {data} = await axios.post(
-				`${PREFIX}/api/v1/auth/jwt/login/`,
+				`${PREFIX}/api/v1/auth/jwt/login`,
 				params,
 				{
 					headers: {
