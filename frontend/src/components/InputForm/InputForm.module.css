@@ -1,5 +1,6 @@
 .input {
-    font-size: 17px;
+    font-family: var(--font_default), sans-serif;
+    font-size: 13px;
     font-style: normal;
     font-weight: 400;
     color: var(--color_text_default);
@@ -7,12 +8,13 @@
     background: #FFF;
     box-shadow: 15px 20px 45px 0px rgba(233, 233, 233, 0.25);
     border-radius: 10px;
-    padding: 20px;
+    padding: 8px;
 }
 
 .input::placeholder {
+    font-family: var(--font_default), sans-serif;
     color: var(--color_text_default_trans);
-    font-size: 17px;
+    font-size: 13px;
     font-style: normal;
     font-weight: 400;
 }

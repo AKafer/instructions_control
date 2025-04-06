@@ -1,12 +1,14 @@
 import os
+import uuid
 from datetime import datetime
+from typing import Sequence
 
 import sqlalchemy
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import Request, UploadFile
-from database.models import TrainingModules
+from database.models import TrainingModules, User, TrainingModuleProgresses, Rules
 from settings import (
     BASE_URL,
     STATIC_FOLDER,
@@ -21,6 +23,10 @@ from web.journals.services import logger
 
 
 class DuplicateIndexError(Exception):
+    pass
+
+
+class ModuleOperationError(Exception):
     pass
 
 
@@ -67,3 +73,38 @@ def delete_file(filename: str) -> None:
     except FileNotFoundError:
         pass
 
+
+async def check_data(
+        module_id: int, user_id: str, db_session: AsyncSession
+) -> TrainingModules:
+    query = select(User).where(User.id == user_id)
+    user = await db_session.scalar(query)
+    if user is None:
+        raise ModuleOperationError('User not found with this id: {}'.format(user_id))
+    query = select(TrainingModules).where(TrainingModules.id == module_id)
+    module = await db_session.scalar(query)
+    if module is None:
+        raise ModuleOperationError('Module not found with this id: {}'.format(module_id))
+    return module
+
+
+async def get_users_and_progresses(
+    instruction_id: int,
+    training_modules: Sequence[TrainingModules],
+    db_session: AsyncSession,
+) -> (list[User], list[TrainingModuleProgresses]):
+    query = select(Rules.profession_id).filter(Rules.instruction_id == instruction_id)
+    result = await db_session.execute(query)
+    profession_ids = result.scalars().all()
+    query = select(User).where(User.profession_id.in_(profession_ids))
+    result = await db_session.execute(query)
+    users = result.scalars().all()
+    query = select(TrainingModuleProgresses).where(
+        and_(
+            TrainingModuleProgresses.user_id.in_([user.id for user in users]),
+            TrainingModuleProgresses.module_id.in_([tm.id for tm in training_modules]),
+        )
+    )
+    result = await db_session.execute(query)
+    tm_progresses = result.scalars().all()
+    return users, tm_progresses

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import Form
 from pydantic import BaseModel, Field
 
@@ -10,6 +12,8 @@ class TrainingModule(BaseModel):
     order_index: int
     link: str | None
     filename: str | None = Field(None, exclude=True)
+    applied: int
+    passed: int
 
     class Config:
         orm_mode = True
@@ -54,3 +58,14 @@ class TrainingModuleUpdateInput(BaseModel):
             description=description,
             order_index=order_index,
         )
+
+
+class TrainingModuleStatus(BaseModel):
+    user_id: str
+    module_id : int
+    module_title: str
+    module_description: str | None
+    module_order_index: int
+    module_link: str | None
+    is_completed: bool
+    completed_at: datetime | None

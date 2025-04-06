@@ -6,10 +6,12 @@
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "antd": "^5.24.6",
     "axios": "^1.7.7",
     "classnames": "^2.5.1",
     "html5-qrcode": "^2.3.8",
     "jwt-decode": "^4.0.0",
+    "lodash.debounce": "^4.0.8",
     "react": "^18.3.1",
     "react-data-table-component": "^7.6.2",
     "react-dom": "^18.3.1",
@@ -29,18 +31,42 @@
       "react-app",
       "react-app/jest"
     ],
-    "plugins": ["react-refresh"],
+    "plugins": [
+      "react-refresh"
+    ],
     "rules": {
-      "no-unused-vars": ["error", { "varsIgnorePattern": "^[A-Z_]" }],
+      "no-unused-vars": [
+        "error",
+        {
+          "varsIgnorePattern": "^[A-Z_]"
+        }
+      ],
       "react-refresh/only-export-components": [
         "warn",
-        { "allowConstantExport": true }
+        {
+          "allowConstantExport": true
+        }
       ],
-      "semi": ["error", "always", { "omitLastInOneLineBlock": false }],
-      "comma-dangle": ["error", "never"],
-      "quotes": ["error", "single"],
+      "semi": [
+        "error",
+        "always",
+        {
+          "omitLastInOneLineBlock": false
+        }
+      ],
+      "comma-dangle": [
+        "error",
+        "never"
+      ],
+      "quotes": [
+        "error",
+        "single"
+      ],
       "react/prop-types": 0,
-      "indent": ["error", "tab"]
+      "indent": [
+        "error",
+        "tab"
+      ]
     }
   },
   "browserslist": {

@@ -26,7 +26,7 @@
 .outer_table {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 1px;
     width: 100%;
 }
 
@@ -56,4 +56,37 @@
 .filter_button img {
     width: 32px;
     height: 32px;
+    cursor: pointer;
+}
+
+.table {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    padding-left: 20px;
+}
+
+.iconButton {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+}
+
+.iconButton:hover {
+  opacity: 0.6;
+}
+
+.iconImage {
+  width: 25px;
+  height: 25px;
+}
+
+.table_count {
+    color: var(--color_text_default);
+    font-family: var(--font_default), sans-serif;
+    font-size: 18px;
+    text-align: right;
+    margin-right: 40px;
 }

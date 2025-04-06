@@ -14,7 +14,8 @@ class UsersFilter(Filter):
     last_name__ilike: str | None
     telegram_id__ilike: str | None
     phone_number__ilike: str | None
-    profession__in: list[int] | None = Field(Query(None))
+    profession_id__in: list[int] | None = Field(Query(None))
+    division_id__in: list[int] | None = Field(Query(None))
     created_at: datetime | None
     created_at__gt: datetime | None
     created_at__gte: datetime | None

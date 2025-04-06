@@ -7,6 +7,8 @@ from fastapi import (
     Response,
     status,
 )
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy import paginate
 from fastapi_users import exceptions, models, schemas
 from fastapi_users.manager import BaseUserManager
 from fastapi_users.router.common import ErrorCode, ErrorModel
@@ -52,6 +54,21 @@ async def get_all_users(
     query = user_filter.filter(query)
     users = await db_session.execute(query)
     return users.scalars().unique().all()
+
+@router.get(
+    '/paginated',
+    response_model=Page[UserListRead],
+    dependencies=[Depends(current_superuser)],
+)
+async def get_paginated_users(
+    user_filter: UsersFilter = Depends(UsersFilter),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    query = select(User).options(
+        joinedload(User.instructions).joinedload(Instructions.journals)
+    )
+    query = user_filter.filter(query)
+    return await paginate(db_session, query)
 
 
 async def get_user_or_404(

@@ -1,0 +1,42 @@
+/* Обёртка для таблицы, чтобы ограничить переполнение */
+.tableWrapper {
+  max-width: 100%;
+  overflow-x: auto;
+  margin-right: 25px;
+}
+
+.customTable {
+  border: 1px solid var(--color_element_border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+
+/* Глобальные стили для переопределения стилей Ant Design */
+:global(.ant-table-thead > tr > th) {
+  background-color: var(--color_primary_default) !important;
+  color: var(--color_background_default) !important;
+  font-weight: 600 !important;
+  font-size: 15px !important;
+  text-align: center !important;
+}
+
+:global(.ant-pagination) {
+  display: flex !important;
+  justify-content: center !important;
+  padding: 16px 0 !important;
+}
+
+:global(.ant-table-tbody > tr > td) {
+  border-bottom: 1px solid var(--color_element_border) !important;
+}
+
+:global(.ant-table-thead > tr > th),
+:global(.ant-table-tbody > tr > td) {
+  border-right: 1px solid var(--color_element_border) !important;
+}
+
+:global(.ant-table-thead > tr > th:last-child),
+:global(.ant-table-tbody > tr > td:last-child) {
+  border-right: none !important;
+}
