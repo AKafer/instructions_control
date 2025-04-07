@@ -5,7 +5,7 @@ import {deleteUserUrl, JWT_STORAGE_KEY, PREFIX} from '../../../helpers/constants
 import {useState} from 'react';
 
 
-export function DeleteUser({user, setDeleteModalOpen, setLastNameFilter}) {
+export function DeleteUser({user, setDeleteModalOpen, setRefreshKey, setLastNameFilter}) {
 	const [error, setError] = useState(undefined);
 
 	const jwt = localStorage.getItem(JWT_STORAGE_KEY);
@@ -20,6 +20,7 @@ export function DeleteUser({user, setDeleteModalOpen, setLastNameFilter}) {
 			});
 			setDeleteModalOpen(false);
 			setLastNameFilter(last_name ? last_name : '');
+			setRefreshKey((prev) => prev + 1);
 		} catch (e) {
 			if (e instanceof AxiosError) {
 				setError(e.response?.data.detail || e.response?.data.message || 'Неизвестная ошибка логина');

@@ -1,28 +1,37 @@
 import styles from './CreateUser.module.css';
 import Button from '../../Button/Button';
 import axios, {AxiosError} from 'axios';
-import {deleteUserUrl, JWT_STORAGE_KEY, PREFIX} from '../../../helpers/constants';
-import {useState} from 'react';
+import {JWT_STORAGE_KEY, PREFIX, registerUrl} from '../../../helpers/constants';
+import {useEffect, useReducer, useState} from 'react';
 import InputForm from '../../InputForm/InputForm';
 import {SelectForm} from '../../SelectForm/SelectForm';
+import {formReducer, INITIAL_STATE} from './CreateUser.state';
 
 
-export function CreateUser(setCreateModalOpen, setLastNameFilter) {
-	const [error, setError] = useState(undefined);
-
+export function CreateUser({
+	optionsProf, optionsDiv, setCreateModalOpen, setRefreshKey, setLastNameFilter
+}) {
 	const jwt = localStorage.getItem(JWT_STORAGE_KEY);
 
-	const createUser = async (id, last_name) => {
+	const [error, setError] = useState(undefined);
+	const [formState, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
+	const { values, isValid, additional_features, isFormReadyToSubmit} = formState;
+
+
+	const createUser = async (payload) => {
 		try {
 
-			await axios.delete(`${PREFIX}${deleteUserUrl}/${id}`, {
-				headers: {
-					'Authorization': `Bearer ${jwt}`,
-					'Content-Type': 'application/x-www-form-urlencoded'
-				}
-			});
+			await axios.post(`${PREFIX}${registerUrl}`,
+				payload,
+				{
+					headers: {
+						'Authorization': `Bearer ${jwt}`,
+						'Content-Type': 'application/json'
+					}
+				});
 			setCreateModalOpen(false);
-			setLastNameFilter(last_name ? last_name : '');
+			setLastNameFilter(payload.last_name ? payload.last_name : '');
+			setRefreshKey((prev) => prev + 1);
 		} catch (e) {
 			if (e instanceof AxiosError) {
 				setError(e.response?.data.detail || e.response?.data.message || 'Неизвестная ошибка логина');
@@ -32,183 +41,306 @@ export function CreateUser(setCreateModalOpen, setLastNameFilter) {
 		}
 	};
 
+	const onChange = (e) => {
+		// console.log(e.target.name, e.target.value);
+		dispatchForm({type: 'SET_VALUE', payload: { [e.target.name]: e.target.value}});
+		dispatchForm({type: 'SET_VALIDITY_FOR_FIELD', payload: e.target.name});
+	};
+
+	const addAdditionalFeature = (e) => {
+		dispatchForm({type: 'SET_ADDITIONAL_FEATURE', payload: { [e.target.name]: e.target.value}});
+	};
+
+	const selectProf = (e) => {
+		dispatchForm({type: 'SET_VALUE', payload: { 'profession_id': e.value}});
+		dispatchForm({type: 'SET_VALIDITY_FOR_FIELD', payload: 'profession_id'});
+	};
+
+	const selectDiv = (e) => {
+		dispatchForm({type: 'SET_VALUE', payload: { 'division_id': e.value}});
+		dispatchForm({type: 'SET_VALIDITY_FOR_FIELD', payload: 'division_id'});
+	};
+
+	const selectGender = (e) => {
+		dispatchForm({type: 'SET_ADDITIONAL_FEATURE', payload: { 'gender': e.label}});
+	};
+
+	const addUser = (e) => {
+		e.preventDefault();
+		// console.log(formState);
+		dispatchForm({type: 'SUBMIT'});
+		// console.log(values);
+		// console.log(isValid);
+	};
+
+	useEffect(() => {
+		if (isFormReadyToSubmit) {
+			values.password = '1111';
+			if (Object.keys(additional_features).length > 0) {
+				values.additional_features = additional_features;
+			}
+			if (values.date_of_birth) {
+				values.date_of_birth = values.date_of_birth + 'T06:00:00Z';
+			}
+			if (values.started_work) {
+				values.started_work = values.started_work + 'T06:00:00Z';
+			}
+			if (values.changed_profession) {
+				values.changed_profession = values.changed_profession + 'T06:00:00Z';
+			}
+			console.log(values);
+			createUser(values);
+			dispatchForm({ type: 'CLEAR' });
+		}
+	}, [isFormReadyToSubmit, values]);
+
+
+	if (1 == 0 ) {
+		console.log(isValid, isFormReadyToSubmit, dispatchForm(), createUser);
+	}
+
+	const optionsGender = [
+		{ value: '1', label: 'Мужской' },
+		{ value: '2', label: 'Женский' }
+	];
+
+
 	return (
 		<div className={styles['create_user']}>
 			<h1 className={styles['title']}>Создать нового сотрудника</h1>
 			{error && <div className={styles['error']}>{error}</div>}
-			<div className={styles['content']}>
-				<div className={styles['left_panel']}>
-					<span className={styles['span']}>
-						Фамилия:
-						<InputForm
-							value={''}
-							type="text"
-							name='last_name'
-							placeholder='Фамилия'
-						/>
-					</span>
-					<span className={styles['span']}>
-						Имя:
-						<InputForm
-							value={''}
-							type="text"
-							name='name'
-							placeholder='Имя'
-						/>
-					</span>
-					<span className={styles['span']}>
-						Отчество:
-						<InputForm
-							value={''}
-							type="text"
-							name='father_name'
-							placeholder='Отчество'
-						/>
-					</span>
-					<span className={styles['span']}>
-						Профессия:
-						<SelectForm
-							// value={selectedProfOption}
-							// options={optionsProf}
-							placeholder="Профессия"
-						/>
-					</span>
-					<span className={styles['span']}>
-						Подразделение:
-						<SelectForm
-							// value={selectedDivOption}
-							// options={optionsDiv}
-							placeholder="Подразделение"
-						/>
-					</span>
-					<span className={styles['span']}>
-						Табельный номер:
-						<InputForm
-							value={''}
-							type="text"
-							name='number'
-							placeholder='Табельный номер'
-						/>
-					</span>
-					<span className={styles['span']}>
-						Дата приема на работу:
-						<InputForm
-							value={''}
-							type="date"
-							name='started_work'
-							placeholder='Дата приема на работу'
-						/>
-					</span>
-					<span className={styles['span']}>
-						Дата рождения:
-						<InputForm
-							value={''}
-							type="date"
-							name='date_of_birth'
-							placeholder='Дата рождения'
-						/>
-					</span>
-					<span className={styles['span']}>
+			<form onSubmit={addUser} className={styles['form']}>
+				<div className={styles['content']} >
+					<div className={styles['left_panel']}>
+						<span className={styles['span']}>
 						Логин:
-						<InputForm
-							value={''}
-							type="text"
-							name='email'
-							placeholder='Логин'
-						/>
-					</span>
-
-				</div>
-				<div className={styles['right_panel']}>
-					<span className={styles['span']}>
+							<InputForm
+								value={values.email}
+								isValid={isValid.email}
+								type="text"
+								name='email'
+								placeholder='Логин'
+								onChange={onChange}
+							/>
+						</span>
+						<span className={styles['span']}>
+						Фамилия:
+							<InputForm
+								value={values.last_name}
+								type="text"
+								name='last_name'
+								isValid={isValid.last_name}
+								placeholder='Фамилия'
+								onChange={onChange}
+							/>
+						</span>
+						<span className={styles['span']}>
+						Имя:
+							<InputForm
+								value={values.name}
+								type="text"
+								name='name'
+								isValid={isValid.name}
+								placeholder='Имя'
+								onChange={onChange}
+							/>
+						</span>
+						<span className={styles['span']}>
+						Отчество:
+							<InputForm
+								value={values.father_name || ''}
+								type="text"
+								name='father_name'
+								placeholder='Отчество'
+								onChange={onChange}
+							/>
+						</span>
+						<span className={styles['span']}>
+						Профессия:
+							<SelectForm
+								value={optionsProf.find(option => option.value === values.profession_id) || null}
+								options={optionsProf}
+								placeholder="Профессия"
+								name='profession_id'
+								onChange={selectProf}
+								isValid={isValid.profession_id}
+							/>
+						</span>
+						<span className={styles['span']}>
+						Подразделение:
+							<SelectForm
+								value={optionsDiv.find(option => option.value === values.division_id) || null}
+								options={optionsDiv}
+								placeholder="Подразделение"
+								name='division_id'
+								onChange={selectDiv}
+								isValid={isValid.division_id}
+							/>
+						</span>
+						<span className={styles['span']}>
+						Табельный номер:
+							<InputForm
+								value={values.number  || ''}
+								type="text"
+								name='number'
+								placeholder='Табельный номер'
+								onChange={onChange}
+							/>
+						</span>
+					</div>
+					<div className={styles['left_panel']}>
+						<span className={styles['span']}>
+						ИНН:
+							<InputForm
+								value={values.inn  || ''}
+								type="text"
+								name='inn'
+								placeholder='ИНН'
+								onChange={onChange}
+							/>
+						</span>
+						<span className={styles['span']}>
+						СНИЛС:
+							<InputForm
+								value={values.snils  || ''}
+								type="text"
+								name='snils'
+								placeholder='СНИЛС'
+								onChange={onChange}
+							/>
+						</span>
+						<span className={styles['span']}>
 						Телефон:
-						<InputForm
-							value={''}
-							type="text"
-							name='phone_number'
-							placeholder='Телефон'
-						/>
-					</span>
-					<span className={styles['span']}>
+							<InputForm
+								value={values.phone_number || ''}
+								type="text"
+								name='phone_number'
+								placeholder='Телефон'
+								onChange={onChange}
+							/>
+						</span>
+						<span className={styles['span']}>
 						Телеграм ID:
-						<InputForm
-							value={''}
-							type="text"
-							name='telegram_id'
-							placeholder='Телеграм ID'
-						/>
-					</span>
-					<span className={styles['span']}>
-						Рост, см:
-						<InputForm
-							value={''}
-							type="number"
-							name='height'
-							placeholder='Рост'
-						/>
-					</span>
-					<span className={styles['span']}>
-						Размер одежды:
-						<InputForm
-							value={''}
-							type="number"
-							name='clothing_size'
-							placeholder='Размер одежды'
-						/>
-					</span>
-					<span className={styles['span']}>
-						Размер обуви:
-						<InputForm
-							value={''}
-							type="number"
-							name='shoe_size'
-							placeholder='Размер обуви'
-						/>
-					</span>
-					<span className={styles['span']}>
-						Размер головного убора:
-						<InputForm
-							value={''}
-							type="number"
-							name='head_size'
-							placeholder='Размер головного убора'
-						/>
-					</span>
-					<span className={styles['span']}>
-						Размер респиратора:
-						<InputForm
-							value={''}
-							type="number"
-							name='mask_size'
-							placeholder='Размер респиратора'
-						/>
-					</span>
-					<span className={styles['span']}>
-						Размер перчаток:
-						<InputForm
-							value={''}
-							type="number"
-							name='gloves_size'
-							placeholder='Размер перчаток'
-						/>
-					</span>
-					<span className={styles['span']}>
-						Размер рукавиц:
-						<InputForm
-							value={''}
-							type="number"
-							name='mitten_size'
-							placeholder='Размер рукавиц'
-						/>
-					</span>
-				</div>
-			</div>
+							<InputForm
+								value={values.telegram_id || ''}
+								type="text"
+								name='telegram_id'
+								placeholder='Телеграм ID'
+								onChange={onChange}
+							/>
+						</span>
+						<span className={styles['span']}>
+						Дата приема на работу:
+							<InputForm
+								value={values.started_work || ''}
+								type="date"
+								name='started_work'
+								placeholder='Дата приема на работу'
+								onChange={onChange}
+							/>
+						</span>
+						<span className={styles['span']}>
+						Дата рождения:
+							<InputForm
+								value={values.date_of_birth  || ''}
+								type="date"
+								name='date_of_birth'
+								placeholder='Дата рождения'
+								onChange={onChange}
+							/>
+						</span>
+						<span className={styles['span']}>
+						Дата смены должности/подразделения:
+							<InputForm
+								value={values.changed_profession  || ''}
+								type="date"
+								name='changed_profession'
+								placeholder='Дата смены должности/подразделения'
+								onChange={onChange}
+							/>
+						</span>
+					</div>
+					<div className={styles['right_panel']}>
 
-			<div className={styles['button']}>
-				<Button onClick={() => createUser()}>
-					Создать
-				</Button>
-			</div>
+						<span className={styles['span']}>
+						Пол:
+							<SelectForm
+								value={optionsGender.find(
+									option => option.label === additional_features.gender)
+									|| null}
+								options={optionsGender}
+								placeholder="Пол"
+								name='gender'
+								onChange={selectGender}
+							/>
+						</span>
+						<span className={styles['span']}>
+						Рост, см:
+							<InputForm
+								value={additional_features.height || ''}
+								type="number"
+								name='height'
+								placeholder='Рост'
+								onChange={addAdditionalFeature}
+							/>
+						</span>
+						<span className={styles['span']}>
+						Размер одежды:
+							<InputForm
+								value={additional_features.clothing_size || ''}
+								type="number"
+								name='clothing_size'
+								placeholder='Размер одежды'
+								onChange={addAdditionalFeature}
+							/>
+						</span>
+						<span className={styles['span']}>
+						Размер обуви:
+							<InputForm
+								value={additional_features.shoe_size || ''}
+								type="number"
+								name='shoe_size'
+								placeholder='Размер обуви'
+								onChange={addAdditionalFeature}
+							/>
+						</span>
+						<span className={styles['span']}>
+						Размер головного убора:
+							<InputForm
+								value={additional_features.head_size || ''}
+								type="number"
+								name='head_size'
+								placeholder='Размер головного убора'
+								onChange={addAdditionalFeature}
+							/>
+						</span>
+						<span className={styles['span']}>
+						Размер респиратора:
+							<InputForm
+								value={additional_features.mask_size || ''}
+								type="number"
+								name='mask_size'
+								placeholder='Размер респиратора'
+								onChange={addAdditionalFeature}
+							/>
+						</span>
+						<span className={styles['span']}>
+						Размер перчаток:
+							<InputForm
+								value={additional_features.gloves_size || ''}
+								type="number"
+								name='gloves_size'
+								placeholder='Размер перчаток'
+								onChange={addAdditionalFeature}
+							/>
+						</span>
+					</div>
+				</div>
+
+				<div className={styles['button']}>
+					<Button>Создать</Button>
+				</div>
+			</form>
 		</div>
 	);
 }

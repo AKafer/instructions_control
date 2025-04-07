@@ -7,7 +7,8 @@ const useTableData = ({
 	initialPageSize = 10,
 	usePagination = true,
 	axiosOptions = {},
-	filters = {}
+	filters = {},
+	refreshKey = null
 }) => {
 	const [data, setData] = useState([]);
 	const [pagination, setPagination] = useState({
@@ -48,7 +49,7 @@ const useTableData = ({
 
 	useEffect(() => {
 		fetchData();
-	}, [endpoint, JSON.stringify(filters)]);
+	}, [endpoint, refreshKey, JSON.stringify(filters)]);
 
 	return { data, pagination, loading, fetchData };
 };

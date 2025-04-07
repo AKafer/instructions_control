@@ -18,4 +18,6 @@
     --color_primary_contrast_default: rgba(255, 255, 255, 1);
     --color_primary_contrast_default_rgb: 255, 255, 255;
     --color_element_border: #ccc;
+    --invalid_element_border: red;
+    --invalid_elemen_background: rgba(255, 192, 203, 0.2);
 }

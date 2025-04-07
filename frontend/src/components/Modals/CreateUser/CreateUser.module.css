@@ -12,8 +12,16 @@
     font-size: 20px;
     font-weight: 600;
     color: var(--color_text_default);
+    padding-bottom: 10px;
 }
 
+
+.form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+}
 
 
 .content {
@@ -65,5 +73,5 @@
 }
 
 .button {
-    padding: 20px 20px;
+    padding-top: 35px;
 }

@@ -9,3 +9,5 @@ export const getAllDivisionsUrl = '/api/v1/divisions/';
 export const getAllUsersUrl = '/api/v1/users';
 
 export const deleteUserUrl = getAllUsersUrl;
+
+export const registerUrl = '/api/v1/auth/register';

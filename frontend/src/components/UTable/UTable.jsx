@@ -26,7 +26,8 @@ const UniversalTable = ({
 	axiosOptions = {},
 	filters = {},
 	tableProps = {},
-	onTotalRecordsChange = () => {}
+	onTotalRecordsChange = () => {},
+	refreshKey = null
 }) => {
 	const { data, pagination, loading, fetchData } = useTableData({
 		endpoint,
@@ -34,8 +35,10 @@ const UniversalTable = ({
 		initialPageSize,
 		usePagination,
 		axiosOptions,
-		filters
+		filters,
+		refreshKey
 	});
+
 
 	useEffect(() => {
 		if (pagination?.total !== undefined) {

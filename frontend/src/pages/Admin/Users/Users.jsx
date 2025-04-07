@@ -27,6 +27,7 @@ export function Users () {
 	const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
 	const [selectedUser, setSelectedUser] = useState(null);
 	const [totalRecords, setTotalRecords] = useState(0);
+	const [refreshKey, setRefreshKey] = useState(0);
 
 	const {
 		error: errorProf,
@@ -177,7 +178,13 @@ export function Users () {
 					Добавить сотрудника
 					</Button>
 					<Modal isOpen={isCreateModalOpen} onClose={() => setCreateModalOpen(false)}>
-						<CreateUser/>
+						<CreateUser
+							optionsProf={optionsProf}
+							optionsDiv={optionsDiv}
+							setCreateModalOpen={setCreateModalOpen}
+							setRefreshKey={setRefreshKey}
+							setLastNameFilter={setLastNameFilter}
+						/>
 					</Modal>
 					<Button>
 					Добавить подразделение
@@ -193,10 +200,11 @@ export function Users () {
 					</Button>
 				</div>
 			</div>
-			{(errorDiv || errorProf) && <div className={styles.error}>
-				{errorDiv ? errorDiv : ''}{errorProf ? errorProf : ''}
-			</div>}
+
 			<div className={styles.outer_table}>
+				{(errorDiv || errorProf) && <div className={styles.error}>
+					{errorDiv ? errorDiv : ''}--{errorProf ? errorProf : ''}
+				</div>}
 				<div className={styles.filters_table}>
 					<Input
 						value={lastNameFilter}
@@ -239,6 +247,7 @@ export function Users () {
 						}}
 						filters={filters}
 						onTotalRecordsChange={setTotalRecords}
+						refreshKey={refreshKey}
 					/>
 				</div>
 			</div>
@@ -249,6 +258,7 @@ export function Users () {
 				<DeleteUser
 					user={selectedUser}
 					setDeleteModalOpen={setDeleteModalOpen}
+					setRefreshKey={setRefreshKey}
 					setLastNameFilter={setLastNameFilter}
 				/>
 			</Modal>
