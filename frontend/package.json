@@ -30,20 +30,12 @@
       "react-app",
       "react-app/jest"
     ],
-    "plugins": [
-      "react-refresh"
-    ],
+    "plugins": [],
     "rules": {
       "no-unused-vars": [
         "error",
         {
           "varsIgnorePattern": "^[A-Z_]"
-        }
-      ],
-      "react-refresh/only-export-components": [
-        "warn",
-        {
-          "allowConstantExport": true
         }
       ],
       "semi": [
