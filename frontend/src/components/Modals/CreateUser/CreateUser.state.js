@@ -21,6 +21,47 @@ export const INITIAL_STATE = {
 export function formReducer(state, action) {
 	// eslint-disable-next-line default-case
 	switch (action.type) {
+	case 'SET_FROM_USER': {
+		const payloadEntries = action.payload.filter(
+			(entry) => Array.isArray(entry) && entry.length === 2
+		);
+
+		const userValues = payloadEntries
+			.filter(([key]) => key !== 'additional_features' && key !== 'id')
+			.map(([key, value]) => {
+				if (
+					(key === 'date_of_birth' || key === 'started_work' || key === 'changed_profession') &&
+        typeof value === 'string'
+				) {
+					return [key, value.split('T')[0]];
+				}
+				return [key, value];
+			});
+
+		const additionalFeaturesEntry = payloadEntries.find(
+			([key]) => key === 'additional_features'
+		);
+		const additionalFeaturesUser =
+    additionalFeaturesEntry &&
+    additionalFeaturesEntry[1] &&
+    typeof additionalFeaturesEntry[1] === 'object'
+    	? Object.entries(additionalFeaturesEntry[1]).filter(
+    		(entry) => Array.isArray(entry) && entry.length === 2
+    	)
+    	: [];
+
+		return {
+			...state,
+			values: {
+				...state.values,
+				...Object.fromEntries(userValues)
+			},
+			additional_features: {
+				...state.additional_features,
+				...Object.fromEntries(additionalFeaturesUser)
+			}
+		};
+	}
 	case 'SET_VALUE':
 		const valuesEntries = Object.entries(action.payload);
 		const [nameV, valueV] = valuesEntries[0];

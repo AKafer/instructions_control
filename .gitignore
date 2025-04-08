@@ -5,3 +5,5 @@ ci/files/
 /ci/.env_prod
 src/logs/
 src/static/
+/frontend/.env.development
+/frontend/.env.production

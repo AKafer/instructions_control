@@ -1,6 +1,8 @@
 // export const PREFIX = 'http://0.0.0.0:8700';
 
-export const PREFIX = '';
+// export const PREFIX = '';
+
+export const PREFIX = process.env.REACT_APP_API_URL || '';
 export const JWT_STORAGE_KEY = 'jwt';
 export const EMAIL_STORAGE_KEY = 'email';
 

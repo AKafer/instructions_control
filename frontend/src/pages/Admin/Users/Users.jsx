@@ -107,7 +107,7 @@ export function Users () {
 				<button className={styles.iconButton}
 					onClick={() => {
 						setSelectedUser(record);
-						setEditModalOpen(true);
+						setCreateModalOpen(true);
 					}}
 				>
 					<img
@@ -169,12 +169,17 @@ export function Users () {
 		};
 	}
 
+	const openCreateModal = () => {
+		setSelectedUser(null);
+		setCreateModalOpen(true);
+	};
+
 	return (
 		<div className={styles.users}>
 			<div className={styles.outer_manage}>
 				<div className={styles.manage}>
 					<h1 className={styles.title}>Управление</h1>
-					<Button onClick={() => setCreateModalOpen(true)}>
+					<Button onClick={openCreateModal}>
 					Добавить сотрудника
 					</Button>
 					<Modal isOpen={isCreateModalOpen} onClose={() => setCreateModalOpen(false)}>
@@ -184,6 +189,7 @@ export function Users () {
 							setCreateModalOpen={setCreateModalOpen}
 							setRefreshKey={setRefreshKey}
 							setLastNameFilter={setLastNameFilter}
+							currentUser={selectedUser}
 						/>
 					</Modal>
 					<Button>

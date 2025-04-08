@@ -21,6 +21,7 @@
 }
 
 .invalid {
-    border: 2px solid var(--invalid_element_border);
+    border: 1px solid var(--invalid_element_border);
     background: var(--invalid_elemen_background)
 }
+

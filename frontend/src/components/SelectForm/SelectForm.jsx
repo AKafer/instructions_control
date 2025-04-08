@@ -2,13 +2,14 @@ import React from 'react';
 import Select from 'react-select';
 
 
-export function SelectForm({options, value, placeholder, onChange, isValid}) {
+export function SelectForm({options, value, placeholder, onChange, isValid, ...rest}) {
 	return (
 		<Select classNamePrefix="custom-select"
 			options={options}
 			placeholder={placeholder}
 			value={value}
 			onChange={onChange}
+			{...rest}
 			styles={{
 				control: (base) => ({
 					...base,
@@ -17,12 +18,12 @@ export function SelectForm({options, value, placeholder, onChange, isValid}) {
 					borderRadius: '10px',
 					backgroundColor: '#fff',
 					border: isValid === false
-						? '2px solid var(--invalid_element_border)'
+						? '1px solid var(--invalid_element_border)'
 						: '1px solid var(--color_element_border)',
 					boxShadow: 'none',
 					'&:hover': {
 						border: isValid === false
-							? '2px solid var(--invalid_element_border)'
+							? '1px solid var(--invalid_element_border)'
 							: '1px solid #888'
 					},
 					...(isValid === false && { background: 'var(--invalid_elemen_background)' })

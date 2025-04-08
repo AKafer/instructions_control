@@ -1,15 +1,17 @@
 import styles from './CreateUser.module.css';
 import Button from '../../Button/Button';
 import axios, {AxiosError} from 'axios';
-import {JWT_STORAGE_KEY, PREFIX, registerUrl} from '../../../helpers/constants';
+import {getAllUsersUrl, JWT_STORAGE_KEY, PREFIX, registerUrl} from '../../../helpers/constants';
 import {useEffect, useReducer, useState} from 'react';
 import InputForm from '../../InputForm/InputForm';
 import {SelectForm} from '../../SelectForm/SelectForm';
 import {formReducer, INITIAL_STATE} from './CreateUser.state';
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 
 
 export function CreateUser({
-	optionsProf, optionsDiv, setCreateModalOpen, setRefreshKey, setLastNameFilter
+	optionsProf, optionsDiv, setCreateModalOpen, setRefreshKey, setLastNameFilter, currentUser
 }) {
 	const jwt = localStorage.getItem(JWT_STORAGE_KEY);
 
@@ -17,18 +19,27 @@ export function CreateUser({
 	const [formState, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
 	const { values, isValid, additional_features, isFormReadyToSubmit} = formState;
 
-
 	const createUser = async (payload) => {
 		try {
-
-			await axios.post(`${PREFIX}${registerUrl}`,
-				payload,
-				{
-					headers: {
-						'Authorization': `Bearer ${jwt}`,
-						'Content-Type': 'application/json'
-					}
-				});
+			if (currentUser) {
+				await axios.patch(`${PREFIX}${getAllUsersUrl}/${currentUser.id}/`,
+					payload,
+					{
+						headers: {
+							'Authorization': `Bearer ${jwt}`,
+							'Content-Type': 'application/json'
+						}
+					});
+			} else{
+				await axios.post(`${PREFIX}${registerUrl}`,
+					payload,
+					{
+						headers: {
+							'Authorization': `Bearer ${jwt}`,
+							'Content-Type': 'application/json'
+						}
+					});
+			}
 			setCreateModalOpen(false);
 			setLastNameFilter(payload.last_name ? payload.last_name : '');
 			setRefreshKey((prev) => prev + 1);
@@ -40,6 +51,12 @@ export function CreateUser({
 			}
 		}
 	};
+
+	useEffect(() => {
+		if (currentUser) {
+			dispatchForm({type: 'SET_FROM_USER', payload: Object.entries(currentUser)});
+		}
+	}, [currentUser]);
 
 	const onChange = (e) => {
 		// console.log(e.target.name, e.target.value);
@@ -105,26 +122,43 @@ export function CreateUser({
 	];
 
 
+	const errorMessage = 'Обязательное поле';
+
 	return (
 		<div className={styles['create_user']}>
-			<h1 className={styles['title']}>Создать нового сотрудника</h1>
+			<h1 className={styles['title']}>{currentUser ? 'Редактировать' : 'Создать нового'} сотрудника</h1>
 			{error && <div className={styles['error']}>{error}</div>}
 			<form onSubmit={addUser} className={styles['form']}>
 				<div className={styles['content']} >
 					<div className={styles['left_panel']}>
-						<span className={styles['span']}>
-						Логин:
+						<span
+							className={styles['span']}
+							data-tooltip-content={errorMessage}
+							data-tooltip-id="errorTooltipEmail"
+						>
+						Логин*:
 							<InputForm
 								value={values.email}
 								isValid={isValid.email}
 								type="text"
 								name='email'
-								placeholder='Логин'
+								placeholder='Email'
 								onChange={onChange}
 							/>
+							<Tooltip
+								id="errorTooltipEmail"
+								place="top-end"
+								content={errorMessage}
+								isOpen={!isValid.email}
+								className={styles['my-tooltip']}
+							/>
 						</span>
-						<span className={styles['span']}>
-						Фамилия:
+						<span
+							className={styles['span']}
+							data-tooltip-content={errorMessage}
+							data-tooltip-id="errorTooltipLastName"
+						>
+						Фамилия*:
 							<InputForm
 								value={values.last_name}
 								type="text"
@@ -132,10 +166,22 @@ export function CreateUser({
 								isValid={isValid.last_name}
 								placeholder='Фамилия'
 								onChange={onChange}
+
+							/>
+							<Tooltip
+								id="errorTooltipLastName"
+								place="top-end"
+								content={errorMessage}
+								isOpen={!isValid.last_name}
+								className={styles['my-tooltip']}
 							/>
 						</span>
-						<span className={styles['span']}>
-						Имя:
+						<span
+							className={styles['span']}
+							data-tooltip-content={errorMessage}
+							data-tooltip-id="errorTooltipName"
+						>
+						Имя*:
 							<InputForm
 								value={values.name}
 								type="text"
@@ -143,6 +189,13 @@ export function CreateUser({
 								isValid={isValid.name}
 								placeholder='Имя'
 								onChange={onChange}
+							/>
+							<Tooltip
+								id="errorTooltipName"
+								place="top-end"
+								content={errorMessage}
+								isOpen={!isValid.name}
+								className={styles['my-tooltip']}
 							/>
 						</span>
 						<span className={styles['span']}>
@@ -155,8 +208,12 @@ export function CreateUser({
 								onChange={onChange}
 							/>
 						</span>
-						<span className={styles['span']}>
-						Профессия:
+						<span
+							className={styles['span']}
+							data-tooltip-content={errorMessage}
+							data-tooltip-id="errorTooltipProf"
+						>
+						Профессия*:
 							<SelectForm
 								value={optionsProf.find(option => option.value === values.profession_id) || null}
 								options={optionsProf}
@@ -165,9 +222,20 @@ export function CreateUser({
 								onChange={selectProf}
 								isValid={isValid.profession_id}
 							/>
+							<Tooltip
+								id="errorTooltipProf"
+								place="top-end"
+								content={errorMessage}
+								isOpen={!isValid.profession_id}
+								className={styles['my-tooltip']}
+							/>
 						</span>
-						<span className={styles['span']}>
-						Подразделение:
+						<span
+							className={styles['span']}
+							data-tooltip-content={errorMessage}
+							data-tooltip-id="errorTooltipDiv"
+						>
+						Подразделение*:
 							<SelectForm
 								value={optionsDiv.find(option => option.value === values.division_id) || null}
 								options={optionsDiv}
@@ -175,6 +243,13 @@ export function CreateUser({
 								name='division_id'
 								onChange={selectDiv}
 								isValid={isValid.division_id}
+							/>
+							<Tooltip
+								id="errorTooltipDiv"
+								place="top-end"
+								content={errorMessage}
+								isOpen={!isValid.division_id}
+								className={styles['my-tooltip']}
 							/>
 						</span>
 						<span className={styles['span']}>
@@ -338,7 +413,7 @@ export function CreateUser({
 				</div>
 
 				<div className={styles['button']}>
-					<Button>Создать</Button>
+					<Button>{currentUser ? 'Редактировать' : 'Создать'}</Button>
 				</div>
 			</form>
 		</div>

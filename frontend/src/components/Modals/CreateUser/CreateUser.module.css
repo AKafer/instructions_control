@@ -75,3 +75,13 @@
 .button {
     padding-top: 35px;
 }
+
+.my-tooltip {
+  background-color: pink !important;
+  color: var(--color_destructive_default) !important;
+  border: 1px solid var(--invalid_element_border) !important;
+  padding: 3px  !important;
+  border-radius: 4px !important;
+  font-size: 13px !important;
+  transform: translateY(42px) !important;
+}
