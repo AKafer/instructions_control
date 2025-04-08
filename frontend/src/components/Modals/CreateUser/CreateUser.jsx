@@ -22,7 +22,7 @@ export function CreateUser({
 	const createUser = async (payload) => {
 		try {
 			if (currentUser) {
-				await axios.patch(`${PREFIX}${getAllUsersUrl}/${currentUser.id}/`,
+				await axios.patch(`${PREFIX}${getAllUsersUrl}/${currentUser.id}`,
 					payload,
 					{
 						headers: {
