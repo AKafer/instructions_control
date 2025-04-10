@@ -23,11 +23,11 @@ const useFillSelect = ({ endpoint, labelField = 'title' }) => {
 			const sortedOptions = data
 				.map(item => ({
 					value: item.id,
-					label: item[labelField]
+					label: item[labelField],
+					description: item.description
 				}))
 				.sort((a, b) => a.label.localeCompare(b.label));
 
-			console.log(sortedOptions);
 			setOptions(sortedOptions);
 
 			const itemDict = data.reduce((acc, curr) => {

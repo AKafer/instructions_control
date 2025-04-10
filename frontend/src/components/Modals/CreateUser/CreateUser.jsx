@@ -19,7 +19,7 @@ export function CreateUser({
 	const [formState, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
 	const { values, isValid, additional_features, isFormReadyToSubmit} = formState;
 
-	const createUser = async (payload) => {
+	const manageUser = async (payload) => {
 		try {
 			if (currentUser) {
 				await axios.patch(`${PREFIX}${getAllUsersUrl}/${currentUser.id}`,
@@ -59,7 +59,6 @@ export function CreateUser({
 	}, [currentUser]);
 
 	const onChange = (e) => {
-		// console.log(e.target.name, e.target.value);
 		dispatchForm({type: 'SET_VALUE', payload: { [e.target.name]: e.target.value}});
 		dispatchForm({type: 'SET_VALIDITY_FOR_FIELD', payload: e.target.name});
 	};
@@ -84,43 +83,28 @@ export function CreateUser({
 
 	const addUser = (e) => {
 		e.preventDefault();
-		// console.log(formState);
 		dispatchForm({type: 'SUBMIT'});
-		// console.log(values);
-		// console.log(isValid);
 	};
 
 	useEffect(() => {
 		if (isFormReadyToSubmit) {
-			values.password = '1111';
-			if (Object.keys(additional_features).length > 0) {
-				values.additional_features = additional_features;
-			}
-			if (values.date_of_birth) {
-				values.date_of_birth = values.date_of_birth + 'T06:00:00Z';
-			}
-			if (values.started_work) {
-				values.started_work = values.started_work + 'T06:00:00Z';
-			}
-			if (values.changed_profession) {
-				values.changed_profession = values.changed_profession + 'T06:00:00Z';
-			}
-			console.log(values);
-			createUser(values);
+			 const payload = {
+				...values,
+				password: '1111',
+				additional_features: Object.keys(additional_features).length > 0 ? additional_features : undefined,
+				date_of_birth: values.date_of_birth ? values.date_of_birth + 'T06:00:00Z' : undefined,
+				started_work: values.started_work ? values.started_work + 'T06:00:00Z' : undefined,
+				changed_profession: values.changed_profession ? values.changed_profession + 'T06:00:00Z' : undefined
+			};
+			manageUser(payload);
 			dispatchForm({ type: 'CLEAR' });
 		}
-	}, [isFormReadyToSubmit, values]);
-
-
-	if (1 == 0 ) {
-		console.log(isValid, isFormReadyToSubmit, dispatchForm(), createUser);
-	}
+	}, [isFormReadyToSubmit, values, additional_features]);
 
 	const optionsGender = [
 		{ value: '1', label: 'Мужской' },
 		{ value: '2', label: 'Женский' }
 	];
-
 
 	const errorMessage = 'Обязательное поле';
 

@@ -11,10 +11,11 @@ import {
 import {useEffect, useState} from 'react';
 import UniversalTable from '../../../components/UTable/UTable';
 import {Modal} from '../../../components/Modals/Modal';
-import {EditUser} from '../../../components/Modals/EditUser/EditUser';
 import {DeleteUser} from '../../../components/Modals/DeleteUser/DeleteUser';
 import useFillSelect from '../../../hooks/useFillSelect.hook';
 import {CreateUser} from '../../../components/Modals/CreateUser/CreateUser';
+import {ManageProf} from '../../../components/Modals/ManageProf/ManageProf';
+import {ManageDiv} from '../../../components/Modals/ManageDiv/ManageDiv';
 
 
 export function Users () {
@@ -23,7 +24,8 @@ export function Users () {
 	const [selectedDivOption, setSelectedDivOption] = useState(null);
 	const [lastNameFilter, setLastNameFilter] = useState(undefined);
 	const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-	const [isEditModalOpen, setEditModalOpen] = useState(false);
+	const [isManageProfModalOpen, setManageProfModalOpen] = useState(false);
+	const [isManageDivModalOpen, setManageDivModalOpen] = useState(false);
 	const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
 	const [selectedUser, setSelectedUser] = useState(null);
 	const [totalRecords, setTotalRecords] = useState(0);
@@ -32,7 +34,8 @@ export function Users () {
 	const {
 		error: errorProf,
 		options: optionsProf,
-		itemDict: professionDict
+		itemDict: professionDict,
+		getItems: getProfessions
 	} = useFillSelect({
 		endpoint: getAllProfessionsUrl,
 		labelField: 'title'
@@ -41,7 +44,8 @@ export function Users () {
 	const {
 		error: errorDiv,
 		options: optionsDiv,
-		itemDict: divisionDict
+		itemDict: divisionDict,
+		getItems: getDivisions
 	} = useFillSelect({
 		endpoint: getAllDivisionsUrl,
 		labelField: 'title'
@@ -192,18 +196,28 @@ export function Users () {
 							currentUser={selectedUser}
 						/>
 					</Modal>
-					<Button>
-					Добавить подразделение
+					<Button onClick={() => setManageProfModalOpen(true)}>
+					Профессии
 					</Button>
-					<Button>
-					Удалить подразделение
+					<Modal isOpen={isManageProfModalOpen} onClose={() => setManageProfModalOpen(false)}>
+						<ManageProf
+							optionsProf={optionsProf}
+							setManageProfModalOpen={setManageProfModalOpen}
+							getProfessions={getProfessions}
+							setSelectedProfOption={setSelectedProfOption}
+						/>
+					</Modal>
+					<Button onClick={() => setManageDivModalOpen(true)}>
+					Подразделения
 					</Button>
-					<Button>
-					Добавить профессию
-					</Button>
-					<Button>
-					Удалить профессию
-					</Button>
+					<Modal isOpen={isManageDivModalOpen} onClose={() => setManageDivModalOpen(false)}>
+						<ManageDiv
+							optionsDiv={optionsDiv}
+							setManageDivModalOpen={setManageDivModalOpen}
+							getDivisions={getDivisions}
+							setSelectedDivOption={setSelectedDivOption}
+						/>
+					</Modal>
 				</div>
 			</div>
 
@@ -257,9 +271,6 @@ export function Users () {
 					/>
 				</div>
 			</div>
-			<Modal isOpen={isEditModalOpen} onClose={() => setEditModalOpen(false)}>
-				<EditUser user={selectedUser} />
-			</Modal>
 			<Modal isOpen={isDeleteModalOpen} onClose={() => setDeleteModalOpen(false)}>
 				<DeleteUser
 					user={selectedUser}
