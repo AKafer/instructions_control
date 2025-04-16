@@ -163,7 +163,7 @@ export function ManageProf({optionsProf, setManageProfModalOpen, getProfessions,
 						<span className={styles['span']}>
 						Описание:
 							<InputForm
-								value={values.description}
+								value={values.description ?? ''}
 								type="text"
 								name="description"
 								placeholder="Описание"

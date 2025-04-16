@@ -27,7 +27,8 @@ const UniversalTable = ({
 	filters = {},
 	tableProps = {},
 	onTotalRecordsChange = () => {},
-	refreshKey = null
+	refreshKey = null,
+	height = 500
 }) => {
 	const { data, pagination, loading, fetchData } = useTableData({
 		endpoint,
@@ -62,11 +63,20 @@ const UniversalTable = ({
 					loading={loading}
 					rowKey="id"
 					onChange={handleTableChange}
-					pagination={{
-						...pagination,
-						showSizeChanger: true,
-						pageSizeOptions: ['10', '20', '50', '100']
-					}}
+					pagination={
+						usePagination
+							? {
+								...pagination,
+								showSizeChanger: true,
+								pageSizeOptions: ['10', '20', '50', '100']
+		  }
+							: false
+					}
+					scroll={
+						usePagination
+							? undefined
+							: { y: height } // или auto-расчёт по доступному пространству
+					}
 					{...tableProps}
 				/>
 			</div>

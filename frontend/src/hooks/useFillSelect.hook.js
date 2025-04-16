@@ -31,10 +31,11 @@ const useFillSelect = ({ endpoint, labelField = 'title' }) => {
 			setOptions(sortedOptions);
 
 			const itemDict = data.reduce((acc, curr) => {
-				acc[curr.id] = curr[labelField];
+				acc[curr.id] = curr;
 				return acc;
 			}, {});
 			setItemDict(itemDict);
+			console.log('itemDict', itemDict);
 		} catch (e) {
 			if (e instanceof AxiosError) {
 				setError(e.response?.data.detail || e.response?.data.message || 'Неизвестная ошибка логина');

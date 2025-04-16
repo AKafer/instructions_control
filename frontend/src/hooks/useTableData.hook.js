@@ -30,15 +30,16 @@ const useTableData = ({
 				params,
 				...axiosOptions
 			});
-			console.log('response', response);
-			setData(response.data.items);
 			if (usePagination) {
+				setData(response.data.items);
 				setPagination(prev => ({
 					...prev,
 					current: page,
 					pageSize,
 					total: response.data.total
 				}));
+			} else {
+				setData(response.data);
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке данных:', error);

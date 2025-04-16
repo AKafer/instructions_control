@@ -1,0 +1,45 @@
+.ins {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    padding: 20px;
+}
+
+.leftSide {
+	display: flex;
+	flex-direction: column;
+	width: 50%;
+}
+
+.buttonWrapper {
+	display: flex;
+	justify-content: flex-start;
+	margin-bottom: 10px;
+    margin-right: 30px;
+    margin-left: 30px;
+}
+
+.table {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    padding-left: 20px;
+}
+
+
+.iconButton {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+}
+
+.iconButton:hover {
+  opacity: 0.6;
+}
+
+.iconImage {
+  width: 25px;
+  height: 25px;
+}

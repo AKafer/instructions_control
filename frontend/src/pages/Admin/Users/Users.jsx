@@ -4,6 +4,7 @@ import Input from '../../../components/Input/Input';
 import {CustomSelect} from '../../../components/Select/Select';
 import {
 	getAllDivisionsUrl,
+	getAllInstructionsUrl,
 	getAllProfessionsUrl,
 	JWT_STORAGE_KEY,
 	PREFIX
@@ -16,6 +17,7 @@ import useFillSelect from '../../../hooks/useFillSelect.hook';
 import {CreateUser} from '../../../components/Modals/CreateUser/CreateUser';
 import {ManageProf} from '../../../components/Modals/ManageProf/ManageProf';
 import {ManageDiv} from '../../../components/Modals/ManageDiv/ManageDiv';
+import {ManageIns} from '../../../components/Modals/ManageIns/ManageIns';
 
 
 export function Users () {
@@ -26,6 +28,7 @@ export function Users () {
 	const [isCreateModalOpen, setCreateModalOpen] = useState(false);
 	const [isManageProfModalOpen, setManageProfModalOpen] = useState(false);
 	const [isManageDivModalOpen, setManageDivModalOpen] = useState(false);
+	const [isManageInsModalOpen, setManageInsModalOpen] = useState(false);
 	const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
 	const [selectedUser, setSelectedUser] = useState(null);
 	const [totalRecords, setTotalRecords] = useState(0);
@@ -48,6 +51,16 @@ export function Users () {
 		getItems: getDivisions
 	} = useFillSelect({
 		endpoint: getAllDivisionsUrl,
+		labelField: 'title'
+	});
+
+	const {
+		error: errorIns,
+		options: optionsIns,
+		itemDict: instructionDict,
+		getItems: getInstructions
+	} = useFillSelect({
+		endpoint: getAllInstructionsUrl,
 		labelField: 'title'
 	});
 
@@ -86,22 +99,22 @@ export function Users () {
 			dataIndex: 'profession_id',
 			key: 'profession_id',
 			sorter: (a, b) => {
-				const nameA = professionDict[a.profession_id] || '';
-				const nameB = professionDict[b.profession_id] || '';
+				const nameA = professionDict[a.profession_id]?.['title'] || '';
+				const nameB = professionDict[b.profession_id]?.['title'] || '';
 				return nameA.localeCompare(nameB);
 			},
-			render: (profession_id) => professionDict[profession_id] || '—'
+			render: (profession_id) => professionDict[profession_id]?.['title'] ?? '—'
 		},
 		{
 			title: 'Подразделение',
 			dataIndex: 'division_id',
 			key: 'division_id',
 			sorter: (a, b) => {
-				const nameA = divisionDict[a.division_id] || '';
-				const nameB = divisionDict[b.division_id] || '';
+				const nameA = divisionDict[a.division_id]?.['title'] || '';
+				const nameB = divisionDict[b.division_id]?.['title'] || '';
 				return nameA.localeCompare(nameB);
 			},
-			render: (division_id) => divisionDict[division_id] || '—'
+			render: (division_id) => divisionDict[division_id]?.['title'] ?? '—'
 		},
 		{
 			title: 'Изменить',
@@ -216,6 +229,18 @@ export function Users () {
 							setManageDivModalOpen={setManageDivModalOpen}
 							getDivisions={getDivisions}
 							setSelectedDivOption={setSelectedDivOption}
+						/>
+					</Modal>
+					<Button onClick={() => setManageInsModalOpen(true)}>
+					Инструкции
+					</Button>
+					<Modal isOpen={isManageInsModalOpen} onClose={() => setManageInsModalOpen(false)}>
+						<ManageIns
+							optionsIns={optionsIns}
+							instructionDict={instructionDict}
+							setManageInsModalOpen={setManageInsModalOpen}
+							getInstructions={getInstructions}
+							// setSelectedInsOption={setSelectedInsOption}
 						/>
 					</Modal>
 				</div>

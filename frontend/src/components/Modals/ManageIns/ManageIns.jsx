@@ -1,4 +1,4 @@
-import styles from './CreateIns.module.css';
+import styles from './ManageIns.module.css';
 import Button from '../../Button/Button';
 import axios, {AxiosError} from 'axios';
 import {
@@ -10,10 +10,10 @@ import {useEffect, useReducer, useState} from 'react';
 import {SelectForm} from '../../SelectForm/SelectForm';
 import {Tooltip} from 'react-tooltip';
 import InputForm from '../../InputForm/InputForm';
-import {formReducer, INITIAL_STATE} from './CreateIns.state';
+import {formReducer, INITIAL_STATE} from './ManageIns.state';
 
 
-export function CreateIns({optionsIns, setManageInsModalOpen, getInstructions, setSelectedInsOption}) {
+export function ManageIns({optionsIns, instructionDict, setManageInsModalOpen, getInstructions, setSelectedInsOption}) {
 	const [errorApi, setErrorApi] = useState(undefined);
 	const [state, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
 	const {
@@ -85,7 +85,7 @@ export function CreateIns({optionsIns, setManageInsModalOpen, getInstructions, s
 				type: 'SET_VALUE', payload:
 					{
 						'title': option.label,
-						'description': option.description
+						'number': instructionDict[option.value]?.number || ''	
 					}}
 			);
 		} else {
@@ -121,7 +121,7 @@ export function CreateIns({optionsIns, setManageInsModalOpen, getInstructions, s
 
 	return (
 		<div className={styles['manage_ins']}>
-			<h1 className={styles['title']}>Управление подразделениями</h1>
+			<h1 className={styles['title']}>Управление инструкциями</h1>
 			{errorApi && <div className={styles['error']}>{errorApi}</div>}
 			<div className={styles['content']}>
 				<span className={styles['span']}>
@@ -159,14 +159,23 @@ export function CreateIns({optionsIns, setManageInsModalOpen, getInstructions, s
 							/>
 						</span>
 						<span className={styles['span']}>
-						Описание:
+						Номер:
 							<InputForm
-								value={values.description}
+								value={values.number ?? ''}
 								type="text"
-								name="description"
-								placeholder="Описание"
+								name="number"
+								placeholder="Номер"
 								onChange={onChange}
 							/>
+						</span>
+						<span className={styles['span']}>
+							<InputForm
+								value={values.repeatable}
+								type="checkbox"
+								name="repeatable"
+								onChange={onChange}
+							/>
+							Повторяемость
 						</span>
 						<div className={styles['button-box']}>
 							{(Boolean(valueIns) && visibleDelButton) && <div className={styles['inline']}>

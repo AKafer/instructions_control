@@ -1,12 +1,13 @@
 export const INITIAL_STATE = {
-	valueDiv: 0,
+	valueIns: 0,
 	subModalOpen: false,
 	visibleDelButton: true,
 	isValid: {
 		title: true
 	},
 	values: {
-		title: ''
+		title: '',
+		repeatable: false
 	},
 	errors: {
 		title: ''
@@ -17,8 +18,8 @@ export const INITIAL_STATE = {
 export function formReducer(state, action) {
 	// eslint-disable-next-line default-case
 	switch (action.type) {
-	case 'SET_VALUE_Div':
-		return {...state, valueDiv: action.payload};
+	case 'SET_VALUE_Ins':
+		return {...state, valueIns: action.payload};
 	case 'SET_SUB_MODAL':
 		return {...state, subModalOpen: action.payload};
 	case 'SET_VISIBLE_DEL_BUTTON':

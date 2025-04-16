@@ -161,7 +161,7 @@ export function ManageDiv({optionsDiv, setManageDivModalOpen, getDivisions, setS
 						<span className={styles['span']}>
 						Описание:
 							<InputForm
-								value={values.description}
+								value={values.description ?? ''}
 								type="text"
 								name="description"
 								placeholder="Описание"
