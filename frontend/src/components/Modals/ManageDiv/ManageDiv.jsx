@@ -111,7 +111,6 @@ export function ManageDiv({optionsDiv, setManageDivModalOpen, getDivisions, setS
 	};
 
 	useEffect(() => {
-		console.log(state);
 		if (isFormReadyToSubmit) {
 			manageDivApi(values);
 			dispatchForm({ type: 'CLEAR' });

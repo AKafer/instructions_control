@@ -43,7 +43,6 @@ export function formReducer(state, action) {
 	case 'RESET_VALIDITY':
 		return {...state, isValid: INITIAL_STATE.isValid, errors: INITIAL_STATE.errors};
 	case 'SUBMIT': {
-		console.log('submit');
 		const titleValidity = Boolean(String(state.values.title || '').trim().length);
 		return {
 			...state,

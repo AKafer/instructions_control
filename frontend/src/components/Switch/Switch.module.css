@@ -1,0 +1,10 @@
+.toggle-switch.ant-switch-checked {
+  background-color: var(--color_primary_default) !important;
+  margin: 0 !important
+}
+
+:global(.ant-switch-checked).toggle-switch {
+  background-color: var(--color_primary_default) !important;
+  margin: 0 !important;   /* если нужно */
+}
+

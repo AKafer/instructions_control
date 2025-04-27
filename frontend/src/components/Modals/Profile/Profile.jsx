@@ -8,9 +8,7 @@ export function Profile() {
 	const navigate = useNavigate();
 
 	const jwt = localStorage.getItem(JWT_STORAGE_KEY);
-	console.log(jwt);
 	const decoded = jwtDecode(jwt);
-	console.log(decoded);
 
 	const LogOut = () => {
 		localStorage.removeItem(JWT_STORAGE_KEY);

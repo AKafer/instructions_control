@@ -1,5 +1,7 @@
+export const nullOption = {value: 0, label: '---Создать новую инструкцию---'};
+
 export const INITIAL_STATE = {
-	valueIns: 0,
+	valueIns: nullOption,
 	subModalOpen: false,
 	visibleDelButton: true,
 	isValid: {
@@ -7,7 +9,8 @@ export const INITIAL_STATE = {
 	},
 	values: {
 		title: '',
-		repeatable: false
+		repeatable: false,
+		file: null
 	},
 	errors: {
 		title: ''
@@ -40,11 +43,10 @@ export function formReducer(state, action) {
 		}
 		return {...state, values: {...state.values, ...action.payload}};
 	case 'CLEAR':
-		return { ...state, values: INITIAL_STATE.values, isFormReadyToSubmit: false, errors: INITIAL_STATE.errors};
+		return { ...state, values: INITIAL_STATE.values, isFormReadyToSubmit: false, subModalOpen: false, errors: INITIAL_STATE.errors};
 	case 'RESET_VALIDITY':
 		return {...state, isValid: INITIAL_STATE.isValid, errors: INITIAL_STATE.errors};
 	case 'SUBMIT': {
-		console.log('submit');
 		const titleValidity = Boolean(String(state.values.title || '').trim().length);
 		return {
 			...state,

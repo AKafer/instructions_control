@@ -26,8 +26,6 @@ export function ManageProf({optionsProf, setManageProfModalOpen, getProfessions,
 		isFormReadyToSubmit
 	} = state;
 
-	console.log('REEEEEEEENDER MANAGE PROF');
-
 	const jwt = localStorage.getItem(JWT_STORAGE_KEY);
 	const optionsProfWide = [
 		{value: 0, label: '---Создать новую профессию---'},
@@ -113,7 +111,6 @@ export function ManageProf({optionsProf, setManageProfModalOpen, getProfessions,
 	};
 
 	useEffect(() => {
-		console.log(state);
 		if (isFormReadyToSubmit) {
 			manageProfApi(values);
 			dispatchForm({ type: 'CLEAR' });

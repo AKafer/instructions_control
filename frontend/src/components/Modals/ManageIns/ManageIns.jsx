@@ -1,21 +1,25 @@
 import styles from './ManageIns.module.css';
 import Button from '../../Button/Button';
 import axios, {AxiosError} from 'axios';
+import cn from 'classnames';
 import {
 	getAllInstructionsUrl,
 	JWT_STORAGE_KEY,
 	PREFIX
 } from '../../../helpers/constants';
-import {useEffect, useReducer, useState} from 'react';
+import {useEffect, useReducer, useRef, useState} from 'react';
 import {SelectForm} from '../../SelectForm/SelectForm';
 import {Tooltip} from 'react-tooltip';
 import InputForm from '../../InputForm/InputForm';
-import {formReducer, INITIAL_STATE} from './ManageIns.state';
+import {formReducer, INITIAL_STATE, nullOption} from './ManageIns.state';
+import ToggleSwitch from '../../Switch/Switch';
 
 
-export function ManageIns({optionsIns, instructionDict, setManageInsModalOpen, getInstructions, setSelectedInsOption}) {
+export function ManageIns({optionsIns, instructionDict, setManageInsModalOpen, getInstructions}) {
+	const inputRef = useRef(null);
 	const [errorApi, setErrorApi] = useState(undefined);
 	const [state, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
+	const optionsInsWide = [nullOption, ...optionsIns];
 	const {
 		valueIns,
 		subModalOpen,
@@ -27,45 +31,64 @@ export function ManageIns({optionsIns, instructionDict, setManageInsModalOpen, g
 	} = state;
 
 	const jwt = localStorage.getItem(JWT_STORAGE_KEY);
-	const optionsInsWide = [
-		{value: 0, label: '---Создать новую инструкцию---'},
-		...optionsIns
-	];
 
 	const manageInsApi = async (payload, isDelete = false) => {
+		const data = new FormData();
+		if (values) {
+			data.append('file', values.file ?? '');
+			data.append('title', values.title ?? '');
+			data.append('number', values.number ?? '');
+			data.append('iteration', values.repeatable ? 'true' : 'false');
+			data.append('period', String(values.period ?? 0));
+		}
 		try {
-			if (valueIns) {
+			let response;
+			if (valueIns?.value) {
 				if (isDelete) {
-					await axios.delete(`${PREFIX}${getAllInstructionsUrl}${valueIns}`,
+					await axios.delete(`${PREFIX}${getAllInstructionsUrl}${valueIns?.value}`,
 						{
 							headers: {
-								'Authorization': `Bearer ${jwt}`,
-								'Content-Type': 'application/json'
+								'Authorization': `Bearer ${jwt}`
 							}
 						});
 				} else {
-					await axios.patch(`${PREFIX}${getAllInstructionsUrl}${valueIns}`,
-						payload,
+					response = await axios.patch(`${PREFIX}${getAllInstructionsUrl}${valueIns?.value}`,
+						data,
 						{
 							headers: {
-								'Authorization': `Bearer ${jwt}`,
-								'Content-Type': 'application/json'
+								'Authorization': `Bearer ${jwt}`
 							}
 						});
 				}
 			} else {
-				await axios.post(`${PREFIX}${getAllInstructionsUrl}`,
-					payload,
+				response = await axios.post(`${PREFIX}${getAllInstructionsUrl}`,
+					data,
 					{
 						headers: {
-							'Authorization': `Bearer ${jwt}`,
-							'Content-Type': 'application/json'
+							'Authorization': `Bearer ${jwt}`
 						}
 					});
 			}
-			setManageInsModalOpen(false);
-			getInstructions();
-			// setSelectedInsOption(null);
+			// setManageInsModalOpen(false);
+			await getInstructions();
+			if (response) {
+				const { id, title, number, iteration, period, link } = response.data;
+				const newOption = { value: id, label: title };
+				dispatchForm({type: 'SET_VALUE_Ins', payload: newOption});
+				dispatchForm({type: 'SET_SUB_MODAL', payload: false});
+				dispatchForm({type: 'SET_VISIBLE_DEL_BUTTON', payload: true});
+				dispatchForm({
+					type: 'SET_VALUE', payload:
+					{
+						'title': title,
+						'number': number || '',
+						'repeatable': iteration || false,
+						'period': period || '',
+						'link': link || ''
+					}}
+				);
+
+			}
 		} catch (e) {
 			if (e instanceof AxiosError) {
 				setErrorApi(e.response?.data.detail || e.response?.data.message || 'Неизвестная ошибка');
@@ -78,19 +101,41 @@ export function ManageIns({optionsIns, instructionDict, setManageInsModalOpen, g
 	const selectIns = (option) => {
 		dispatchForm({type: 'SET_SUB_MODAL', payload: false});
 		dispatchForm({type: 'SET_VISIBLE_DEL_BUTTON', payload: true});
-		dispatchForm({type: 'SET_VALUE_Ins', payload: option.value});
+		dispatchForm({type: 'SET_VALUE_Ins', payload: option});
 		dispatchForm({type: 'RESET_VALIDITY'});
 		if (option.value !== 0) {
 			dispatchForm({
 				type: 'SET_VALUE', payload:
 					{
 						'title': option.label,
-						'number': instructionDict[option.value]?.number || ''	
+						'number': instructionDict[option.value]?.number || '',
+						'repeatable': instructionDict[option.value]?.iteration || false,
+						'period': instructionDict[option.value]?.period || '',
+						'link': instructionDict[option.value]?.link || ''
 					}}
 			);
 		} else {
 			dispatchForm({type: 'CLEAR'});
 		}
+	};
+
+	const handleRepeatableChange = (field) => (checked) => {
+		dispatchForm({ type: 'SET_SUB_MODAL', payload: false });
+		dispatchForm({ type: 'SET_VISIBLE_DEL_BUTTON', payload: false });
+		dispatchForm({ type: 'SET_VALUE', payload: { [field]: checked } });
+		dispatchForm({ type: 'RESET_VALIDITY' });
+	};
+
+	const setFile = (e) => {
+		dispatchForm({ type: 'SET_SUB_MODAL', payload: false });
+		dispatchForm({ type: 'SET_VISIBLE_DEL_BUTTON', payload: false });
+		const file = e.target.files[0];
+		if (file) {
+			dispatchForm({ type: 'SET_VALUE', payload: { file } });
+		} else {
+			dispatchForm({ type: 'SET_VALUE', payload: { file: null } });
+		}
+		e.target.value = '';
 	};
 
 	const onChange = (e) => {
@@ -107,34 +152,50 @@ export function ManageIns({optionsIns, instructionDict, setManageInsModalOpen, g
 	const deleteIns = () => {
 		manageInsApi({}, true);
 		dispatchForm({ type: 'CLEAR' });
-		dispatchForm({type: 'SET_VALUE_Ins', payload: 0});
+		dispatchForm({type: 'SET_VALUE_Ins', payload: nullOption});
+
 	};
 
 	useEffect(() => {
-		console.log(state);
 		if (isFormReadyToSubmit) {
 			manageInsApi(values);
 			dispatchForm({ type: 'CLEAR' });
-			dispatchForm({type: 'SET_VALUE_Ins', payload: 0});
+			dispatchForm({type: 'SET_VALUE_Ins', payload: nullOption});
 		}
 	}, [isFormReadyToSubmit, values, errors, isValid]);
 
 	return (
 		<div className={styles['manage_ins']}>
 			<h1 className={styles['title']}>Управление инструкциями</h1>
-			{errorApi && <div className={styles['error']}>{errorApi}</div>}
+			{errorApi && <div className={styles.error}>{errorApi}</div>}
 			<div className={styles['content']}>
 				<span className={styles['span']}>
-					Подразделения:
+					Инструкции:
 					<SelectForm
-						value={optionsInsWide.find(option => option.value === valueIns)}
+						value={valueIns}
 						options={optionsInsWide}
 						name="Instruction_id"
 						onChange={selectIns}
 					/>
 				</span>
+				<div className={styles.fileLinkBox}>
+					<a
+						href={values.link || undefined}
+						target="_blank"
+					    rel="noreferrer"
+						className={cn(styles.fileLink, {
+							[styles.disabled]: !values.link
+						})}
+					>
+						<img
+							className={styles.iconImageFile}
+							src="/icons/doc-icon.svg"
+							alt="Instruction file"/>
+					</a>
+
+				</div>
 				<div className={styles['box']}>
-					<span className={styles['box-title']}>Параметры подразделения</span>
+					<span className={styles['box-title']}>Основные параметры инструкции</span>
 					<div className={styles['box-content']}>
 						<span
 							className={styles['span']}
@@ -168,22 +229,54 @@ export function ManageIns({optionsIns, instructionDict, setManageInsModalOpen, g
 								onChange={onChange}
 							/>
 						</span>
-						<span className={styles['span']}>
-							<InputForm
-								value={values.repeatable}
-								type="checkbox"
+						<div className={styles.switchBox}>
+							<ToggleSwitch
 								name="repeatable"
-								onChange={onChange}
+								checked={values.repeatable}
+								onChange={handleRepeatableChange('repeatable')}
+								size="default"
 							/>
-							Повторяемость
-						</span>
+
+							{values.repeatable ? (
+								<label className={styles.field}>
+									<span className={styles.label}>Период, дней:</span>
+									<InputForm
+										value={values.period}
+										type="number"
+										name="period"
+										placeholder="100"
+										className={styles.input}
+										onChange={onChange}
+									/>
+								</label>
+							) : (
+								<span className={styles.caption}>Повторяемость</span>
+							)}
+						</div>
+
+
+
+						<div className={styles.fileButtonBox}>
+							<input
+								ref={inputRef}
+								type="file"
+								onChange={setFile}
+								className={styles.hiddenInput}
+							/>
+							<Button
+								className={styles.fileButton}
+								onClick={() => inputRef.current?.click()}
+							>
+								{valueIns?.value ? 'Изменить ' : 'Выбрать '} файл
+							</Button>
+							<div className={styles.fileName}>{values.file?.name || 'файл не выбран'}</div>
+						</div>
 						<div className={styles['button-box']}>
-							{(Boolean(valueIns) && visibleDelButton) && <div className={styles['inline']}>
+							{(Boolean(valueIns?.value) && visibleDelButton) && <div className={styles['inline']}>
 								<button className={styles.iconButton}
 									onClick={() => {
 										dispatchForm({type: 'SET_SUB_MODAL', payload: true});
 										dispatchForm({type: 'SET_VISIBLE_DEL_BUTTON', payload: false});
-
 									}}
 								>
 									<img
@@ -210,7 +303,7 @@ export function ManageIns({optionsIns, instructionDict, setManageInsModalOpen, g
 			</div>
 			<div className={styles['button']}>
 				<Button onClick={creatEditIns}>
-					{valueIns ? 'Редактировать' : 'Создать'}
+					{valueIns?.value ? 'Редактировать' : 'Создать'}
 				</Button>
 			</div>
 		</div>
