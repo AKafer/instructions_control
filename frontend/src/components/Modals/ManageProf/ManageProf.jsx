@@ -142,6 +142,7 @@ export function ManageProf({optionsProf, setManageProfModalOpen, getProfessions,
 						>
 						Наименование*:
 							<InputForm
+								maxLength={64}
 								value={values.title}
 								isValid={isValid.title}
 								type="text"

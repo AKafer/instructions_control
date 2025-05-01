@@ -35,7 +35,6 @@ const useFillSelect = ({ endpoint, labelField = 'title' }) => {
 				return acc;
 			}, {});
 			setItemDict(itemDict);
-			console.log('itemDict', itemDict);
 		} catch (e) {
 			if (e instanceof AxiosError) {
 				setError(e.response?.data.detail || e.response?.data.message || 'Неизвестная ошибка логина');

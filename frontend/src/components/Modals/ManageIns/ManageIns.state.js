@@ -2,6 +2,8 @@ export const nullOption = {value: 0, label: '---Создать новую инс
 
 export const INITIAL_STATE = {
 	valueIns: nullOption,
+	valueProf: null,
+	optionsUnBindedProf: [],
 	subModalOpen: false,
 	visibleDelButton: true,
 	isValid: {
@@ -21,8 +23,12 @@ export const INITIAL_STATE = {
 export function formReducer(state, action) {
 	// eslint-disable-next-line default-case
 	switch (action.type) {
+	case 'SET_VALUE_optionsUnBindedProf':
+		return {...state, optionsUnBindedProf: action.payload};
 	case 'SET_VALUE_Ins':
 		return {...state, valueIns: action.payload};
+	case 'SET_VALUE_Prof':
+		return {...state, valueProf: action.payload};
 	case 'SET_SUB_MODAL':
 		return {...state, subModalOpen: action.payload};
 	case 'SET_VISIBLE_DEL_BUTTON':
@@ -43,7 +49,16 @@ export function formReducer(state, action) {
 		}
 		return {...state, values: {...state.values, ...action.payload}};
 	case 'CLEAR':
-		return { ...state, values: INITIAL_STATE.values, isFormReadyToSubmit: false, subModalOpen: false, errors: INITIAL_STATE.errors};
+		return {
+			...state,
+			values: INITIAL_STATE.values,
+			isFormReadyToSubmit: false,
+			subModalOpen: false,
+			errors: INITIAL_STATE.errors,
+			valueIns: nullOption,
+			valueProf: null,
+			optionsUnBindedProf: []
+		};
 	case 'RESET_VALIDITY':
 		return {...state, isValid: INITIAL_STATE.isValid, errors: INITIAL_STATE.errors};
 	case 'SUBMIT': {

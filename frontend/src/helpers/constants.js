@@ -8,6 +8,7 @@ export const EMAIL_STORAGE_KEY = 'email';
 
 export const getAllProfessionsUrl = '/api/v1/professions/';
 export const getAllDivisionsUrl = '/api/v1/divisions/';
+export const getAllRulesUrl = '/api/v1/rules/';
 export const getAllInstructionsUrl = '/api/v1/instructions/';
 export const getAllUsersUrl = '/api/v1/users';
 

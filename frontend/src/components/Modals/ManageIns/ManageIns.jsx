@@ -3,25 +3,36 @@ import Button from '../../Button/Button';
 import axios, {AxiosError} from 'axios';
 import cn from 'classnames';
 import {
-	getAllInstructionsUrl,
+	getAllInstructionsUrl, getAllRulesUrl,
 	JWT_STORAGE_KEY,
 	PREFIX
 } from '../../../helpers/constants';
-import {useEffect, useReducer, useRef, useState} from 'react';
+import {useEffect, useMemo, useReducer, useRef, useState} from 'react';
 import {SelectForm} from '../../SelectForm/SelectForm';
 import {Tooltip} from 'react-tooltip';
 import InputForm from '../../InputForm/InputForm';
 import {formReducer, INITIAL_STATE, nullOption} from './ManageIns.state';
 import ToggleSwitch from '../../Switch/Switch';
+import BindedProf from '../../BindedProf/BindedProf';
 
 
-export function ManageIns({optionsIns, instructionDict, setManageInsModalOpen, getInstructions}) {
+export function ManageIns({
+	optionsIns,
+	instructionDict,
+	setManageInsModalOpen,
+	getInstructions,
+	optionsProf,
+	rulesDict,
+	getRules
+})
+{
 	const inputRef = useRef(null);
 	const [errorApi, setErrorApi] = useState(undefined);
 	const [state, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
 	const optionsInsWide = [nullOption, ...optionsIns];
 	const {
 		valueIns,
+		valueProf,
 		subModalOpen,
 		visibleDelButton,
 		values,
@@ -29,6 +40,23 @@ export function ManageIns({optionsIns, instructionDict, setManageInsModalOpen, g
 		errors,
 		isFormReadyToSubmit
 	} = state;
+
+	const profDict = useMemo(
+		() => Object.fromEntries(optionsProf.map(({ value, label }) => [value, label])),
+		[optionsProf]
+	);
+
+	const optionsUnBindedProf = useMemo(() => {
+		if (valueIns?.value === 0) {
+			return [];
+		}
+		return optionsProf.filter(option =>
+			!Object.values(rulesDict).some(rule =>
+				rule.instruction_id === valueIns?.value &&
+      			rule.profession_id  === option.value
+			)
+		);
+	}, [optionsProf, rulesDict, valueIns]);
 
 	const jwt = localStorage.getItem(JWT_STORAGE_KEY);
 
@@ -69,7 +97,6 @@ export function ManageIns({optionsIns, instructionDict, setManageInsModalOpen, g
 						}
 					});
 			}
-			// setManageInsModalOpen(false);
 			await getInstructions();
 			if (response) {
 				const { id, title, number, iteration, period, link } = response.data;
@@ -98,6 +125,41 @@ export function ManageIns({optionsIns, instructionDict, setManageInsModalOpen, g
 		}
 	};
 
+	const manageRulesApi = async (method, payload, rule_id) => {
+		try {
+			if (method === 'POST') {
+				await axios.post(`${PREFIX}${getAllRulesUrl}`,
+					payload,
+					{
+						headers: {
+							'Authorization': `Bearer ${jwt}`,
+							'Content-Type': 'application/json'
+						}
+					});
+			}
+			if (method === 'DELETE') {
+				await axios.delete(`${PREFIX}${getAllRulesUrl}${rule_id}`,
+					{
+						headers: {
+							'Authorization': `Bearer ${jwt}`
+						}
+					});
+			}
+			getRules();
+			dispatchForm({type: 'SET_VALUE_Prof', payload: null});
+		} catch (e) {
+			if (e instanceof AxiosError) {
+				setErrorApi(e.response?.data.detail || e.response?.data.message || 'Неизвестная ошибка');
+			} else {
+				setErrorApi(`Неизвестная ошибка ${e}`);
+			}
+		}
+	};
+
+	const selectProf = (option) => {
+		dispatchForm({type: 'SET_VALUE_Prof', payload: option});
+	};
+
 	const selectIns = (option) => {
 		dispatchForm({type: 'SET_SUB_MODAL', payload: false});
 		dispatchForm({type: 'SET_VISIBLE_DEL_BUTTON', payload: true});
@@ -114,6 +176,7 @@ export function ManageIns({optionsIns, instructionDict, setManageInsModalOpen, g
 						'link': instructionDict[option.value]?.link || ''
 					}}
 			);
+			dispatchForm({type: 'SET_VALUE_Prof', payload: null});
 		} else {
 			dispatchForm({type: 'CLEAR'});
 		}
@@ -164,147 +227,196 @@ export function ManageIns({optionsIns, instructionDict, setManageInsModalOpen, g
 		}
 	}, [isFormReadyToSubmit, values, errors, isValid]);
 
+	const bindProf = () => {
+		const payload = {
+			instruction_id: valueIns?.value,
+			profession_id: valueProf?.value,
+			description: `created by user on ${new Date().toLocaleDateString()}`
+		};
+		manageRulesApi('POST', payload);
+	};
+
 	return (
 		<div className={styles['manage_ins']}>
-			<h1 className={styles['title']}>Управление инструкциями</h1>
+			<h1 className={styles.title}>Управление инструкциями</h1>
 			{errorApi && <div className={styles.error}>{errorApi}</div>}
 			<div className={styles['content']}>
-				<span className={styles['span']}>
+				<div className={styles['left_panel']}>
+					<h2 className={styles.title}>Основное</h2>
+					<span className={styles['span']}>
 					Инструкции:
-					<SelectForm
-						value={valueIns}
-						options={optionsInsWide}
-						name="Instruction_id"
-						onChange={selectIns}
-					/>
-				</span>
-				<div className={styles.fileLinkBox}>
-					<a
-						href={values.link || undefined}
-						target="_blank"
-					    rel="noreferrer"
-						className={cn(styles.fileLink, {
-							[styles.disabled]: !values.link
-						})}
-					>
-						<img
-							className={styles.iconImageFile}
-							src="/icons/doc-icon.svg"
-							alt="Instruction file"/>
-					</a>
-
-				</div>
-				<div className={styles['box']}>
-					<span className={styles['box-title']}>Основные параметры инструкции</span>
-					<div className={styles['box-content']}>
-						<span
-							className={styles['span']}
-							data-tooltip-content={errors.title}
-							data-tooltip-id="errorTooltipTitle"
+						<SelectForm
+							value={valueIns}
+							options={optionsInsWide}
+							name="Instruction_id"
+							onChange={selectIns}
+						/>
+					</span>
+					<div className={styles.fileLinkBox}>
+						<a
+							href={values.link || undefined}
+							target="_blank"
+					    	rel="noreferrer"
+							className={cn(styles.fileLink, {
+								[styles.disabled]: !values.link
+							})}
 						>
-						Наименование*:
-							<InputForm
-								value={values.title}
-								isValid={isValid.title}
-								type="text"
-								name="title"
-								placeholder="Наименование"
-								onChange={onChange}
-							/>
-							<Tooltip
-								id="errorTooltipTitle"
-								place="top-end"
-								content={errors.title}
-								isOpen={!isValid.title}
-								className={styles['my-tooltip']}
-							/>
-						</span>
-						<span className={styles['span']}>
-						Номер:
-							<InputForm
-								value={values.number ?? ''}
-								type="text"
-								name="number"
-								placeholder="Номер"
-								onChange={onChange}
-							/>
-						</span>
-						<div className={styles.switchBox}>
-							<ToggleSwitch
-								name="repeatable"
-								checked={values.repeatable}
-								onChange={handleRepeatableChange('repeatable')}
-								size="default"
-							/>
+							<img
+								className={styles.iconImageFile}
+								src="/icons/doc-icon.svg"
+								alt="Instruction file"/>
+						</a>
 
-							{values.repeatable ? (
-								<label className={styles.field}>
-									<span className={styles.label}>Период, дней:</span>
-									<InputForm
-										value={values.period}
-										type="number"
-										name="period"
-										placeholder="100"
-										className={styles.input}
-										onChange={onChange}
-									/>
-								</label>
-							) : (
-								<span className={styles.caption}>Повторяемость</span>
-							)}
-						</div>
-
-
-
-						<div className={styles.fileButtonBox}>
-							<input
-								ref={inputRef}
-								type="file"
-								onChange={setFile}
-								className={styles.hiddenInput}
-							/>
-							<Button
-								className={styles.fileButton}
-								onClick={() => inputRef.current?.click()}
+					</div>
+					<div className={styles['box']}>
+						<span className={styles['box-title']}>Основные параметры инструкции</span>
+						<div className={styles['box-content']}>
+							<span
+								className={styles['span']}
+								data-tooltip-content={errors.title}
+								data-tooltip-id="errorTooltipTitle"
 							>
-								{valueIns?.value ? 'Изменить ' : 'Выбрать '} файл
-							</Button>
-							<div className={styles.fileName}>{values.file?.name || 'файл не выбран'}</div>
-						</div>
-						<div className={styles['button-box']}>
-							{(Boolean(valueIns?.value) && visibleDelButton) && <div className={styles['inline']}>
-								<button className={styles.iconButton}
-									onClick={() => {
-										dispatchForm({type: 'SET_SUB_MODAL', payload: true});
-										dispatchForm({type: 'SET_VISIBLE_DEL_BUTTON', payload: false});
-									}}
-								>
-									<img
-										className={styles.iconImage}
-										src="/icons/delete-icon.svg"
-										alt="delete"/>
-								</button>
-							</div>}
-							{subModalOpen && <div className={styles['submodal']}>
-								<Button className={styles.button_submodal} onClick={deleteIns}>
-										Удалить
-								</Button>
-								<Button className={styles.button_submodal} onClick={() => {
-									dispatchForm({type: 'SET_SUB_MODAL', payload: false});
-									dispatchForm({type: 'SET_VISIBLE_DEL_BUTTON', payload: true});
-								}}>
-										Отмена
-								</Button>
+						Наименование*:
+								<InputForm
+									maxLength={640}
+									value={values.title}
+									isValid={isValid.title}
+									type="text"
+									name="title"
+									placeholder="Наименование"
+									onChange={onChange}
+								/>
+								<Tooltip
+									id="errorTooltipTitle"
+									place="top-end"
+									content={errors.title}
+									isOpen={!isValid.title}
+									className={styles['my-tooltip']}
+								/>
+							</span>
+							<span className={styles['span']}>
+						Номер:
+								<InputForm
+									value={values.number ?? ''}
+									type="text"
+									name="number"
+									placeholder="Номер"
+									onChange={onChange}
+								/>
+							</span>
+							<div className={styles.switchBox}>
+								<ToggleSwitch
+									name="repeatable"
+									checked={values.repeatable}
+									onChange={handleRepeatableChange('repeatable')}
+									size="default"
+								/>
+
+								{values.repeatable ? (
+									<label className={styles.field}>
+										<span className={styles.label}>Период, дней:</span>
+										<InputForm
+											value={values.period}
+											type="number"
+											name="period"
+											placeholder="100"
+											className={styles.input}
+											onChange={onChange}
+										/>
+									</label>
+								) : (
+									<span className={styles.caption}>Повторяемость</span>
+								)}
 							</div>
-							}
+							<div className={styles.fileButtonBox}>
+								<input
+									ref={inputRef}
+									type="file"
+									onChange={setFile}
+									className={styles.hiddenInput}
+								/>
+								<Button
+									className={styles.fileButton}
+									onClick={() => inputRef.current?.click()}
+								>
+									{valueIns?.value ? 'Изменить ' : 'Выбрать '} файл
+								</Button>
+								<div className={styles.fileName}>{values.file?.name || 'файл не выбран'}</div>
+							</div>
+							<div className={styles['button-box']}>
+								{(Boolean(valueIns?.value) && visibleDelButton) && <div className={styles['inline']}>
+									<button className={styles.iconButton}
+										onClick={() => {
+											dispatchForm({type: 'SET_SUB_MODAL', payload: true});
+											dispatchForm({type: 'SET_VISIBLE_DEL_BUTTON', payload: false});
+										}}
+									>
+										<img
+											className={styles.iconImage}
+											src="/icons/delete-icon.svg"
+											alt="delete"/>
+									</button>
+								</div>}
+								{subModalOpen && <div className={styles.submodal}>
+									<Button className={styles.button_submodal} onClick={deleteIns}>
+										Удалить
+									</Button>
+									<Button className={styles.button_submodal} onClick={() => {
+										dispatchForm({type: 'SET_SUB_MODAL', payload: false});
+										dispatchForm({type: 'SET_VISIBLE_DEL_BUTTON', payload: true});
+									}}>
+										Отмена
+									</Button>
+								</div>
+								}
+							</div>
 						</div>
 					</div>
+					<div className={styles['button']}>
+						<Button onClick={creatEditIns}>
+							{valueIns?.value ? 'Редактировать' : 'Создать'}
+						</Button>
+					</div>
 				</div>
-			</div>
-			<div className={styles['button']}>
-				<Button onClick={creatEditIns}>
-					{valueIns?.value ? 'Редактировать' : 'Создать'}
-				</Button>
+				<div className={styles['left_panel']}>
+					<h2 className={styles.title}>Привязка профессий</h2>
+					<span className={styles['span']}>
+					Профессии:
+						<SelectForm
+							value={valueProf}
+							placeholder={'Выберите профессию'}
+							options={optionsUnBindedProf || []}
+							name="Profession_id"
+							onChange={selectProf}
+						/>
+					</span>
+					<div className={styles.bind_button_box}>
+						<Button
+							className={cn(styles.bind_button, {
+								[styles.disabled]: (!valueIns?.value || valueProf == null)
+							})}
+							onClick={bindProf}>
+							Привязать
+						</Button>
+					</div>
+					<div className={styles.binds_box}>
+						{Object.values(rulesDict)
+							.filter(rule => rule.instruction_id === valueIns?.value)  /* только нужные */
+							.map(rule => (
+								<BindedProf
+									key={rule.id}
+									rule_id={rule.id}
+									profession_id={rule.profession_id}
+									profDict={profDict}
+									manageRulesApi={manageRulesApi}
+								/>
+							))}
+					</div>
+				</div>
+				<div className={styles['right_panel']}>
+					<h2 className={styles.title}>Привязка модулей</h2>
+				</div>
+
 			</div>
 		</div>
 	);

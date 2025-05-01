@@ -5,7 +5,7 @@ import {CustomSelect} from '../../../components/Select/Select';
 import {
 	getAllDivisionsUrl,
 	getAllInstructionsUrl,
-	getAllProfessionsUrl,
+	getAllProfessionsUrl, getAllRulesUrl,
 	JWT_STORAGE_KEY,
 	PREFIX
 } from '../../../helpers/constants';
@@ -33,6 +33,16 @@ export function Users () {
 	const [selectedUser, setSelectedUser] = useState(null);
 	const [totalRecords, setTotalRecords] = useState(0);
 	const [refreshKey, setRefreshKey] = useState(0);
+
+	const {
+		error: errorRule,
+		options: optionsRule,
+		itemDict: rulesDict,
+		getItems: getRules
+	} = useFillSelect({
+		endpoint: getAllRulesUrl,
+		labelField: 'description'
+	});
 
 	const {
 		error: errorProf,
@@ -240,6 +250,10 @@ export function Users () {
 							instructionDict={instructionDict}
 							setManageInsModalOpen={setManageInsModalOpen}
 							getInstructions={getInstructions}
+							optionsProf={optionsProf}
+							rulesDict={rulesDict}
+							getRules={getRules}
+
 							// setSelectedInsOption={setSelectedInsOption}
 						/>
 					</Modal>
@@ -247,8 +261,8 @@ export function Users () {
 			</div>
 
 			<div className={styles.outer_table}>
-				{(errorDiv || errorProf) && <div className={styles.error}>
-					{errorDiv ? errorDiv : ''}--{errorProf ? errorProf : ''}
+				{(errorDiv || errorProf || errorRule || errorIns) && <div className={styles.error}>
+					{errorDiv ? errorDiv : ''}--{errorProf ? errorProf : ''}--{errorRule ? errorRule : ''}--{errorIns ? errorIns : ''}
 				</div>}
 				<div className={styles.filters_table}>
 					<Input

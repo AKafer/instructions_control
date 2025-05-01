@@ -64,9 +64,10 @@ async def get_paginated_users(
     user_filter: UsersFilter = Depends(UsersFilter),
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    query = select(User).options(
-        joinedload(User.instructions).joinedload(Instructions.journals)
-    )
+    # query = select(User).options(
+    #     joinedload(User.instructions).joinedload(Instructions.journals)
+    # )
+    query = select(User).where(User.is_superuser == False)
     query = user_filter.filter(query)
     return await paginate(db_session, query)
 
