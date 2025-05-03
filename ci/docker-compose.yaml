@@ -85,11 +85,6 @@ services:
       - app
     networks:
       - control
-#    command: >
-#      sh -c "
-#      echo \"window._env_ = { REACT_APP_API_BASE_URL: '${API_BASE_URL}' };\" > /frontend/build/env-config.js &&
-#      cat /frontend/build/env-config.js &&
-#      npx serve -s build -l $SERVE_PORT"
 
 volumes:
   postgres_data:
