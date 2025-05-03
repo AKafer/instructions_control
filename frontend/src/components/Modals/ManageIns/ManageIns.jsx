@@ -108,11 +108,11 @@ export function ManageIns({
 		const jwt = localStorage.getItem(JWT_STORAGE_KEY);
 		const data = new FormData();
 		if (values) {
-			data.append('file', moduleFile ?? '');
-			data.append('title', moduleTitle ?? '');
-			data.append('instruction_id', valueIns?.value ?? '');
-			data.append('description', `created by user on ${new Date().toLocaleDateString()}`);
-			data.append('order_index', String(values.period ?? 0));
+			data.append('file', values.file ?? '');
+			data.append('title', values.title ?? '');
+			data.append('number', values.number ?? '');
+			data.append('iteration', values.repeatable ? 'true' : 'false');
+			data.append('period', String(values.period ?? 0));
 		}
 		try {
 			let response;
