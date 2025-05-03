@@ -45,9 +45,49 @@ async def update_tm_in_db(
     db_session: AsyncSession, tm: TrainingModules, **update_data: dict
 ) -> TrainingModules:
     for field, value in update_data.items():
+        if field == 'order_index':
+            query = (
+                select(TrainingModules.order_index)
+                .filter(TrainingModules.instruction_id == tm.instruction_id)
+            )
+            result = await db_session.scalars(query)
+            indexes = result.all()
+            for index in indexes:
+                if index == value and value != tm.order_index:
+                    raise DuplicateIndexError(f'Index module {value} already exists for this instruction')
         setattr(tm, field, value)
     return tm
 
+
+async def  move_module(
+    tm: TrainingModules,
+    move: str,
+    db_session: AsyncSession
+) -> bool:
+    query = (
+        select(TrainingModules)
+        .filter(TrainingModules.instruction_id == tm.instruction_id)
+    )
+    result = await db_session.scalars(query)
+    modules = result.all()
+    indexes = sorted([module.order_index for module in modules])
+    if move == 'up':
+        if tm.order_index == indexes[0]:
+            return False
+        new_index = indexes[indexes.index(tm.order_index) - 1]
+    elif move == 'down':
+        if tm.order_index == indexes[-1]:
+            return False
+        new_index = indexes[indexes.index(tm.order_index) + 1]
+    else:
+        return False
+    tm_2 = next(
+        module for module in modules if module.order_index == new_index
+    )
+    tm_2.order_index = tm.order_index
+    tm.order_index = new_index
+    await db_session.commit()
+    return True
 
 def get_full_link(request: Request, filename: str) -> str:
     base_url = BASE_URL or str(request.base_url)

@@ -35,16 +35,6 @@ export function Users () {
 	const [refreshKey, setRefreshKey] = useState(0);
 
 	const {
-		error: errorRule,
-		options: optionsRule,
-		itemDict: rulesDict,
-		getItems: getRules
-	} = useFillSelect({
-		endpoint: getAllRulesUrl,
-		labelField: 'description'
-	});
-
-	const {
 		error: errorProf,
 		options: optionsProf,
 		itemDict: professionDict,
@@ -248,21 +238,16 @@ export function Users () {
 						<ManageIns
 							optionsIns={optionsIns}
 							instructionDict={instructionDict}
-							setManageInsModalOpen={setManageInsModalOpen}
 							getInstructions={getInstructions}
 							optionsProf={optionsProf}
-							rulesDict={rulesDict}
-							getRules={getRules}
-
-							// setSelectedInsOption={setSelectedInsOption}
 						/>
 					</Modal>
 				</div>
 			</div>
 
 			<div className={styles.outer_table}>
-				{(errorDiv || errorProf || errorRule || errorIns) && <div className={styles.error}>
-					{errorDiv ? errorDiv : ''}--{errorProf ? errorProf : ''}--{errorRule ? errorRule : ''}--{errorIns ? errorIns : ''}
+				{(errorDiv || errorProf || errorIns) && <div className={styles.error}>
+					{errorDiv ? errorDiv : ''}--{errorProf ? errorProf : ''}--{errorIns ? errorIns : ''}
 				</div>}
 				<div className={styles.filters_table}>
 					<Input

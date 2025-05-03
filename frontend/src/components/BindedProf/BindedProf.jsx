@@ -1,6 +1,5 @@
 import React from 'react';
 import styles from './BindedProf.module.css';
-import cn from 'classnames';
 import Button from '../Button/Button';
 
 const BindedProf = ({

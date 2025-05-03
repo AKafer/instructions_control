@@ -3,7 +3,9 @@ import Button from '../../Button/Button';
 import axios, {AxiosError} from 'axios';
 import cn from 'classnames';
 import {
-	getAllInstructionsUrl, getAllRulesUrl,
+	getAllInstructionsUrl,
+	getAllModulesUrl,
+	getAllRulesUrl,
 	JWT_STORAGE_KEY,
 	PREFIX
 } from '../../../helpers/constants';
@@ -14,22 +16,48 @@ import InputForm from '../../InputForm/InputForm';
 import {formReducer, INITIAL_STATE, nullOption} from './ManageIns.state';
 import ToggleSwitch from '../../Switch/Switch';
 import BindedProf from '../../BindedProf/BindedProf';
+import {useNavigate} from 'react-router-dom';
+import useFillSelect from '../../../hooks/useFillSelect.hook';
+import Module from '../../Module/Module';
 
 
 export function ManageIns({
 	optionsIns,
 	instructionDict,
-	setManageInsModalOpen,
 	getInstructions,
-	optionsProf,
-	rulesDict,
-	getRules
+	optionsProf
 })
 {
+	const navigate = useNavigate();
 	const inputRef = useRef(null);
+	const inputModuleRef = useRef(null);
 	const [errorApi, setErrorApi] = useState(undefined);
 	const [state, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
 	const optionsInsWide = [nullOption, ...optionsIns];
+	const [moduleTitle, setModuleTitle] = useState('');
+	const [moduleFile, setModuleFile] = useState(null);
+
+	const {
+		error: errorModule,
+		options: optionsModule,
+		itemDict: modulesDict,
+		getItems: getModules
+	} = useFillSelect({
+		endpoint: getAllModulesUrl,
+		labelField: 'description'
+	});
+
+
+	const {
+		error: errorRule,
+		options: optionsRule,
+		itemDict: rulesDict,
+		getItems: getRules
+	} = useFillSelect({
+		endpoint: getAllRulesUrl,
+		labelField: 'description'
+	});
+
 	const {
 		valueIns,
 		valueProf,
@@ -50,6 +78,7 @@ export function ManageIns({
 		if (valueIns?.value === 0) {
 			return [];
 		}
+
 		return optionsProf.filter(option =>
 			!Object.values(rulesDict).some(rule =>
 				rule.instruction_id === valueIns?.value &&
@@ -58,16 +87,32 @@ export function ManageIns({
 		);
 	}, [optionsProf, rulesDict, valueIns]);
 
-	const jwt = localStorage.getItem(JWT_STORAGE_KEY);
+	const currentInsModules = useMemo(() => {
+		if (valueIns?.value === 0) {
+			return [];
+		}
+		return Object
+			.values(modulesDict)
+			.filter(m => m.instruction_id === valueIns.value)
+			.sort((a, b) => a.order_index - b.order_index);
+	}, [valueIns, modulesDict]);
+
+	const maxIndex = useMemo(() => {
+		if (currentInsModules.length === 0) {
+			return 0;
+		}
+		return Math.max(...currentInsModules.map(m => m.order_index));
+	});
 
 	const manageInsApi = async (payload, isDelete = false) => {
+		const jwt = localStorage.getItem(JWT_STORAGE_KEY);
 		const data = new FormData();
 		if (values) {
-			data.append('file', values.file ?? '');
-			data.append('title', values.title ?? '');
-			data.append('number', values.number ?? '');
-			data.append('iteration', values.repeatable ? 'true' : 'false');
-			data.append('period', String(values.period ?? 0));
+			data.append('file', moduleFile ?? '');
+			data.append('title', moduleTitle ?? '');
+			data.append('instruction_id', valueIns?.value ?? '');
+			data.append('description', `created by user on ${new Date().toLocaleDateString()}`);
+			data.append('order_index', String(values.period ?? 0));
 		}
 		try {
 			let response;
@@ -118,6 +163,11 @@ export function ManageIns({
 			}
 		} catch (e) {
 			if (e instanceof AxiosError) {
+				if (e.response.status === 401) {
+					setErrorApi('Вы не авторизованы. Перенаправляю на главную…');
+					navigate('/login');
+					return;
+				}
 				setErrorApi(e.response?.data.detail || e.response?.data.message || 'Неизвестная ошибка');
 			} else {
 				setErrorApi(`Неизвестная ошибка ${e}`);
@@ -126,6 +176,7 @@ export function ManageIns({
 	};
 
 	const manageRulesApi = async (method, payload, rule_id) => {
+		const jwt = localStorage.getItem(JWT_STORAGE_KEY);
 		try {
 			if (method === 'POST') {
 				await axios.post(`${PREFIX}${getAllRulesUrl}`,
@@ -149,6 +200,64 @@ export function ManageIns({
 			dispatchForm({type: 'SET_VALUE_Prof', payload: null});
 		} catch (e) {
 			if (e instanceof AxiosError) {
+				if (e.response.status === 401) {
+					setErrorApi('Вы не авторизованы. Перенаправляю на главную…');
+					navigate('/login');
+					return;
+				}
+				setErrorApi(e.response?.data.detail || e.response?.data.message || 'Неизвестная ошибка');
+			} else {
+				setErrorApi(`Неизвестная ошибка ${e}`);
+			}
+		}
+	};
+
+	const manageModulesApi = async (method, data, module_id) => {
+		const jwt = localStorage.getItem(JWT_STORAGE_KEY);
+		try {
+			if (method === 'POST') {
+				await axios.post(`${PREFIX}${getAllModulesUrl}`,
+					data,
+					{
+						headers: {
+							'Authorization': `Bearer ${jwt}`
+						}
+					});
+			}
+			if (method === 'PATCH') {
+				await axios.patch(`${PREFIX}${getAllModulesUrl}${module_id}`,
+					data,
+					{
+						headers: {
+							'Authorization': `Bearer ${jwt}`
+						}
+					});
+			}
+			if (method === 'DELETE') {
+				await axios.delete(`${PREFIX}${getAllModulesUrl}${module_id}`,
+					{
+						headers: {
+							'Authorization': `Bearer ${jwt}`
+						}
+					});
+			}
+			if (method === 'MOVE') {
+				await axios.post(`${PREFIX}${getAllModulesUrl}${module_id}?move=${data.move}`,
+					{},
+					{
+						headers: {
+							'Authorization': `Bearer ${jwt}`
+						}
+					});
+			}
+			getModules();
+		} catch (e) {
+			if (e instanceof AxiosError) {
+				if (e.response.status === 401) {
+					setErrorApi('Вы не авторизованы. Перенаправляю на главную…');
+					navigate('/login');
+					return;
+				}
 				setErrorApi(e.response?.data.detail || e.response?.data.message || 'Неизвестная ошибка');
 			} else {
 				setErrorApi(`Неизвестная ошибка ${e}`);
@@ -161,6 +270,8 @@ export function ManageIns({
 	};
 
 	const selectIns = (option) => {
+		setModuleTitle('');
+		setModuleFile(null);
 		dispatchForm({type: 'SET_SUB_MODAL', payload: false});
 		dispatchForm({type: 'SET_VISIBLE_DEL_BUTTON', payload: true});
 		dispatchForm({type: 'SET_VALUE_Ins', payload: option});
@@ -173,7 +284,8 @@ export function ManageIns({
 						'number': instructionDict[option.value]?.number || '',
 						'repeatable': instructionDict[option.value]?.iteration || false,
 						'period': instructionDict[option.value]?.period || '',
-						'link': instructionDict[option.value]?.link || ''
+						'link': instructionDict[option.value]?.link || '',
+						'file': null
 					}}
 			);
 			dispatchForm({type: 'SET_VALUE_Prof', payload: null});
@@ -236,10 +348,27 @@ export function ManageIns({
 		manageRulesApi('POST', payload);
 	};
 
+	const changeModuleTitle = (e) => {
+		setModuleTitle(e.target.value);
+	};
+
+	const bindModule = () => {
+		const data = new FormData();
+		data.append('file', moduleFile ?? '');
+		data.append('title', moduleTitle ?? '');
+		data.append('instruction_id', valueIns?.value ?? '');
+		data.append('description', `created by user on ${new Date().toLocaleDateString()}`);
+		data.append('order_index', String(maxIndex + 1));
+		console.log('bindModule', data);
+		manageModulesApi('POST', data);
+		setModuleFile(null);
+		setModuleTitle('');
+	};
+
 	return (
 		<div className={styles['manage_ins']}>
 			<h1 className={styles.title}>Управление инструкциями</h1>
-			{errorApi && <div className={styles.error}>{errorApi}</div>}
+			{(errorApi || errorRule) && <div className={styles.error}>{errorApi}-{errorRule}</div>}
 			<div className={styles['content']}>
 				<div className={styles['left_panel']}>
 					<h2 className={styles.title}>Основное</h2>
@@ -266,7 +395,6 @@ export function ManageIns({
 								src="/icons/doc-icon.svg"
 								alt="Instruction file"/>
 						</a>
-
 					</div>
 					<div className={styles['box']}>
 						<span className={styles['box-title']}>Основные параметры инструкции</span>
@@ -276,7 +404,7 @@ export function ManageIns({
 								data-tooltip-content={errors.title}
 								data-tooltip-id="errorTooltipTitle"
 							>
-						Наименование*:
+							Наименование*:
 								<InputForm
 									maxLength={640}
 									value={values.title}
@@ -295,7 +423,7 @@ export function ManageIns({
 								/>
 							</span>
 							<span className={styles['span']}>
-						Номер:
+							Номер:
 								<InputForm
 									value={values.number ?? ''}
 									type="text"
@@ -337,11 +465,22 @@ export function ManageIns({
 								/>
 								<Button
 									className={styles.fileButton}
-									onClick={() => inputRef.current?.click()}
+									onClick={() => {
+
+										inputRef.current?.click();
+										dispatchForm({type: 'RESET_VALIDITY'});
+									}}
 								>
 									{valueIns?.value ? 'Изменить ' : 'Выбрать '} файл
 								</Button>
-								<div className={styles.fileName}>{values.file?.name || 'файл не выбран'}</div>
+								<div
+									className={cn(
+										styles.fileName,
+										{ [styles.red_text]: !isValid.file },
+									)}
+								>
+									{values.file?.name || 'файл не выбран'}
+								</div>
 							</div>
 							<div className={styles['button-box']}>
 								{(Boolean(valueIns?.value) && visibleDelButton) && <div className={styles['inline']}>
@@ -414,7 +553,63 @@ export function ManageIns({
 					</div>
 				</div>
 				<div className={styles['right_panel']}>
-					<h2 className={styles.title}>Привязка модулей</h2>
+					<h2 className={cn(styles.title, styles.moduleWitdth)}>Привязка модулей</h2>
+					<span
+						className={styles['span']}
+					>
+						Наименование*:
+						<InputForm
+							maxLength={64}
+							value={moduleTitle}
+							type="text"
+							name="title"
+							placeholder="Наименование"
+							onChange={changeModuleTitle}
+						/>
+					</span>
+					<div className={styles.fileButtonBox}>
+						<input
+							ref={inputModuleRef}
+							type="file"
+							onChange={(e) => {
+								setModuleFile(e.target.files[0]);
+								e.target.value = '';
+							}}
+							className={styles.hiddenInput}
+						/>
+						<Button
+							className={cn(styles.fileButton, {
+								[styles.disabled]: !( valueIns?.value)
+							})}
+							onClick={() => {
+								inputModuleRef.current?.click();
+							}}
+						>
+							Выбрать файл
+						</Button>
+						<div className={styles.fileName}>
+							{moduleFile?.name || 'файл не выбран'}
+						</div>
+					</div>
+					<div className={styles.bind_button_box}>
+						<Button
+							className={cn(styles.bind_button, {
+								[styles.disabled]: !(Boolean(moduleTitle) && Boolean(moduleFile) && valueIns?.value)
+							})}
+							onClick={bindModule}>
+							Привязать
+						</Button>
+					</div>
+					<div className={styles.module_box}>
+						{Object.values(currentInsModules).map((module, idx) => (
+							<Module
+								key={module.id}
+								displayIndex={idx + 1}
+								module={module}
+								manageModulesApi={manageModulesApi}
+							/>
+						))}
+					</div>
 				</div>
 
 			</div>

@@ -125,6 +125,7 @@ h2.title  {
 
 .button-box{
     height: 50px;
+    margin-bottom: 10px;
 }
 
 .error {
@@ -196,14 +197,14 @@ h2.title  {
   position: absolute;
   width: 0;
   height: 0;
-  opacity: 0;          /* совсем невидим */
-  pointer-events: none; /* не ловит клики */
+  opacity: 0;
+  pointer-events: none;
 }
 
 .fileButtonBox {
     display: flex;
     flex-direction: row;
-    margin: 20px 0 20px 0;
+    margin: 20px 0 8px 0;
     align-items: center;
 }
 
@@ -272,4 +273,19 @@ h2.title  {
     height: 350px;
     overflow-y: auto;
     overflow-x: hidden;
+}
+
+.red_text {
+    color: var(--color_destructive_default);
+}
+
+.module_box {
+    margin-top: 20px;
+    height: 350px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.moduleWitdth {
+    width: 360px;
 }

@@ -72,3 +72,4 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/t
 # ToDo
 1) add validation for empty fields at login page
 2) add validation for email and date at user form
+3) go to start page if unauthorized user

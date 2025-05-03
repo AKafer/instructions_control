@@ -7,7 +7,8 @@ export const INITIAL_STATE = {
 	subModalOpen: false,
 	visibleDelButton: true,
 	isValid: {
-		title: true
+		title: true,
+		file: true
 	},
 	values: {
 		title: '',
@@ -19,6 +20,10 @@ export const INITIAL_STATE = {
 	},
 	isFormReadyToSubmit: false
 };
+
+function isEqualJSON(a, b) {
+	return JSON.stringify(a) === JSON.stringify(b);
+}
 
 export function formReducer(state, action) {
 	// eslint-disable-next-line default-case
@@ -63,15 +68,18 @@ export function formReducer(state, action) {
 		return {...state, isValid: INITIAL_STATE.isValid, errors: INITIAL_STATE.errors};
 	case 'SUBMIT': {
 		const titleValidity = Boolean(String(state.values.title || '').trim().length);
+		const fileValidity = Boolean(state.values.file != null || !isEqualJSON(state.valueIns, nullOption));
+		console.log('fileValidity', fileValidity);
 		return {
 			...state,
 			isValid: {
-				title: titleValidity
+				title: titleValidity,
+				file: fileValidity
 			},
 			errors: {
 				title: titleValidity ? '' : 'Обязательное поле'
 			},
-			isFormReadyToSubmit: (titleValidity)
+			isFormReadyToSubmit: (titleValidity && fileValidity)
 		};
 	}
 	default:

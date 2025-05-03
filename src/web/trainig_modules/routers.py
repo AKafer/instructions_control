@@ -15,7 +15,7 @@ from main_schemas import ResponseErrorBody
 from web.trainig_modules.schemas import TrainingModule, TrainingModuleCreateInput, TrainingModuleUpdateInput, \
     TrainingModuleStatus
 from web.trainig_modules.services import get_full_link, save_file, update_tm_in_db, delete_file, check_index, \
-    DuplicateIndexError, check_data, ModuleOperationError, get_users_and_progresses
+    DuplicateIndexError, check_data, ModuleOperationError, get_users_and_progresses, move_module
 from web.users.users import current_superuser, current_user
 
 router = APIRouter(
@@ -25,11 +25,29 @@ router = APIRouter(
 
 
 @router.get(
-    '/get_modules_for_instruction/{instruction_id:int}',
+    '/',
     response_model=list[TrainingModule],
     dependencies=[Depends(current_superuser)]
 )
 async def get_all_training_modules(
+    request: Request,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    query = (select(TrainingModules))
+    result = await db_session.execute(query)
+    training_modules = result.scalars().all()
+    for tm in training_modules:
+        if tm.filename is not None:
+            tm.link = get_full_link(request, tm.filename)
+    return training_modules
+
+
+@router.get(
+    '/get_modules_for_instruction/{instruction_id:int}',
+    response_model=list[TrainingModule],
+    dependencies=[Depends(current_superuser)]
+)
+async def get_all_training_modules_for_ins(
     instruction_id: int,
     request: Request,
     db_session: AsyncSession = Depends(get_db_session),
@@ -74,7 +92,11 @@ async def get_training_module_by_id(
     training_module_id: int,
     db_session: AsyncSession = Depends(get_db_session)
 ):
-    query = select(TrainingModules).filter(TrainingModules.id == training_module_id)
+    query = (
+        select(TrainingModules)
+        .filter(TrainingModules.id == training_module_id)
+        .order_by(TrainingModules.order_index)
+    )
     tm = await db_session.scalar(query)
     if tm is None:
         raise HTTPException(
@@ -181,9 +203,15 @@ async def update_training_module(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f'TrainingModule with id {training_module_id} not found',
         )
-    tm =  await update_tm_in_db(
-        db_session, tm, **training_module_input.dict(exclude_none=True)
-    )
+    try:
+        tm =  await update_tm_in_db(
+            db_session, tm, **training_module_input.dict(exclude_none=True)
+        )
+    except DuplicateIndexError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
     users, tm_progresses = await get_users_and_progresses(
         tm.instruction_id,
         (tm,),
@@ -210,6 +238,35 @@ async def update_training_module(
     if tm.filename is not None:
         tm.link = get_full_link(request, tm.filename)
     return tm
+
+@router.post(
+    '/{training_module_id}',
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(current_superuser)],
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def move_training_module(
+    training_module_id: int,
+    move: str,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    query = select(TrainingModules).filter(TrainingModules.id == training_module_id)
+    tm = await db_session.scalar(query)
+    if tm is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'TrainingModule with id {training_module_id} not found',
+        )
+    result = await move_module(tm, move, db_session)
+    return {
+        'success': result,
+        'module_id': training_module_id,
+        'move': move,
+    }
 
 
 @router.delete(

@@ -14,6 +14,7 @@ export function CustomSelect({options, value, placeholder, onChange}) {
 					...base,
 					minHeight: '60px',
 					minWidth: '300px',
+					maxWidth: '300px',
 					borderRadius: '10px',
 					backgroundColor: '#fff',
 					border: '1px solid var(--color_element_border)',
