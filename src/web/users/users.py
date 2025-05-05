@@ -137,7 +137,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             httponly=True,
             # samesite="lax",
             samesite = 'none',
-            secure = False,
+            secure = True,
         )
 
 
