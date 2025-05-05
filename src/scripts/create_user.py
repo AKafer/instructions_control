@@ -61,6 +61,13 @@ async def main():
             name=settings.SUPERUSER_NAME,
             last_name=settings.SUPERUSER_LAST_NAME,
         )
+        await create_user(
+            session=session,
+            email=settings.SUPERUSER_EMAIL_2,
+            password=settings.SUPERUSER_PASSWORD_2,
+            name=settings.SUPERUSER_NAME_2,
+            last_name=settings.SUPERUSER_LAST_NAME_2,
+        )
 
 
 if __name__ == "__main__":

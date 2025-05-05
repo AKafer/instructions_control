@@ -29,7 +29,7 @@ logger = logging.getLogger("control")
 
 SECRET = settings.SECRET_KEY
 
-ACCESS_TTL  = 10
+ACCESS_TTL  = 60 * 60
 REFRESH_TTL = 60 * 60 * 24 * 14
 
 AUDIENCE: List[str] = ["fastapi-users:auth"]
@@ -137,7 +137,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             httponly=True,
             # samesite="lax",
             samesite = 'none',
-            secure = True,
+            secure = True, # for prod
         )
 
 

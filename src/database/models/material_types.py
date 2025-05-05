@@ -26,7 +26,7 @@ class MaterialTypes(BaseModel):
         COMPLETE = 'компл'
 
     id = sa.Column(sa.BigInteger, primary_key=True)
-    title = sa.Column(sa.String(64), nullable=False, unique=True)
+    title = sa.Column(sa.String(320), nullable=False, unique=True)
     unit_of_measurement = sa.Column(
         sa.Enum(
             Units,

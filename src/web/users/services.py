@@ -49,7 +49,7 @@ async def peak_personal_journal(request: Request, user: User) -> User:
 
 
 async def check_profession_division(user: User) -> None:
-    if not user.email == settings.SUPERUSER_EMAIL:
+    if not user.email in settings.SUPERUSER_EMAILS_LIST:
         async with Session() as db_session:
             query = select(Professions).where(Professions.id == user.profession_id)
             profession = await db_session.scalar(query)
