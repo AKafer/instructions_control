@@ -1,21 +1,21 @@
 import styles from './ManageProf.module.css';
 import Button from '../../Button/Button';
-import axios, {AxiosError} from 'axios';
 import {
 	getAllProfessionsUrl,
-	JWT_STORAGE_KEY,
-	PREFIX
+	JWT_STORAGE_KEY
 } from '../../../helpers/constants';
 import {useEffect, useReducer, useState} from 'react';
 import {SelectForm} from '../../SelectForm/SelectForm';
 import {Tooltip} from 'react-tooltip';
 import InputForm from '../../InputForm/InputForm';
 import {formReducer, INITIAL_STATE} from './manageProf.state';
+import useApi from '../../../hooks/useApi.hook';
 
 
 export function ManageProf({optionsProf, setManageProfModalOpen, getProfessions, setSelectedProfOption}) {
 	const [errorApi, setErrorApi] = useState(undefined);
 	const [state, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
+	const api = useApi();
 	const {
 		valueProf,
 		subModalOpen,
@@ -36,42 +36,20 @@ export function ManageProf({optionsProf, setManageProfModalOpen, getProfessions,
 		try {
 			if (valueProf) {
 				if (isDelete) {
-					await axios.delete(`${PREFIX}${getAllProfessionsUrl}${valueProf}`,
-						{
-							headers: {
-								'Authorization': `Bearer ${jwt}`,
-								'Content-Type': 'application/json'
-							}
-						});
+					await api.delete(`${getAllProfessionsUrl}${valueProf}`);
 				} else {
-					await axios.patch(`${PREFIX}${getAllProfessionsUrl}${valueProf}`,
-						payload,
-						{
-							headers: {
-								'Authorization': `Bearer ${jwt}`,
-								'Content-Type': 'application/json'
-							}
-						});
+					await api.patch(`${getAllProfessionsUrl}${valueProf}`, payload);
 				}
 			} else {
-				await axios.post(`${PREFIX}${getAllProfessionsUrl}`,
-					payload,
-					{
-						headers: {
-							'Authorization': `Bearer ${jwt}`,
-							'Content-Type': 'application/json'
-						}
-					});
+				await api.post(`${getAllProfessionsUrl}`, payload);
 			}
 			setManageProfModalOpen(false);
 			getProfessions();
 			setSelectedProfOption(null);
 		} catch (e) {
-			if (e instanceof AxiosError) {
-				setErrorApi(e.response?.data.detail || e.response?.data.message || 'Неизвестная ошибка');
-			} else {
-				setErrorApi(`Неизвестная ошибка ${e}`);
-			}
+			setErrorApi(
+				e.response?.data?.detail || e.response?.data?.message || 'Неизвестная ошибка'
+			);
 		}
 	};
 

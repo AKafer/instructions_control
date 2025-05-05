@@ -1,42 +1,56 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import {EMAIL_STORAGE_KEY, JWT_STORAGE_KEY} from './constants';
-
+import { JWT_STORAGE_KEY } from './constants';
+import useApi from '../hooks/useApi.hook';
 
 const PrivateRoute = ({ children, adminOnly = false }) => {
-	const jwt = localStorage.getItem(JWT_STORAGE_KEY);
+	const [checking, setChecking] = useState(true);
+	const [allowed,  setAllowed]  = useState(false);
+	const api = useApi();
 
-	if (!jwt) {
-		return <Navigate to="/login" replace />;
-	}
+	useEffect(() => {
+		const verify = async () => {
+			let token = localStorage.getItem(JWT_STORAGE_KEY);
+			let needRefresh = true;
 
-	let decoded;
-	try {
-		decoded = jwtDecode(jwt);
-	} catch (error) {
-		console.error('Ошибка декодирования токена:', error);
-		return <Navigate to="/login" replace />;
-	}
+			if (token) {
+				try {
+					const { exp } = jwtDecode(token);
+					needRefresh = exp < Date.now() / 1000;
+				} catch {
+					needRefresh = true;
+				}
+			}
 
-	const currentTime = Date.now() / 1000;
+			if (needRefresh) {
+				try {
+					const { data } = await api.post(
+						'/auth/jwt/refresh',
+						{},
+						{ withCredentials: true }
+					);
+					token = data.access_token;
+					localStorage.setItem(JWT_STORAGE_KEY, token);
+				} catch {
+					token = null;
+				}
+			}
 
-	if (decoded.exp && decoded.exp < currentTime) {
-		console.warn('JWT token expired');
-		localStorage.removeItem(JWT_STORAGE_KEY);
-		return <Navigate to="/login" replace />;
-	}
+			if (!token) {
+				setAllowed(false);
+			} else {
+				const { is_superuser } = jwtDecode(token);
+				setAllowed(!adminOnly || !!is_superuser);
+			}
+			setChecking(false);
+		};
 
-	let isAdmin = false;
-	isAdmin = !!decoded.is_superuser;
+		verify();
+	}, [adminOnly, api]);
 
-
-
-	if (adminOnly && !isAdmin) {
-		return <Navigate to="/control" replace />;
-	}
-
-	return children;
+	if (checking) return <div>Загружаем…</div>;
+	return allowed ? children : <Navigate to="/login" replace />;
 };
 
 export default PrivateRoute;

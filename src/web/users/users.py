@@ -1,9 +1,9 @@
 import uuid
 import logging
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Dict, Any, Union, List
 
 import sqlalchemy
-from fastapi import Depends, Request, Response
+from fastapi import Depends, Request, Response, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin, models, exceptions
 from fastapi_users.authentication import (
@@ -11,7 +11,7 @@ from fastapi_users.authentication import (
     BearerTransport,
     JWTStrategy,
 )
-from fastapi_users.jwt import generate_jwt
+from fastapi_users.jwt import generate_jwt, decode_jwt
 from fastapi_users.db import SQLAlchemyUserDatabase
 from sqlalchemy import select, func
 
@@ -28,6 +28,61 @@ from web.users.services import check_profession_division
 logger = logging.getLogger("control")
 
 SECRET = settings.SECRET_KEY
+
+ACCESS_TTL  = 10
+REFRESH_TTL = 60 * 60 * 24 * 14
+
+AUDIENCE: List[str] = ["fastapi-users:auth"]
+ALGORITHM = "HS256"
+
+
+class JWTDecodeError(Exception):
+    pass
+
+
+def build_refresh_token(user: models.UP) -> str:
+    payload = {
+        "sub": str(user.id),
+        "aud": AUDIENCE,
+        "type": "refresh",
+    }
+    return generate_jwt(
+        payload,
+        SECRET,
+        REFRESH_TTL,
+        algorithm=ALGORITHM
+    )
+
+
+async def verify_refresh(token: str, user_manager: "UserManager") -> User:
+    try:
+        data = decode_jwt(
+            token,
+            SECRET,
+            algorithms=[ALGORITHM],
+            audience=AUDIENCE,
+        )
+        if data.get("type") != "refresh":
+            raise JWTDecodeError("Not refresh token")
+
+        user_id = uuid.UUID(str(data["sub"]))
+    except (JWTDecodeError, ValueError, KeyError):
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    print(f"[refresh] sub from token → {user_id}")
+
+    try:
+        parsed_id = user_manager.parse_id(user_id)
+        user = await user_manager.get(parsed_id)
+        print('user', user)
+    except exceptions.UserNotExists:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    if not user.is_active:
+        raise HTTPException(status_code=401, detail="Inactive user")
+
+    return user
+
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
@@ -72,6 +127,19 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             logger.debug(f'Superuser {user.id} has logged in.')
         else:
             await actualize_journals_for_user(user)
+
+        refresh_token = build_refresh_token(user)
+        print('refresh_token', refresh_token)
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            max_age=REFRESH_TTL,
+            httponly=True,
+            # samesite="lax",
+            samesite = 'none',
+            secure = False,
+        )
+
 
     async def get_by_phone(self, phone: str) -> User:
         query = select(User).where(User.phone_number == phone.lower())
@@ -146,7 +214,10 @@ class CustomJWTStrategy(JWTStrategy):
 
 
 def get_jwt_strategy() -> JWTStrategy:
-    return CustomJWTStrategy(secret=SECRET, lifetime_seconds=3600)
+    return CustomJWTStrategy(
+        secret=SECRET,
+        lifetime_seconds=ACCESS_TTL
+    )
 
 
 auth_backend = AuthenticationBackend(
@@ -158,7 +229,5 @@ auth_backend = AuthenticationBackend(
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 
 current_user = fastapi_users.current_user()
-
 current_active_user = fastapi_users.current_user(active=True)
-
 current_superuser = fastapi_users.current_user(superuser=True)

@@ -15,7 +15,14 @@ def setup_routes(app: FastAPI):
     app.add_route("/ping/", lambda _request: PlainTextResponse('pong'))
 
 
-origins = ["*"]
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://0.0.0.0:3000",
+    "http://localhost:4000",
+    "http://localhost:8500",
+    "https://ins-front.ddns.net",
+]
 
 
 def create_app() -> FastAPI:

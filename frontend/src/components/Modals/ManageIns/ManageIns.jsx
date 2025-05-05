@@ -1,13 +1,10 @@
 import styles from './ManageIns.module.css';
 import Button from '../../Button/Button';
-import axios, {AxiosError} from 'axios';
 import cn from 'classnames';
 import {
 	getAllInstructionsUrl,
 	getAllModulesUrl,
-	getAllRulesUrl,
-	JWT_STORAGE_KEY,
-	PREFIX
+	getAllRulesUrl
 } from '../../../helpers/constants';
 import {useEffect, useMemo, useReducer, useRef, useState} from 'react';
 import {SelectForm} from '../../SelectForm/SelectForm';
@@ -19,6 +16,7 @@ import BindedProf from '../../BindedProf/BindedProf';
 import {useNavigate} from 'react-router-dom';
 import useFillSelect from '../../../hooks/useFillSelect.hook';
 import Module from '../../Module/Module';
+import useApi from '../../../hooks/useApi.hook';
 
 
 export function ManageIns({
@@ -36,6 +34,7 @@ export function ManageIns({
 	const optionsInsWide = [nullOption, ...optionsIns];
 	const [moduleTitle, setModuleTitle] = useState('');
 	const [moduleFile, setModuleFile] = useState(null);
+	const api = useApi();
 
 	const {
 		error: errorModule,
@@ -105,7 +104,6 @@ export function ManageIns({
 	});
 
 	const manageInsApi = async (payload, isDelete = false) => {
-		const jwt = localStorage.getItem(JWT_STORAGE_KEY);
 		const data = new FormData();
 		if (values) {
 			data.append('file', values.file ?? '');
@@ -118,29 +116,12 @@ export function ManageIns({
 			let response;
 			if (valueIns?.value) {
 				if (isDelete) {
-					await axios.delete(`${PREFIX}${getAllInstructionsUrl}${valueIns?.value}`,
-						{
-							headers: {
-								'Authorization': `Bearer ${jwt}`
-							}
-						});
+					await api.delete(`${getAllInstructionsUrl}${valueIns?.value}`);
 				} else {
-					response = await axios.patch(`${PREFIX}${getAllInstructionsUrl}${valueIns?.value}`,
-						data,
-						{
-							headers: {
-								'Authorization': `Bearer ${jwt}`
-							}
-						});
+					response = await api.patch(`${getAllInstructionsUrl}${valueIns?.value}`, data);
 				}
 			} else {
-				response = await axios.post(`${PREFIX}${getAllInstructionsUrl}`,
-					data,
-					{
-						headers: {
-							'Authorization': `Bearer ${jwt}`
-						}
-					});
+				response = await api.post(`${getAllInstructionsUrl}`, data);
 			}
 			await getInstructions();
 			if (response) {
@@ -162,106 +143,47 @@ export function ManageIns({
 
 			}
 		} catch (e) {
-			if (e instanceof AxiosError) {
-				if (e.response.status === 401) {
-					setErrorApi('Вы не авторизованы. Перенаправляю на главную…');
-					navigate('/login');
-					return;
-				}
-				setErrorApi(e.response?.data.detail || e.response?.data.message || 'Неизвестная ошибка');
-			} else {
-				setErrorApi(`Неизвестная ошибка ${e}`);
-			}
+			setErrorApi(
+				e.response?.data?.detail || e.response?.data?.message || 'Неизвестная ошибка'
+			);
 		}
 	};
 
 	const manageRulesApi = async (method, payload, rule_id) => {
-		const jwt = localStorage.getItem(JWT_STORAGE_KEY);
 		try {
 			if (method === 'POST') {
-				await axios.post(`${PREFIX}${getAllRulesUrl}`,
-					payload,
-					{
-						headers: {
-							'Authorization': `Bearer ${jwt}`,
-							'Content-Type': 'application/json'
-						}
-					});
-			}
-			if (method === 'DELETE') {
-				await axios.delete(`${PREFIX}${getAllRulesUrl}${rule_id}`,
-					{
-						headers: {
-							'Authorization': `Bearer ${jwt}`
-						}
-					});
+				await api.post(getAllRulesUrl, payload);
+			} else if (method === 'DELETE') {
+				await api.delete(`${getAllRulesUrl}${rule_id}`);
 			}
 			getRules();
-			dispatchForm({type: 'SET_VALUE_Prof', payload: null});
+			dispatchForm({ type: 'SET_VALUE_Prof', payload: null });
 		} catch (e) {
-			if (e instanceof AxiosError) {
-				if (e.response.status === 401) {
-					setErrorApi('Вы не авторизованы. Перенаправляю на главную…');
-					navigate('/login');
-					return;
-				}
-				setErrorApi(e.response?.data.detail || e.response?.data.message || 'Неизвестная ошибка');
-			} else {
-				setErrorApi(`Неизвестная ошибка ${e}`);
-			}
+			setErrorApi(
+				e.response?.data?.detail || e.response?.data?.message || 'Неизвестная ошибка'
+			);
 		}
 	};
 
 	const manageModulesApi = async (method, data, module_id) => {
-		const jwt = localStorage.getItem(JWT_STORAGE_KEY);
 		try {
 			if (method === 'POST') {
-				await axios.post(`${PREFIX}${getAllModulesUrl}`,
-					data,
-					{
-						headers: {
-							'Authorization': `Bearer ${jwt}`
-						}
-					});
+				await api.post(`${getAllModulesUrl}`, data);
 			}
 			if (method === 'PATCH') {
-				await axios.patch(`${PREFIX}${getAllModulesUrl}${module_id}`,
-					data,
-					{
-						headers: {
-							'Authorization': `Bearer ${jwt}`
-						}
-					});
+				await api.patch(`${getAllModulesUrl}${module_id}`, data);
 			}
 			if (method === 'DELETE') {
-				await axios.delete(`${PREFIX}${getAllModulesUrl}${module_id}`,
-					{
-						headers: {
-							'Authorization': `Bearer ${jwt}`
-						}
-					});
+				await api.delete(`${getAllModulesUrl}${module_id}`);
 			}
 			if (method === 'MOVE') {
-				await axios.post(`${PREFIX}${getAllModulesUrl}${module_id}?move=${data.move}`,
-					{},
-					{
-						headers: {
-							'Authorization': `Bearer ${jwt}`
-						}
-					});
+				await api.post(`${getAllModulesUrl}${module_id}?move=${data.move}`,{});
 			}
 			getModules();
 		} catch (e) {
-			if (e instanceof AxiosError) {
-				if (e.response.status === 401) {
-					setErrorApi('Вы не авторизованы. Перенаправляю на главную…');
-					navigate('/login');
-					return;
-				}
-				setErrorApi(e.response?.data.detail || e.response?.data.message || 'Неизвестная ошибка');
-			} else {
-				setErrorApi(`Неизвестная ошибка ${e}`);
-			}
+			setErrorApi(
+				e.response?.data?.detail || e.response?.data?.message || 'Неизвестная ошибка'
+			);
 		}
 	};
 

@@ -1,20 +1,19 @@
 import styles from './CreateUser.module.css';
 import Button from '../../Button/Button';
-import axios, {AxiosError} from 'axios';
-import {getAllUsersUrl, JWT_STORAGE_KEY, PREFIX, registerUrl} from '../../../helpers/constants';
+import {getAllUsersUrl, PREFIX, registerUrl} from '../../../helpers/constants';
 import {useEffect, useReducer, useState} from 'react';
 import InputForm from '../../InputForm/InputForm';
 import {SelectForm} from '../../SelectForm/SelectForm';
 import {formReducer, INITIAL_STATE} from './CreateUser.state';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
+import useApi from '../../../hooks/useApi.hook';
 
 
 export function CreateUser({
 	optionsProf, optionsDiv, setCreateModalOpen, setRefreshKey, setLastNameFilter, currentUser
 }) {
-	const jwt = localStorage.getItem(JWT_STORAGE_KEY);
-
+	const api = useApi();
 	const [error, setError] = useState(undefined);
 	const [formState, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
 	const { values, isValid, additional_features, isFormReadyToSubmit} = formState;
@@ -22,33 +21,17 @@ export function CreateUser({
 	const manageUser = async (payload) => {
 		try {
 			if (currentUser) {
-				await axios.patch(`${PREFIX}${getAllUsersUrl}/${currentUser.id}`,
-					payload,
-					{
-						headers: {
-							'Authorization': `Bearer ${jwt}`,
-							'Content-Type': 'application/json'
-						}
-					});
+				await api.patch(`${getAllUsersUrl}/${currentUser.id}`, payload);
 			} else{
-				await axios.post(`${PREFIX}${registerUrl}`,
-					payload,
-					{
-						headers: {
-							'Authorization': `Bearer ${jwt}`,
-							'Content-Type': 'application/json'
-						}
-					});
+				await api.post(`${registerUrl}`, payload);
 			}
 			setCreateModalOpen(false);
 			setLastNameFilter(payload.last_name ? payload.last_name : '');
 			setRefreshKey((prev) => prev + 1);
 		} catch (e) {
-			if (e instanceof AxiosError) {
-				setError(e.response?.data.detail || e.response?.data.message || 'Неизвестная ошибка логина');
-			} else {
-				setError(`Неизвестная ошибка ${e}`);
-			}
+			setError(
+				e.response?.data?.detail || e.response?.data?.message || 'Неизвестная ошибка'
+			);
 		}
 	};
 

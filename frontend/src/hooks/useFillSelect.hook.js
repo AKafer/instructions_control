@@ -1,21 +1,22 @@
 import axios, { AxiosError } from 'axios';
-import { JWT_STORAGE_KEY, PREFIX } from '../helpers/constants';
+import { JWT_STORAGE_KEY } from '../helpers/constants';
 import { useEffect, useState } from 'react';
+import useApi from './useApi.hook';
 
 const useFillSelect = ({ endpoint, labelField = 'title' }) => {
 	const [error, setError] = useState(undefined);
 	const [options, setOptions] = useState([]);
 	const [itemDict, setItemDict] = useState({});
+	const api = useApi();
 
 	const jwt = localStorage.getItem(JWT_STORAGE_KEY);
 
 	const getItems = async () => {
 		try {
 			const params = new URLSearchParams();
-			const { data } = await axios.get(`${PREFIX}${endpoint}`, {
+			const { data } = await api.get(`${endpoint}`, {
 				params,
 				headers: {
-					'Authorization': `Bearer ${jwt}`,
 					'Content-Type': 'application/x-www-form-urlencoded'
 				}
 			});
@@ -36,11 +37,9 @@ const useFillSelect = ({ endpoint, labelField = 'title' }) => {
 			}, {});
 			setItemDict(itemDict);
 		} catch (e) {
-			if (e instanceof AxiosError) {
-				setError(e.response?.data.detail || e.response?.data.message || 'Неизвестная ошибка логина');
-			} else {
-				setError('Неизвестная ошибка');
-			}
+			setError(
+				e.response?.data?.detail || e.response?.data?.message || 'Неизвестная ошибка'
+			);
 		}
 	};
 

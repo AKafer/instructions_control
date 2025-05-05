@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import useApi from './useApi.hook';
+
 
 const useTableData = ({
 	endpoint,
@@ -10,6 +11,7 @@ const useTableData = ({
 	filters = {},
 	refreshKey = null
 }) => {
+	const api = useApi();
 	const [data, setData] = useState([]);
 	const [pagination, setPagination] = useState({
 		current: initialPage,
@@ -26,7 +28,7 @@ const useTableData = ({
 				params.page = page;
 				params.size = pageSize;
 			}
-			const response = await axios.get(endpoint, {
+			const response = await api.get(endpoint, {
 				params,
 				...axiosOptions
 			});

@@ -5,9 +5,9 @@ import {CustomSelect} from '../../../components/Select/Select';
 import {
 	getAllDivisionsUrl,
 	getAllInstructionsUrl,
-	getAllProfessionsUrl, getAllRulesUrl,
-	JWT_STORAGE_KEY,
-	PREFIX
+	getAllProfessionsUrl,
+	getAllUsersPaginatedUrl,
+	JWT_STORAGE_KEY
 } from '../../../helpers/constants';
 import {useEffect, useState} from 'react';
 import UniversalTable from '../../../components/UTable/UTable';
@@ -278,7 +278,7 @@ export function Users () {
 				</div>
 				<div className={styles.table}>
 					<UniversalTable
-						endpoint={`${PREFIX}/api/v1/users/paginated`}
+						endpoint={getAllUsersPaginatedUrl}
 						columns={columns}
 						usePagination={true}
 						initialPage={1}

@@ -1,32 +1,24 @@
 import styles from './DeleteUser.module.css';
 import Button from '../../Button/Button';
-import axios, {AxiosError} from 'axios';
-import {deleteUserUrl, JWT_STORAGE_KEY, PREFIX} from '../../../helpers/constants';
+import {getAllUsersUrl} from '../../../helpers/constants';
 import {useState} from 'react';
+import useApi from '../../../hooks/useApi.hook';
 
 
 export function DeleteUser({user, setDeleteModalOpen, setRefreshKey, setLastNameFilter}) {
 	const [error, setError] = useState(undefined);
 
-	const jwt = localStorage.getItem(JWT_STORAGE_KEY);
-
+	const api = useApi();
 	const deleteUser = async (id, last_name) => {
 		try {
-			await axios.delete(`${PREFIX}${deleteUserUrl}/${id}`, {
-				headers: {
-					'Authorization': `Bearer ${jwt}`,
-					'Content-Type': 'application/x-www-form-urlencoded'
-				}
-			});
+			await api.delete(`${getAllUsersUrl}/${id}`);
 			setDeleteModalOpen(false);
 			setLastNameFilter(last_name ? last_name : '');
 			setRefreshKey((prev) => prev + 1);
 		} catch (e) {
-			if (e instanceof AxiosError) {
-				setError(e.response?.data.detail || e.response?.data.message || 'Неизвестная ошибка логина');
-			} else {
-				setError(`Неизвестная ошибка ${e}`);
-			}
+			setError(
+				e.response?.data?.detail || e.response?.data?.message || 'Неизвестная ошибка'
+			);
 		}
 	};
 

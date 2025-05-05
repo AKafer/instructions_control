@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette import status
+
 from web.professions.routers import router as prof_router
 from web.instructions.routers import router as ins_router
 from web.rules.routers import router as rules_router
@@ -19,7 +21,8 @@ from web.trainig_modules.routers import router as trainig_modules_router
 
 from main_schemas import ResponseErrorBody
 from web.users.schemas import UserRead, UserCreate
-from web.users.users import fastapi_users, auth_backend, current_superuser
+from web.users.users import fastapi_users, auth_backend, current_superuser, UserManager, get_user_manager, \
+    verify_refresh, REFRESH_TTL, ACCESS_TTL, build_refresh_token, get_jwt_strategy
 
 api_v1_router = APIRouter(
     prefix='/api/v1',
@@ -81,3 +84,40 @@ api_v1_router.include_router(trainig_modules_router)
 #     prefix="/users",
 #     tags=["users"],
 # )
+
+bearer_refresh = HTTPBearer(auto_error=False)
+
+
+@api_v1_router.post("/auth/jwt/refresh", summary="Обновить пару JWT")
+async def refresh_tokens(
+    request: Request,
+    response: Response,
+    creds: HTTPAuthorizationCredentials = Depends(bearer_refresh),
+    user_manager: UserManager = Depends(get_user_manager),
+):
+    print("***REFRESH TOKENS***")
+
+    token = request.cookies.get("refresh_token")
+    if token is None:
+        raise HTTPException(status_code=401, detail="Missing refresh token")
+
+    user = await verify_refresh(token, user_manager)
+
+    jwt_strategy = get_jwt_strategy()
+    new_access  = await jwt_strategy.write_token(user)
+    # new_refresh = build_refresh_token(user)
+    #
+    # response.set_cookie(
+    #     "refresh_token",
+    #     new_refresh,
+    #     max_age=REFRESH_TTL,
+    #     httponly=True,
+    #     samesite='lax',
+    #     secure=False,
+    # )
+    return {
+        "access_token": new_access,
+        "expires_in":  ACCESS_TTL,
+        "token_type":  "bearer",
+        # "refresh_token": new_refresh,  # если нужно в теле
+    }

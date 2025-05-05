@@ -1,21 +1,21 @@
 import styles from './ManageDiv.module.css';
 import Button from '../../Button/Button';
-import axios, {AxiosError} from 'axios';
 import {
-	getAllDivessionsUrl, getAllDivisionsUrl,
-	JWT_STORAGE_KEY,
-	PREFIX
+	getAllDivisionsUrl,
+	JWT_STORAGE_KEY
 } from '../../../helpers/constants';
 import {useEffect, useReducer, useState} from 'react';
 import {SelectForm} from '../../SelectForm/SelectForm';
 import {Tooltip} from 'react-tooltip';
 import InputForm from '../../InputForm/InputForm';
 import {formReducer, INITIAL_STATE} from './manageDiv.state';
+import useApi from '../../../hooks/useApi.hook';
 
 
 export function ManageDiv({optionsDiv, setManageDivModalOpen, getDivisions, setSelectedDivOption}) {
 	const [errorApi, setErrorApi] = useState(undefined);
 	const [state, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
+	const api = useApi();
 	const {
 		valueDiv,
 		subModalOpen,
@@ -26,7 +26,6 @@ export function ManageDiv({optionsDiv, setManageDivModalOpen, getDivisions, setS
 		isFormReadyToSubmit
 	} = state;
 
-	const jwt = localStorage.getItem(JWT_STORAGE_KEY);
 	const optionsDivWide = [
 		{value: 0, label: '---Создать новое подразделение---'},
 		...optionsDiv
@@ -36,42 +35,20 @@ export function ManageDiv({optionsDiv, setManageDivModalOpen, getDivisions, setS
 		try {
 			if (valueDiv) {
 				if (isDelete) {
-					await axios.delete(`${PREFIX}${getAllDivisionsUrl}${valueDiv}`,
-						{
-							headers: {
-								'Authorization': `Bearer ${jwt}`,
-								'Content-Type': 'application/json'
-							}
-						});
+					await api.delete(`${getAllDivisionsUrl}${valueDiv}`);
 				} else {
-					await axios.patch(`${PREFIX}${getAllDivisionsUrl}${valueDiv}`,
-						payload,
-						{
-							headers: {
-								'Authorization': `Bearer ${jwt}`,
-								'Content-Type': 'application/json'
-							}
-						});
+					await api.patch(`${getAllDivisionsUrl}${valueDiv}`, payload);
 				}
 			} else {
-				await axios.post(`${PREFIX}${getAllDivisionsUrl}`,
-					payload,
-					{
-						headers: {
-							'Authorization': `Bearer ${jwt}`,
-							'Content-Type': 'application/json'
-						}
-					});
+				await api.post(`${getAllDivisionsUrl}`, payload);
 			}
 			setManageDivModalOpen(false);
 			getDivisions();
 			setSelectedDivOption(null);
 		} catch (e) {
-			if (e instanceof AxiosError) {
-				setErrorApi(e.response?.data.detail || e.response?.data.message || 'Неизвестная ошибка');
-			} else {
-				setErrorApi(`Неизвестная ошибка ${e}`);
-			}
+			setErrorApi(
+				e.response?.data?.detail || e.response?.data?.message || 'Неизвестная ошибка'
+			);
 		}
 	};
 
