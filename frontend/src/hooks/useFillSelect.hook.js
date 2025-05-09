@@ -20,7 +20,7 @@ const useFillSelect = ({ endpoint, labelField = 'title' }) => {
 			const sortedOptions = data
 				.map(item => ({
 					value: item.id,
-					label: item[labelField],
+					label: String(item[labelField]),
 					description: item.description
 				}))
 				.sort((a, b) => a.label.localeCompare(b.label));
