@@ -38,7 +38,7 @@ const useFillSelect = ({ endpoint, labelField = 'title' }) => {
 			setItemDict(itemDict);
 		} catch (e) {
 			setError(
-				e.response?.data?.detail || e.response?.data?.message || 'Неизвестная ошибка'
+				e.response?.data?.detail || e.response?.data?.message || `Неизвестная ошибка: ${e.message}`
 			);
 		}
 	};

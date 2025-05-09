@@ -290,7 +290,9 @@ export function ManageIns({
 	return (
 		<div className={styles['manage_ins']}>
 			<h1 className={styles.title}>Управление инструкциями</h1>
-			{(errorApi || errorRule) && <div className={styles.error}>{errorApi}-{errorRule}</div>}
+			{(errorApi || errorRule || errorModule) && <div className={styles.error}>
+				Ошибка АПИ: {errorApi}-Ошибка загрузки привязок: {errorRule}-Ошибка загрузки модулей: {errorModule}
+			</div>}
 			<div className={styles['content']}>
 				<div className={styles['left_panel']}>
 					<h2 className={styles.title}>Основное</h2>
