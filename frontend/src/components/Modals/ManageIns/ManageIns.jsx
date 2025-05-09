@@ -43,7 +43,7 @@ export function ManageIns({
 		getItems: getModules
 	} = useFillSelect({
 		endpoint: getAllModulesUrl,
-		labelField: 'description'
+		labelField: 'title'
 	});
 
 
@@ -54,7 +54,7 @@ export function ManageIns({
 		getItems: getRules
 	} = useFillSelect({
 		endpoint: getAllRulesUrl,
-		labelField: 'description'
+		labelField: 'id'
 	});
 
 	const {

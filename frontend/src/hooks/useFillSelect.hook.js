@@ -1,5 +1,3 @@
-import axios, { AxiosError } from 'axios';
-import { JWT_STORAGE_KEY } from '../helpers/constants';
 import { useEffect, useState } from 'react';
 import useApi from './useApi.hook';
 
@@ -8,8 +6,6 @@ const useFillSelect = ({ endpoint, labelField = 'title' }) => {
 	const [options, setOptions] = useState([]);
 	const [itemDict, setItemDict] = useState({});
 	const api = useApi();
-
-	const jwt = localStorage.getItem(JWT_STORAGE_KEY);
 
 	const getItems = async () => {
 		try {
