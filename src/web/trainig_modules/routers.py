@@ -240,7 +240,7 @@ async def update_training_module(
     return tm
 
 @router.post(
-    '/{training_module_id}',
+    '/{training_module_id:int}',
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(current_superuser)],
     responses={
@@ -270,7 +270,7 @@ async def move_training_module(
 
 
 @router.delete(
-    '/{training_module_id}',
+    '/{training_module_id:int}',
     dependencies=[Depends(current_superuser)],
     status_code=status.HTTP_204_NO_CONTENT,
     responses={

@@ -39,18 +39,27 @@ const PrivateRoute = ({ children, adminOnly = false }) => {
 
 			if (!token) {
 				setAllowed(false);
-			} else {
-				const { is_superuser } = jwtDecode(token);
-				setAllowed(!adminOnly || !!is_superuser);
+				setChecking(false);
+				return;
 			}
+
+			try {
+				const { is_superuser } = jwtDecode(token);
+				setAllowed(!adminOnly || Boolean(is_superuser));
+			} catch {
+				setAllowed(false);
+			}
+
 			setChecking(false);
 		};
 
 		verify();
 	}, [adminOnly, api]);
 
-	if (checking) return <div>Загружаем…</div>;
-	return allowed ? children : <Navigate to="/login" replace />;
+	if (checking) {return <div>Загружаем…</div>;}
+	return allowed
+		? children
+		: <Navigate to="/login" replace />;
 };
 
 export default PrivateRoute;
