@@ -1,9 +1,6 @@
 .content {
     display: flex;
     flex-direction: row;
-    /*padding-left: 30px;*/
-    /*padding-right: 30px;*/
-    /*align-items: center;*/
 }
 
 .left_panel {
@@ -160,13 +157,11 @@ h2.title  {
   gap: 10px;
 }
 
-/* Переключатель: жёстко слева, не сжимается */
 .switchBox :first-child {
   flex-shrink: 0;
     margin: 0;
 }
 
-/* Блок справа всегда прижат к правому краю */
 .field,
 .caption {
   margin-left: auto;
@@ -214,16 +209,18 @@ h2.title  {
 }
 
 .fileName {
+    color: var(--color_text_default);
+    font-family: var(--font_default), sans-serif;
+    font-size: 13px;
     margin-left: 10px;
     width: 150px;
     overflow: hidden;
     text-align: center;
-
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  word-break: break-all;
-  overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    word-break: break-all;
+    overflow-wrap: anywhere;
 }
 
 .fileLinkBox {

@@ -1,10 +1,14 @@
 from datetime import datetime
+from typing import Any
 
 from fastapi import Query
 from fastapi_filter.contrib.sqlalchemy import Filter
 from pydantic import Field
+from sqlalchemy import select
+from sqlalchemy.sql import Select
+from sqlalchemy.orm import Query as OrmQuery
 
-from database.models import User
+from database.models import User, Activities, ActivityRegistry
 
 
 class UsersFilter(Filter):
@@ -26,6 +30,39 @@ class UsersFilter(Filter):
     updated_at__gte: datetime | None
     updated_at__lt: datetime | None
     updated_at__lte: datetime | None
+    activities_id__in: list[int] | None = Field(Query(None))
 
     class Constants(Filter.Constants):
         model = User
+        join_relationships = ["activities"]
+
+    # @staticmethod
+    # def filter_activities_id__in(query, value):  # имя = поле фильтра
+    #     print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa')
+    #     if value:
+    #         query = query.filter(User.activities.any(Activities.id.in_(value)))
+    #     return query
+
+    @property
+    def filtering_fields(self) -> Any:
+        fields = self.dict(
+            exclude_none=True,
+            exclude_unset=True,
+            exclude={
+                "activities_id__in"
+            },
+        )
+
+        fields.pop(self.Constants.ordering_field_name, None)
+        return fields.items()
+
+    def filter(self, query: OrmQuery | Select) -> OrmQuery | Select | None:
+        if self.activities_id__in is not None:
+            users_uuids = (
+                select(ActivityRegistry.user_id)
+                .where(ActivityRegistry.activity_id.in_(self.activities_id__in))
+            )
+            query = query.where(
+                User.id.in_(users_uuids.subquery())
+            )
+        return super().filter(query)

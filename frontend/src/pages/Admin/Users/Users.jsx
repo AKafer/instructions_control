@@ -3,6 +3,7 @@ import Button from '../../../components/Button/Button';
 import Input from '../../../components/Input/Input';
 import {CustomSelect} from '../../../components/Select/Select';
 import {
+	getAllActivitiesUrl,
 	getAllDivisionsUrl,
 	getAllInstructionsUrl,
 	getAllProfessionsUrl,
@@ -18,6 +19,7 @@ import {CreateUser} from '../../../components/Modals/CreateUser/CreateUser';
 import {ManageProf} from '../../../components/Modals/ManageProf/ManageProf';
 import {ManageDiv} from '../../../components/Modals/ManageDiv/ManageDiv';
 import {ManageIns} from '../../../components/Modals/ManageIns/ManageIns';
+import {ManageActivities} from '../../../components/Modals/ManageActivities/ManageActivities';
 
 
 export function Users () {
@@ -27,6 +29,7 @@ export function Users () {
 	const [lastNameFilter, setLastNameFilter] = useState(undefined);
 	const [isCreateModalOpen, setCreateModalOpen] = useState(false);
 	const [isManageProfModalOpen, setManageProfModalOpen] = useState(false);
+	const [isManageActivitiesModalOpen, setManageActivitiesModalOpen] = useState(false);
 	const [isManageDivModalOpen, setManageDivModalOpen] = useState(false);
 	const [isManageInsModalOpen, setManageInsModalOpen] = useState(false);
 	const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -41,6 +44,16 @@ export function Users () {
 		getItems: getProfessions
 	} = useFillSelect({
 		endpoint: getAllProfessionsUrl,
+		labelField: 'title'
+	});
+
+	const {
+		error: errorActivities,
+		options: optionsActivities,
+		itemDict: activitiesDict,
+		getItems: getActivities
+	} = useFillSelect({
+		endpoint: getAllActivitiesUrl,
 		labelField: 'title'
 	});
 
@@ -218,6 +231,17 @@ export function Users () {
 							setManageProfModalOpen={setManageProfModalOpen}
 							getProfessions={getProfessions}
 							setSelectedProfOption={setSelectedProfOption}
+						/>
+					</Modal>
+					<Button onClick={() => setManageActivitiesModalOpen(true)}>
+					Опасные факторы
+					</Button>
+					<Modal isOpen={isManageActivitiesModalOpen} onClose={() => setManageActivitiesModalOpen(false)}>
+						<ManageActivities
+							optionsActivities={optionsActivities}
+							activitiesDict={activitiesDict}
+							optionsProf={optionsProf}
+							getActivities={getActivities}
 						/>
 					</Modal>
 					<Button onClick={() => setManageDivModalOpen(true)}>

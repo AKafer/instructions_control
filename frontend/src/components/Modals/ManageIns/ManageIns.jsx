@@ -256,10 +256,9 @@ export function ManageIns({
 	useEffect(() => {
 		if (isFormReadyToSubmit) {
 			manageInsApi(values);
-			dispatchForm({ type: 'CLEAR' });
-			dispatchForm({type: 'SET_VALUE_Ins', payload: nullOption});
+			dispatchForm({ type: 'SET_SUBMIT_FALSE' });
 		}
-	}, [isFormReadyToSubmit, values, errors, isValid]);
+	}, [isFormReadyToSubmit]);
 
 	const bindProf = () => {
 		const payload = {

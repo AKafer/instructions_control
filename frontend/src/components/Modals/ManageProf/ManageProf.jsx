@@ -26,7 +26,6 @@ export function ManageProf({optionsProf, setManageProfModalOpen, getProfessions,
 		isFormReadyToSubmit
 	} = state;
 
-	const jwt = localStorage.getItem(JWT_STORAGE_KEY);
 	const optionsProfWide = [
 		{value: 0, label: '---Создать новую профессию---'},
 		...optionsProf

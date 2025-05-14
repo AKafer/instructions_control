@@ -3,6 +3,8 @@ export const JWT_STORAGE_KEY = 'jwt';
 export const EMAIL_STORAGE_KEY = 'email';
 
 export const getAllProfessionsUrl = '/professions/';
+export const getAllActivitiesUrl = '/activities/';
+export const getAllBindActivitiesUrl = '/activities/relations/';
 export const getAllDivisionsUrl = '/divisions/';
 export const getAllRulesUrl = '/rules/';
 export const getAllModulesUrl = '/training_modules/';

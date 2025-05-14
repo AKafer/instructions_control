@@ -1,19 +1,14 @@
-export const nullOption = {value: 0, label: '---Создать новую инструкцию---'};
+export const nullOption = {value: 0, label: '---Создать новый опасный фактор---'};
 
 export const INITIAL_STATE = {
-	valueIns: nullOption,
-	valueProf: null,
-	optionsUnBindedProf: [],
+	valueActivity: nullOption,
 	subModalOpen: false,
 	visibleDelButton: true,
 	isValid: {
-		title: true,
-		file: true
+		title: true
 	},
 	values: {
-		title: '',
-		repeatable: false,
-		file: null
+		title: ''
 	},
 	errors: {
 		title: ''
@@ -21,19 +16,11 @@ export const INITIAL_STATE = {
 	isFormReadyToSubmit: false
 };
 
-function isEqualJSON(a, b) {
-	return JSON.stringify(a) === JSON.stringify(b);
-}
-
 export function formReducer(state, action) {
 	// eslint-disable-next-line default-case
 	switch (action.type) {
-	case 'SET_VALUE_optionsUnBindedProf':
-		return {...state, optionsUnBindedProf: action.payload};
-	case 'SET_VALUE_Ins':
-		return {...state, valueIns: action.payload};
-	case 'SET_VALUE_Prof':
-		return {...state, valueProf: action.payload};
+	case 'SET_VALUE_ACTIVITY':
+		return {...state, valueActivity: action.payload};
 	case 'SET_SUB_MODAL':
 		return {...state, subModalOpen: action.payload};
 	case 'SET_VISIBLE_DEL_BUTTON':
@@ -54,32 +41,20 @@ export function formReducer(state, action) {
 		}
 		return {...state, values: {...state.values, ...action.payload}};
 	case 'CLEAR':
-		return {
-			...state,
-			values: INITIAL_STATE.values,
-			isFormReadyToSubmit: false,
-			subModalOpen: false,
-			errors: INITIAL_STATE.errors,
-			valueIns: nullOption,
-			valueProf: null,
-			optionsUnBindedProf: []
-		};
+		return { ...state, values: INITIAL_STATE.values, isFormReadyToSubmit: false, errors: INITIAL_STATE.errors};
 	case 'RESET_VALIDITY':
 		return {...state, isValid: INITIAL_STATE.isValid, errors: INITIAL_STATE.errors};
 	case 'SUBMIT': {
 		const titleValidity = Boolean(String(state.values.title || '').trim().length);
-		const fileValidity = Boolean(state.values.file != null || !isEqualJSON(state.valueIns, nullOption));
-		console.log('fileValidity', fileValidity);
 		return {
 			...state,
 			isValid: {
-				title: titleValidity,
-				file: fileValidity
+				title: titleValidity
 			},
 			errors: {
 				title: titleValidity ? '' : 'Обязательное поле'
 			},
-			isFormReadyToSubmit: (titleValidity && fileValidity)
+			isFormReadyToSubmit: (titleValidity)
 		};
 	}
 	case 'SET_SUBMIT_FALSE':
