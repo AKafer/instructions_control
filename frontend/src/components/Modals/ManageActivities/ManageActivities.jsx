@@ -52,10 +52,10 @@ export function ManageActivities({optionsActivities, activitiesDict, optionsProf
 		try {
 			let response;
 			if (prof_id) {
-				 response = await api.get(`${getAllUsersUrl}?profession_id__in=${prof_id}`);
+				 response = await api.get(`${getAllUsersUrl}/?profession_id__in=${prof_id}`);
 			}
 			if (activity_id) {
-				response = await api.get(`${getAllUsersUrl}?activities_id__in=${activity_id}`);
+				response = await api.get(`${getAllUsersUrl}/?activities_id__in=${activity_id}`);
 			}
 			const { data } = response;
 			return data;
@@ -135,7 +135,7 @@ export function ManageActivities({optionsActivities, activitiesDict, optionsProf
 					}}
 			);
 			const data = await manageUsersApi({activity_id: option?.value});
-			setBindedUsers(data);
+			setBindedUsers(data ?? []);
 		} else {
 			dispatchForm({type: 'CLEAR'});
 		}
@@ -173,7 +173,7 @@ export function ManageActivities({optionsActivities, activitiesDict, optionsProf
 		setSelectedProfUserIds([]);
 		setValueProf(option);
 		const data = await manageUsersApi({prof_id: option?.value});
-		setProfessionUsers(data);
+		setProfessionUsers(data ?? []);
 	};
 
 	const onCheckPre = (id, checked) => {
@@ -208,7 +208,7 @@ export function ManageActivities({optionsActivities, activitiesDict, optionsProf
 			const data = await manageUsersApi(
 				{activity_id: valueActivity?.value}
 			);
-			setBindedUsers(data);
+			setBindedUsers(data ?? []);
 			setSelectedProfUserIds([]);
 			setSelectedBindUserIds([]);
 		}
@@ -226,7 +226,7 @@ export function ManageActivities({optionsActivities, activitiesDict, optionsProf
 			const data = await manageUsersApi(
 				{activity_id: valueActivity?.value}
 			);
-			setBindedUsers(data);
+			setBindedUsers(data ?? []);
 			setSelectedProfUserIds([]);
 			setSelectedBindUserIds([]);
 		}
