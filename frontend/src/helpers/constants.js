@@ -13,3 +13,21 @@ export const getAllUsersUrl = '/users';
 export const registerUrl = '/auth/register';
 export const loginUrl = '/auth/jwt/login';
 export const getAllUsersPaginatedUrl = '/users/paginated';
+export const getAllMaterialTypesUrl = '/material_types/';
+
+export const unitsOfMeasurements = [
+	{ value: 'шт', label: 'шт' },
+	{ value: 'пар', label: 'пар' },
+	{ value: 'мл', label: 'мл' },
+	{ value: 'гр', label: 'гр' },
+	{ value: 'компл', label: 'компл' }
+];
+
+export const typeSizes = [
+	{ value: 'clothing_size', label: 'Одежда' },
+	{ value: 'shoe_size', label: 'Обувь' },
+	{ value: 'head_size', label: 'Перчатки' },
+	{ value: 'mask_size', label: 'Для головы' },
+	{ value: 'gloves_size', label: 'Перчатки' },
+	{ value: 'mitten_size', label: 'Варежки' }
+];

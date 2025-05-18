@@ -26,7 +26,7 @@ export function SelectForm({options, value, placeholder, onChange, isValid, ...r
 							? '1px solid var(--invalid_element_border)'
 							: '1px solid #888'
 					},
-					...(isValid === false && { background: 'var(--invalid_elemen_background)' })
+					...(isValid === false && { background: 'var(--invalid_element_background)' })
 				}),
 				singleValue: (base) => ({
 					...base,
