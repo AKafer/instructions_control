@@ -26,8 +26,8 @@ export const unitsOfMeasurements = [
 export const typeSizes = [
 	{ value: 'clothing_size', label: 'Одежда' },
 	{ value: 'shoe_size', label: 'Обувь' },
-	{ value: 'head_size', label: 'Перчатки' },
-	{ value: 'mask_size', label: 'Для головы' },
+	{ value: 'head_size', label: 'Для головы' },
+	{ value: 'mask_size', label: 'Для лица' },
 	{ value: 'gloves_size', label: 'Перчатки' },
 	{ value: 'mitten_size', label: 'Варежки' }
 ];
