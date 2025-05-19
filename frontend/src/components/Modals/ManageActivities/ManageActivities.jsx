@@ -323,12 +323,13 @@ export function ManageActivities({optionsActivities, activitiesDict, optionsProf
 					<div className={styles.firstBox}>
 						<div className={styles.profSelect}>
 							<span className={styles['span']}>
-							Профессии:
+							Фильтр по профессии:
 								<SelectForm
 									value={valueProf}
 									options={valueActivity?.value ? optionsProf : []}
 									name="profession_id"
 									onChange={selectProf}
+									placeholder="Профессия"
 								/>
 							</span>
 						</div>
@@ -363,7 +364,10 @@ export function ManageActivities({optionsActivities, activitiesDict, optionsProf
 
 					</div>
 					<div className={styles.thirdBox}>
-						<h2 className={styles.bindTitle}>Привязанные пользователи:</h2>
+						{Boolean(valueActivity?.value) && <h2 className={styles.bindTitleAbsolute}>
+							{`Опасный фактор "${valueActivity?.label}"`}
+						</h2>}
+						<h2 className={styles.bindTitle}>{'Привязанные пользователи:'}</h2>
 						<div className={styles.listBox2}>
 							<List
 								bordered
