@@ -3,26 +3,45 @@ import Button from '../../../components/Button/Button';
 import {Modal} from '../../../components/Modals/Modal';
 import {useState} from 'react';
 import useFillSelect from '../../../hooks/useFillSelect.hook';
-import {getAllMaterialTypesUrl} from '../../../helpers/constants';
-import {ManageSIZ} from '../../../components/Modals/ManageSIZ/ManageSIZ';
+import {
+	getAllMaterialTypesUrl,
+	getAllNormsUrl
+} from '../../../helpers/constants';
+import {ManageTypes} from '../../../components/Modals/ManageTypes/ManageTypes';
+import {ManageNorms} from '../../../components/Modals/ManageNorms/ManageNorms';
 
 
 
 export function SIZ () {
-	const [isManageSIZOpen, setIsManageSIZOpen] = useState(false);
+	const [isManageTypesOpen, setIsManageTypesOpen] = useState(false);
+	const [isManageNormsOpen, setIsManageNormsOpen] = useState(false);
 
 	const {
-		error: errorSIZ,
-		options: optionsSIZ,
-		itemDict: SIZDict,
-		getItems: getSIZ
+		error: errorTypes,
+		options: optionsTypes,
+		itemDict: typesDict,
+		getItems: getTypes
 	} = useFillSelect({
 		endpoint: getAllMaterialTypesUrl,
 		labelField: 'title'
 	});
 
-	const openCreateModal = () => {
-		setIsManageSIZOpen(true);
+	const {
+		error: errorNorms,
+		options: optionsNorms,
+		itemDict: normsDict,
+		getItems: getNorms
+	} = useFillSelect({
+		endpoint: getAllNormsUrl,
+		labelField: 'title'
+	});
+
+	const openModalTypes = () => {
+		setIsManageTypesOpen(true);
+	};
+
+	const openModalNorms = () => {
+		setIsManageNormsOpen(true);
 	};
 
 	return (
@@ -30,14 +49,25 @@ export function SIZ () {
 			<div className={styles.outer_manage}>
 				<div className={styles.manage}>
 					<h1 className={styles.title}>Управление</h1>
-					<Button onClick={openCreateModal}>
-					Тип материала
+					<Button onClick={openModalTypes}>
+					Типы материалов
 					</Button>
-					<Modal isOpen={isManageSIZOpen} onClose={() => setIsManageSIZOpen(false)}>
-						<ManageSIZ
-							optionsSIZ={optionsSIZ}
-							SIZDict={SIZDict}
-							getSIZ={getSIZ}
+					<Modal isOpen={isManageTypesOpen} onClose={() => setIsManageTypesOpen(false)}>
+						<ManageTypes
+							optionsTypes={optionsTypes}
+							typesDict={typesDict}
+							getTypes={getTypes}
+						/>
+					</Modal>
+					<Button onClick={openModalNorms}>
+					Нормы
+					</Button>
+					<Modal isOpen={isManageNormsOpen} onClose={() => setIsManageNormsOpen(false)}>
+						<ManageNorms
+							optionsNorms={optionsNorms}
+							normsDict={normsDict}
+							optionsTypes={optionsTypes}
+							getNorms={getNorms}
 						/>
 					</Modal>
 				</div>

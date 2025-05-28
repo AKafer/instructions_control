@@ -37,6 +37,23 @@ async def get_all_norms(
 
 
 @router.get(
+    '/get_norm_material_by_norm/{norm_id:int}',
+    response_model=list[NormMaterial],
+)
+async def get_norm_material_by_norm(
+    norm_id: int,
+    db_session: AsyncSession = Depends(get_db_session)
+):
+    query = (
+        select(NormMaterials)
+        .filter(NormMaterials.norm_id == norm_id)
+        .order_by(NormMaterials.id.desc())
+    )
+    norm_materials = await db_session.execute(query)
+    return norm_materials.scalars().all()
+
+
+@router.get(
     '/{norm_id:int}',
     response_model=Norm,
     responses={
@@ -49,7 +66,8 @@ async def get_all_norms(
     },
 )
 async def get_norm_by_id(
-    norm_id: int, db_session: AsyncSession = Depends(get_db_session)
+    norm_id: int,
+    db_session: AsyncSession = Depends(get_db_session)
 ):
     query = select(Norms).filter(Norms.id == norm_id)
     norm = await db_session.scalar(query)
@@ -133,7 +151,7 @@ async def add_materials_to_norm(
 
 
 @router.patch(
-    '/{norm_material_id:int}',
+    '/change_materials/{norm_material_id:int}',
     response_model=NormMaterial,
     responses={
         status.HTTP_404_NOT_FOUND: {

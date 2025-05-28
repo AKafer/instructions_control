@@ -1,6 +1,7 @@
 :root {
     --font_default: "Noto Sans", sans-serif;
     --color_text_default: rgba(1, 75, 98, 1);
+    --color_test_disabled: rgba(1, 75, 98, 0.4);
     --color_text_default_trans: rgba(1, 75, 98, 0.4);
     --color_text_default_rgb: 1, 75, 98;
     --color_alert_default: rgba(250, 181, 21, 1);
@@ -11,6 +12,7 @@
     --color_success_default_rgb: 23, 219, 78;
     --color_surface_default: rgba(195, 235, 248, 1);
     --color_surface_default_rgb: 195, 235, 248;
+    --color_surface_default_trans: rgba(195, 235, 248, 0.2);
     --color_background_default: rgba(255, 255, 255, 1);
     --color_background_default_rgb: 255, 255, 255;
     --color_destructive_default: rgba(255, 0, 0, 1);

@@ -26,6 +26,7 @@ const Module = ({
 		data.append('file', moduleFile ?? '');
 		data.append('title', moduleTitle ?? '');
 		manageModulesApi('PATCH', data, module.id);
+		setSubModalEditOpen(false);
 	};
 
 	const deleteModule = async () => {
@@ -64,7 +65,7 @@ const Module = ({
 							<img
 								className={styles.iconImageFile}
 								src="/icons/doc-icon.svg"
-								alt="Module file"/>
+								alt="NormMaterial file"/>
 						</a>
 					</div>
 					<div className={styles.professionName}>

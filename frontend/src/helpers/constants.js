@@ -14,6 +14,7 @@ export const registerUrl = '/auth/register';
 export const loginUrl = '/auth/jwt/login';
 export const getAllUsersPaginatedUrl = '/users/paginated';
 export const getAllMaterialTypesUrl = '/material_types/';
+export const getAllNormsUrl = '/norms/';
 
 export const unitsOfMeasurements = [
 	{ value: 'шт', label: 'шт' },

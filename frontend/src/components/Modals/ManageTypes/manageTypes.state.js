@@ -1,7 +1,7 @@
 export const nullOption = {value: 0, label: '---Создать новый тип материала---'};
 
 export const INITIAL_STATE = {
-	valueSIZ: nullOption,
+	valueTypes: nullOption,
 	subModalOpen: false,
 	visibleDelButton: true,
 	isValid: {
@@ -19,8 +19,8 @@ export const INITIAL_STATE = {
 export function formReducer(state, action) {
 	// eslint-disable-next-line default-case
 	switch (action.type) {
-	case 'SET_VALUE_SIZ':
-		return {...state, valueSIZ: action.payload};
+	case 'SET_VALUE_Types':
+		return {...state, valueTypes: action.payload};
 	case 'SET_SUB_MODAL':
 		return {...state, subModalOpen: action.payload};
 	case 'SET_VISIBLE_DEL_BUTTON':

@@ -1,0 +1,281 @@
+* {
+    box-sizing: border-box;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+}
+
+.normTypeMaterial {
+    background-color: var(--color_surface_default_trans);
+    display: flex;
+    flex-direction: row;
+    align-content: center;
+    border: 1px solid var(--color_primary_default);
+    border-radius: 8px;
+    height: 80px;
+    width: 620px;
+    margin: 0 0 5px 0;
+}
+
+.ntmContent {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
+    flex: 8;
+}
+
+.ntmNameTitle {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: calc(100% / 2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 10px;
+    font-family: var(--font_default), sans-serif;
+    color: var(--color_text_default);
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--color_element_border);
+    overflow: hidden;
+}
+
+.ntmNameNPA {
+    width: 100%;
+    height: calc(100% / 2);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: start;
+    padding-left: 8px;
+    font-family: var(--font_default), sans-serif;
+    color: var(--color_text_default);
+    font-size: 13px;
+    overflow: hidden;
+
+}
+
+.clampedTextTitle {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.clampedTextTitleSub {
+  text-align: center;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.clampedTextNPA {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+
+}
+
+.iconBoxMain {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
+    flex: 1.5;
+    border-left: 1px solid var(--color_element_border);
+}
+
+.iconBox {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
+    border-left: 1px solid var(--color_element_border);
+}
+
+.iconButton {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.iconButton:hover {
+  opacity: 0.6;
+}
+
+.iconImage {
+  width: 28px;
+  height: 28px;
+}
+
+.iconEditImage {
+    width: 27px;
+    height: 27px;
+}
+
+.editIconBox {
+    width: 100%;
+    height: calc(100% / 2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-bottom: 1px solid var(--color_element_border);
+}
+
+.button_submodal {
+    min-width: 0 !important;
+    width: 135px !important;
+    margin: 3px 5px 8px 5px;
+}
+
+.fileButtonBox {
+    display: flex;
+    flex-direction: row;
+    margin: 10px 0 0 0;
+    align-items: center;
+}
+
+.hiddenInput {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fileButton {
+  min-width: 0 !important;
+  width: 135px !important;
+}
+
+.fileName {
+    font-family: var(--font_default), sans-serif;
+    color: var(--color_text_default);
+    font-size: 13px;
+    margin-left: 10px;
+    width: 150px;
+    overflow: hidden;
+    text-align: center;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+}
+
+.bind_button_box {
+    display: flex;
+    align-content: center;
+    justify-content: center;
+    margin: 15px 0 10px 0;
+}
+
+.bind_button {
+    min-width: 0 !important;
+    width: 135px !important;
+    margin-top: 5px;
+    margin-right: 5px;
+    margin-left: 5px
+}
+
+.binds_box {
+    margin-top: 20px;
+    height: 350px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.submodalEdit {
+    border: 1px dashed var(--color_primary_default);
+    border-radius: 8px;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0 0 5px 0;
+    padding: 10px 0 0 10px;
+}
+
+.span {
+  font-family: var(--font_default), sans-serif;
+  color: var(--color_text_default);
+  font-size: 13px;
+}
+
+.input {
+    margin-left: 10px;
+    width: 550px !important;
+}
+
+.ntmInputBox {
+    display: flex;
+    padding: 4px 0 0 0;
+}
+
+.inputNumber {
+    width: 60px !important;
+    background-color: var(--color_surface_default_trans);
+    padding: 5px !important;
+}
+
+.amountBox {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: calc(100% / 2);
+    background: transparent;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    outline: none;
+}
+
+.quantityButton{
+    background: transparent;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    outline: none;
+}
+
+.quantityButton:hover {
+    opacity: 0.6;
+}
+
+.iconPlusImage {
+    width: 20px;
+    height: 20px;
+    margin-top: 3px;
+    border: none;
+    background: transparent;
+}
+.quantityText {
+    font-family: var(--font_default), sans-serif;
+    color: var(--color_text_default);
+    font-size: 13px;
+    text-align: center;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+
+.submodal {
+    align-self: center;
+}

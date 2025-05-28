@@ -1,4 +1,4 @@
-import styles from './ManageSIZ.module.css';
+import styles from './ManageTypes.module.css';
 import Button from '../../Button/Button';
 import {
 	getAllMaterialTypesUrl, typeSizes,
@@ -12,17 +12,17 @@ import {
 	formReducer,
 	INITIAL_STATE,
 	nullOption
-} from './manageSIZ.state';
+} from './manageTypes.state';
 import useApi from '../../../hooks/useApi.hook';
 
 
-export function ManageSIZ({optionsSIZ, SIZDict, getSIZ}) {
+export function ManageTypes({optionsTypes, typesDict, getTypes}) {
 	const [errorApi, setErrorApi] = useState(undefined);
 	const [state, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
 	const api = useApi();
 
 	const {
-		valueSIZ,
+		valueTypes,
 		subModalOpen,
 		visibleDelButton,
 		values,
@@ -31,29 +31,29 @@ export function ManageSIZ({optionsSIZ, SIZDict, getSIZ}) {
 		isFormReadyToSubmit
 	} = state;
 	
-	const optionsSIZWide = [
-		nullOption, ...optionsSIZ
+	const optionsTypesWide = [
+		nullOption, ...optionsTypes
 	];
 
-	const manageSIZApi = async (payload, isDelete = false) => {
+	const manageTypesApi = async (payload, isDelete = false) => {
 		try {
 			let response;
-			if (valueSIZ?.value) {
+			if (valueTypes?.value) {
 				if (isDelete) {
-					await api.delete(`${getAllMaterialTypesUrl}${valueSIZ?.value}`);
+					await api.delete(`${getAllMaterialTypesUrl}${valueTypes?.value}`);
 				} else {
-					response = await api.patch(`${getAllMaterialTypesUrl}${valueSIZ?.value}`, payload);
+					response = await api.patch(`${getAllMaterialTypesUrl}${valueTypes?.value}`, payload);
 				}
 			} else {
 				response = await api.post(`${getAllMaterialTypesUrl}`, payload);
 			}
-			getSIZ();
+			getTypes();
 			if (response) {
 				const { id, title, unit_of_measurement, size_type  } = response.data;
 				const newOption = { value: id, label: title };
 				dispatchForm({type: 'SET_SUB_MODAL', payload: false});
 				dispatchForm({type: 'SET_VISIBLE_DEL_BUTTON', payload: true});
-				dispatchForm({type: 'SET_VALUE_SIZ', payload: newOption});
+				dispatchForm({type: 'SET_VALUE_Types', payload: newOption});
 				dispatchForm({type: 'RESET_VALIDITY'});
 				dispatchForm({
 					type: 'SET_VALUE', payload:
@@ -72,10 +72,10 @@ export function ManageSIZ({optionsSIZ, SIZDict, getSIZ}) {
 	};
 
 
-	const selectSIZ = async (option) => {
+	const selectTypes = async (option) => {
 		dispatchForm({type: 'SET_SUB_MODAL', payload: false});
 		dispatchForm({type: 'SET_VISIBLE_DEL_BUTTON', payload: true});
-		dispatchForm({type: 'SET_VALUE_SIZ', payload: option});
+		dispatchForm({type: 'SET_VALUE_Types', payload: option});
 		dispatchForm({type: 'RESET_VALIDITY'});
 		setErrorApi(undefined);
 		if (option.value !== 0) {
@@ -83,8 +83,8 @@ export function ManageSIZ({optionsSIZ, SIZDict, getSIZ}) {
 				type: 'SET_VALUE', payload:
 					{
 						'title': option.label,
-						'unit_of_measurement': SIZDict[option.value]?.unit_of_measurement || '',
-						'size_type': SIZDict[option.value]?.size_type || ''
+						'unit_of_measurement': typesDict[option.value]?.unit_of_measurement || '',
+						'size_type': typesDict[option.value]?.size_type || ''
 					}}
 			);
 		} else {
@@ -100,19 +100,19 @@ export function ManageSIZ({optionsSIZ, SIZDict, getSIZ}) {
 		setErrorApi(undefined);
 	};
 
-	const creatEditSIZ = () => {
+	const creatEditTypes = () => {
 		dispatchForm({type: 'SUBMIT'});
 	};
 
-	const deleteSIZ = () => {
-		manageSIZApi({}, true);
+	const deleteTypes = () => {
+		manageTypesApi({}, true);
 		dispatchForm({ type: 'CLEAR' });
-		dispatchForm({type: 'SET_VALUE_SIZ', payload: nullOption});
+		dispatchForm({type: 'SET_VALUE_Types', payload: nullOption});
 	};
 
 	useEffect(() => {
 		if (isFormReadyToSubmit) {
-			manageSIZApi(values);
+			manageTypesApi(values);
 			dispatchForm({ type: 'SET_SUBMIT_FALSE' });
 		}
 	}, [isFormReadyToSubmit]);
@@ -133,17 +133,17 @@ export function ManageSIZ({optionsSIZ, SIZDict, getSIZ}) {
 	};
 
 	return (
-		<div className={styles['manage_siz']} >
+		<div className={styles['manage_types']} >
 			<h1 className={styles['title']}>Управление типами материалов</h1>
 			{errorApi && <div className={styles['error']}>{errorApi}</div>}
 			<div className={styles['content']}>
 				<span className={styles['span']}>
-					Опасные факторы:
+					Типы материалов:
 					<SelectForm
-						value={valueSIZ}
-						options={optionsSIZWide}
-						name="SIZ_id"
-						onChange={selectSIZ}
+						value={valueTypes}
+						options={optionsTypesWide}
+						name="Types_id"
+						onChange={selectTypes}
 					/>
 				</span>
 				<div className={styles['box']}>
@@ -182,7 +182,7 @@ export function ManageSIZ({optionsSIZ, SIZDict, getSIZ}) {
 								isValid={isValid.unit_of_measurement}
 								value={unitsOfMeasurements.find(u => u.value === values.unit_of_measurement) ?? null}
 								options={unitsOfMeasurements}
-								name="SIZ_id"
+								name="Types_id"
 								onChange={selectUnit}
 								placeholder={'Единица измерения'}
 							/>
@@ -199,13 +199,13 @@ export function ManageSIZ({optionsSIZ, SIZDict, getSIZ}) {
 							<SelectForm
 								value={typeSizes.find(u => u.value === values.size_type) ?? null}
 								options={typeSizes}
-								name="SIZ_id"
+								name="Types_id"
 								onChange={selectType}
 								placeholder={'Тип'}
 							/>
 						</span>
 						<div className={styles['button-box']}>
-							{(Boolean(valueSIZ?.value) && visibleDelButton) && <div className={styles['inline']}>
+							{(Boolean(valueTypes?.value) && visibleDelButton) && <div className={styles['inline']}>
 								<button className={styles.iconButton}
 									onClick={() => {
 										dispatchForm({type: 'SET_SUB_MODAL', payload: true});
@@ -220,7 +220,7 @@ export function ManageSIZ({optionsSIZ, SIZDict, getSIZ}) {
 								</button>
 							</div>}
 							{subModalOpen && <div className={styles['submodal']}>
-								<Button className={styles.button_submodal} onClick={deleteSIZ}>
+								<Button className={styles.button_submodal} onClick={deleteTypes}>
 										Удалить
 								</Button>
 								<Button className={styles.button_submodal} onClick={() => {
@@ -235,8 +235,8 @@ export function ManageSIZ({optionsSIZ, SIZDict, getSIZ}) {
 					</div>
 				</div>
 				<div className={styles['button']}>
-					<Button onClick={creatEditSIZ}>
-						{valueSIZ?.value ? 'Редактировать' : 'Создать'}
+					<Button onClick={creatEditTypes}>
+						{valueTypes?.value ? 'Редактировать' : 'Создать'}
 					</Button>
 				</div>
 			</div>
