@@ -63,7 +63,7 @@ export function ManageNorms({optionsNorms, normsDict, optionsTypes, getNorms}) {
 		return Object.entries(normsDict).reduce((acc, [normId, norm]) => {
 			const prof = norm.profession;
 			if (prof) {
-				acc[prof.id] = {
+				acc[String(prof.id)] = {
 					title: norm.title,
 					norm_id: normId
 				};
@@ -76,7 +76,7 @@ export function ManageNorms({optionsNorms, normsDict, optionsTypes, getNorms}) {
 		return Object.entries(normsDict).reduce((acc, [normId, norm]) => {
 			const activity = norm.activity;
 			if (activity) {
-				acc[activity.id] = {
+				acc[String(activity.id)] = {
 					title: norm.title,
 					norm_id: normId
 				};
