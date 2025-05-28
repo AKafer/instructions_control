@@ -69,7 +69,7 @@ export function ManageNorms({optionsNorms, normsDict, optionsTypes, getNorms}) {
 				};
 			}
 			return acc;
-		});
+		}, {});
 	}, [normsDict]);
 
 	const normsByActivity = useMemo(() => {
@@ -82,7 +82,8 @@ export function ManageNorms({optionsNorms, normsDict, optionsTypes, getNorms}) {
 				};
 			}
 			return acc;
-		});
+
+		}, {});
 	}, [normsDict]);
 
 	const currentNorm = useMemo(() => {
