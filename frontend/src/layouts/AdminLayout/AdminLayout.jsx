@@ -4,11 +4,11 @@ import styles from './AdminLayout.module.css';
 
 export function AdminLayout() {
 	return (
-		<>
+		<div className={styles['admin-layout']}>
 			<Header start_page="/admin"/>
 			<div className={styles['content']}>
 				<Outlet/>
 			</div>
-		</>
+		</div>
 	);
 }

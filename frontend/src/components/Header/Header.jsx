@@ -18,16 +18,16 @@ export function Header({ start_page }) {
 
 	return (
 		<>
-			<div className={styles['header']}>
-				<div className={styles['logo']}>
+			<div className={styles.header}>
+				<div className={styles.logo}>
 					<Link to={start_page}>
 						<img src={logo} alt="Логотип" />
 					</Link>
 				</div>
-				<div className={styles['menu']}>
+				<div className={styles.menu}>
 					<AdminMenu />
 				</div>
-				<div className={styles['icons']}>
+				<div className={styles.icons}>
 					<button onClick={openModalHelp}>
 						<img src="/icons/help-icon.svg" alt="Уведомления" />
 					</button>

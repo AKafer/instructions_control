@@ -85,7 +85,7 @@ async def calculate_need(
     )
 
 
-@router.post(
+@router.get(
     '/calculate_need_all',
     response_model=dict,
     responses={

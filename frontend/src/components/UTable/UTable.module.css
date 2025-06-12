@@ -1,11 +1,16 @@
 /* Обёртка для таблицы, чтобы ограничить переполнение */
 .tableWrapper {
-  max-width: 100%;
+  width: 100%;
   overflow-x: auto;
   margin-right: 25px;
 }
 
+.tableContainer {
+  width: 100%;
+}
+
 .customTable {
+  width: 100%;
   border: 1px solid var(--color_element_border);
   border-radius: 6px;
   overflow: hidden;

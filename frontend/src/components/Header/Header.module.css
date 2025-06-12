@@ -1,31 +1,31 @@
 .header {
-  position: relative;
+  align-self: center;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  height: 80px; /* высота шапки */
-  padding: 0 20px;
+  padding: 25px 45px;
+  width: 100%;
   background-color: var(--color_background_default);
-  border-bottom: 1px solid var(--color_primary_default);
+  border-bottom: 2px solid var(--color_primary_default);
 }
 
+
+
 .logo {
-  flex: 0 0 auto;
+  display: flex;
 }
 
 .logo img {
   height: 60px;
   width: auto;
   margin: 0;
+  padding: 0;
 }
 
 .menu {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 25px;
-  /* Меню будет строго по центру шапки */
 }
 
 .menu-item {
@@ -45,21 +45,44 @@
 }
 
 .icons {
-  flex: 0 0 auto;
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 20px;
+    display: flex;
+    align-items: center;
+    gap: 0px;
 }
 
 .icons button {
   background: transparent;
   border: none;
-  padding: 0;
+  padding: 0 35px;
   cursor: pointer;
 }
 
 .icons img {
   height: 32px;
   width: auto;
+}
+
+@media (max-width: 1300px) {
+  .logo {
+    display: none;
+  }
+  .icons {
+    display: none;
+  }
+  .header {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 700px) {
+  .menu {
+    gap: 5px;
+  }
+}
+
+@media (max-width: 550px) {
+  .menu {
+    display: flex;
+    flex-direction: column;
+  }
 }

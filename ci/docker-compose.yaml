@@ -57,22 +57,6 @@ services:
     networks:
       - control
 
-  worker:
-    container_name: control_worker
-    image: akafer/ins_control
-    restart: on-failure
-    command: >
-      bash -c "python3 /app/src/jobs/worker_t.py"
-    env_file:
-      - .env
-    volumes:
-      - ./files:/app/src/static
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - control
-
   frontend:
     container_name: control_frontend
     image: akafer/ins_control_frontend

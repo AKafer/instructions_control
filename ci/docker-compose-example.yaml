@@ -1,0 +1,63 @@
+version: '3.8'
+services:
+  traefik:
+    image: traefik:latest
+    env_file:
+      - .env
+    command:
+      - --entryPoints.web.address=:80
+      - --entryPoints.websecure.address=:443
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --certificatesResolvers.le.acme.email=${LETSENCRYPT_EMAIL}
+      - --certificatesResolvers.le.acme.storage=/letsencrypt/acme.json
+      - --certificatesResolvers.le.acme.tlsChallenge=true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt:/letsencrypt
+
+  app:
+    image: akafer/ins_control
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.rule=Host(`ins-control.ddns.net`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.app.entrypoints=websecure"
+      - "traefik.http.routers.app.tls=true"
+      - "traefik.http.services.app.loadbalancer.server.port=8500"
+    depends_on:
+      - db
+
+  frontend:
+    image: akafer/ins_control_frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`ins-control.ddns.net`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+    depends_on:
+      - app
+
+  db:
+    container_name: control_db
+    image: postgres:14-bullseye
+    restart: on-failure
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./.env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - control
+    ports:
+      - "5433:5432"
+
+volumes:
+  postgres_data:

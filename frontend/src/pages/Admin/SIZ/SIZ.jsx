@@ -9,12 +9,14 @@ import {
 } from '../../../helpers/constants';
 import {ManageTypes} from '../../../components/Modals/ManageTypes/ManageTypes';
 import {ManageNorms} from '../../../components/Modals/ManageNorms/ManageNorms';
+import {NormStatistics} from '../../../components/Modals/NormStatistics/NormStatistics';
 
 
 
 export function SIZ () {
 	const [isManageTypesOpen, setIsManageTypesOpen] = useState(false);
 	const [isManageNormsOpen, setIsManageNormsOpen] = useState(false);
+	const [isNormStatisticsOpen, setIsNormStatisticsOpen] = useState(false);
 
 	const {
 		error: errorTypes,
@@ -44,6 +46,11 @@ export function SIZ () {
 		setIsManageNormsOpen(true);
 	};
 
+	const openModalStatistics = () => {
+		setIsNormStatisticsOpen(true);
+	};
+
+
 	return (
 		<div className={styles.siz}>
 			<div className={styles.outer_manage}>
@@ -70,7 +77,18 @@ export function SIZ () {
 							getNorms={getNorms}
 						/>
 					</Modal>
+					<Button onClick={openModalStatistics}>
+					Статистика
+					</Button>
+					<Modal isOpen={isNormStatisticsOpen} onClose={() => setIsNormStatisticsOpen(false)}>
+						<NormStatistics
+						/>
+					</Modal>
 				</div>
+			</div>
+
+			<div className={styles.outer_table}>
+
 			</div>
 		</div>
 	);

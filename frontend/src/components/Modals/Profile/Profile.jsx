@@ -1,6 +1,6 @@
 import styles from './Profile.module.css';
 import Button from '../../Button/Button';
-import {EMAIL_STORAGE_KEY, JWT_STORAGE_KEY} from '../../../helpers/constants';
+import {JWT_STORAGE_KEY} from '../../../helpers/constants';
 import {useNavigate} from 'react-router-dom';
 import {jwtDecode} from 'jwt-decode';
 

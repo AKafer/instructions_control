@@ -39,6 +39,29 @@
   margin: 20px;
 }
 
+@media (max-width: 1000px) {
+    .outer_manage {
+        border-right: none;
+    }
+    .manage {
+        min-height: auto;
+        width: 100px;
+    }
+
+    .users {
+        display: flex;
+        flex-direction: column;
+        justify-content: start;
+    }
+}
+
+@media (max-width: 1300px) {
+    .filters_table {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
 .error {
     background: var(--color_destructive_default);
     color: var(--color_background_default);

@@ -307,12 +307,6 @@ export function Users () {
 						usePagination={true}
 						initialPage={1}
 						initialPageSize={10}
-						axiosOptions={{
-							headers: {
-								'Authorization': `Bearer ${jwt}`,
-								'Content-Type': 'application/x-www-form-urlencoded'
-							}
-						}}
 						filters={filters}
 						onTotalRecordsChange={setTotalRecords}
 						refreshKey={refreshKey}

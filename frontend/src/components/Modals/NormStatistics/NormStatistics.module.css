@@ -1,0 +1,21 @@
+.table {
+    display: flex;
+    padding: 20px;
+}
+
+.iconButton {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+}
+
+.iconButton:hover {
+  opacity: 0.6;
+}
+
+.iconImage {
+  width: 25px;
+  height: 25px;
+}

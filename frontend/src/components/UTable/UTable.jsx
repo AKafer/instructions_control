@@ -1,32 +1,18 @@
-import React, {useEffect} from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Table } from 'antd';
 import useTableData from '../../hooks/useTableData.hook';
 import styles from './UTable.module.css';
-;
 
-/**
- * Универсальный компонент таблицы.
- *
- * @param {object} props
- * @param {string} props.endpoint - URL эндпойнта для загрузки данных.
- * @param {Array} props.columns - Определение столбцов для таблицы.
- * @param {boolean} [props.usePagination=true] - Использовать ли пагинацию.
- * @param {number} [props.initialPage=1] - Начальный номер страницы.
- * @param {number} [props.initialPageSize=10] - Начальный размер страницы.
- * @param {object} [props.axiosOptions={}] - Дополнительные опции для запроса axios.
- * @param {object} [props.filters={}] - Дополнительные фильтры в виде query-параметров.
- * @param {object} [props.tableProps={}] - Дополнительные пропсы для компонента Table.
- */
 const UniversalTable = ({
 	endpoint,
 	columns,
 	usePagination = true,
 	initialPage = 1,
 	initialPageSize = 10,
-	axiosOptions = {},
 	filters = {},
 	tableProps = {},
 	onTotalRecordsChange = () => {},
+	formatData = item => item,
 	refreshKey = null,
 	height = 500
 }) => {
@@ -35,11 +21,17 @@ const UniversalTable = ({
 		initialPage,
 		initialPageSize,
 		usePagination,
-		axiosOptions,
 		filters,
 		refreshKey
 	});
 
+	const formattedData = useMemo(() => {
+		if (Array.isArray(data)) {
+			return data.map(item => formatData(item));
+		} else {
+			return formatData(data);
+		}
+	}, [data, formatData]);
 
 	useEffect(() => {
 		if (pagination?.total !== undefined) {
@@ -55,11 +47,16 @@ const UniversalTable = ({
 
 	return (
 		<div className={styles.tableWrapper}>
-			<div className={styles.customTable}>
+			{/* Вешаем фиксированную высоту и прокрутку только при отключённой пагинации */}
+			<div
+				className={styles.tableContainer}
+				style={!usePagination ? { height: `${height}px`, overflowY: 'auto' } : {}}
+			>
 				<Table
-					className={`${styles.customTable}`}
+					size="small"
+					className={styles.customTable}
 					columns={columns}
-					dataSource={data}
+					dataSource={formattedData}
 					loading={loading}
 					rowKey="id"
 					onChange={handleTableChange}
@@ -69,13 +66,8 @@ const UniversalTable = ({
 								...pagination,
 								showSizeChanger: true,
 								pageSizeOptions: ['10', '20', '50', '100']
-		  }
+							}
 							: false
-					}
-					scroll={
-						usePagination
-							? undefined
-							: { y: height } // или auto-расчёт по доступному пространству
 					}
 					{...tableProps}
 				/>
