@@ -15,6 +15,17 @@ class MaterialType(BaseModel):
     class Config:
         orm_mode = True
 
+class Division(BaseModel):
+    title: str
+
+    class Config:
+        orm_mode = True
+
+class Profession(BaseModel):
+    title: str
+
+    class Config:
+        orm_mode = True
 
 class User(BaseModel):
     id: uuid.UUID
@@ -22,6 +33,8 @@ class User(BaseModel):
     last_name: str
     division_id: str | None
     profession_id: str | None
+    division: Division | None
+    profession: Profession | None
 
     class Config:
         orm_mode = True

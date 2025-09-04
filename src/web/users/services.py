@@ -28,6 +28,11 @@ async def merge_additional_features(
 async def peak_personal_journal(request: Request, user: User) -> User:
     if not user.is_superuser:
         for instruction in user.instructions:
+            if instruction.tests:
+                instruction.is_tests_bind = True
+            if instruction.training_modules:
+                instruction.is_modules_bind = True
+
             if instruction.filename is not None:
                 instruction.link = get_full_link_ins(
                     request, instruction.filename

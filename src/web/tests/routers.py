@@ -1,15 +1,17 @@
 import json
 import logging
 import re
+from collections import defaultdict
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.inspection import inspect
 from starlette import status
 from starlette.requests import Request
 from starlette.responses import Response
 
-from database.models import User
+from database.models import User, Histories
 from database.models.tests import Templates, Tests, Questions
 from dependencies import get_db_session
 from starlette.exceptions import HTTPException
@@ -23,9 +25,9 @@ from web.tests.schemas import (
     QuestionCreateInput,
     Question,
     TestPassInput,
-    History,
+    History, TestsForUser,
 )
-from web.tests.services import update_test_in_db, calculate_test_result
+from web.tests.services import update_test_in_db, calculate_test_result, sa_to_dict
 from web.users.users import current_superuser, current_user
 
 router = APIRouter(
@@ -325,3 +327,44 @@ async def delete_question(
     await db_session.delete(question)
     await db_session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+
+
+@router.get(
+    '/get_tests_instruction/{instruction_id:int}',
+    response_model=dict,
+    dependencies=[Depends(current_user)]
+)
+async def get_test_instruction(
+    instruction_id: int,
+    db_session: AsyncSession = Depends(get_db_session),
+    user: User = Depends(current_user)
+):
+    if user.is_superuser:
+        return {}
+
+    tests = (await db_session.execute(
+        select(Tests).filter(Tests.instruction_id == instruction_id).order_by(Tests.id)
+    )).scalars().all()
+
+    if not tests:
+        return {'data': []}
+
+    histories = (await db_session.execute(
+        select(Histories)
+        .filter(Histories.user_uuid == str(user.id))
+        .filter(Histories.test_id.in_([t.id for t in tests]))
+    )).scalars().all()
+
+    by_test = defaultdict(list)
+    for h in histories:
+        by_test[h.test_id].append(sa_to_dict(h))
+
+    data = []
+    for t in tests:
+        td = sa_to_dict(t)
+        td['histories'] = by_test.get(t.id, [])
+        data.append(td)
+
+    return {'data': data}

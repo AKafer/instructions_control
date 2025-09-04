@@ -29,7 +29,10 @@ from web.users.schemas import (
     Material,
     DeleteMaterials,
 )
-from web.users.services import peak_personal_journal, merge_additional_features
+from web.users.services import (
+    peak_personal_journal,
+    merge_additional_features
+)
 from web.users.users import (
     current_active_user,
     current_superuser,

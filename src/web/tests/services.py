@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.inspection import inspect
 
 from database.models import Tests, User, Histories
 from web.tests.schemas import TestPassInput
@@ -57,3 +58,7 @@ async def calculate_test_result(
     await db_session.commit()
     await db_session.refresh(history)
     return history
+
+
+def sa_to_dict(obj):
+    return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}

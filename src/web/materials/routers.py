@@ -1,5 +1,6 @@
 import sqlalchemy
 from fastapi import APIRouter, Depends
+from fastapi_filter import FilterDepends
 from sqlalchemy import select, Delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -8,9 +9,12 @@ from starlette.responses import Response
 from database.models import Materials
 from dependencies import get_db_session
 from starlette.exceptions import HTTPException
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy import paginate
 
 from main_schemas import ResponseErrorBody
 from web.materials.exceptions import MaterialCreateError
+from web.materials.filters import MaterialsFilter
 from web.materials.schemas import Material, CreateMaterial, UpdateMaterial, DeleteMaterials, CreateMaterialBulk
 from web.materials.services import check_material_create, update_material_db, check_material_bulk_create
 from web.users.users import current_superuser
@@ -29,6 +33,16 @@ async def get_all_materials(
     query = select(Materials).order_by(Materials.id.desc())
     materials = await db_session.execute(query)
     return materials.scalars().all()
+
+
+@router.get('/paginated', response_model=Page[Material])
+async def get_paginated_materials(
+    materials_filter: MaterialsFilter = FilterDepends(MaterialsFilter),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    query = select(Materials).order_by(Materials.id.desc())
+    query = materials_filter.filter(query)
+    return await paginate(db_session, query)
 
 
 @router.get(

@@ -85,3 +85,5 @@ LOGGING = {
         },
     },
 }
+
+ORIGIN_HOSTS = os.getenv('ORIGIN_HOSTS', '').split(',')

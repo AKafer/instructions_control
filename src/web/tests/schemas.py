@@ -93,3 +93,8 @@ class History(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class TestsForUser(Test):
+    histories: list[History] = []
+

@@ -1,10 +1,50 @@
 import uuid
 from datetime import datetime, date, time
 
-from fastapi_users import schemas
+from fastapi_users import schemas, models
 from pydantic import EmailStr, Field, BaseModel, Extra
 
-from web.instructions.schemas import InstructionForUser
+class Histories(BaseModel):
+    id: int
+    date: datetime
+    link: str | None = None
+    signature: str | None = Field(None, exclude=True)
+
+    class Config:
+        orm_mode = True
+
+class Journal(BaseModel):
+    id: int
+    user_uuid: models.ID
+    last_date_read: datetime | None
+    valid: bool | None = None
+    remain_days: int | None = None
+    link: str | None = None
+    signature: str | None = Field(None, exclude=True)
+    actual: bool
+    histories: list[Histories]
+
+    class Config:
+        orm_mode = True
+
+
+class Instruction(BaseModel):
+    id: int
+    link: str | None = None
+    title: str
+    number: str | None
+    iteration: bool = False
+    period: int | None
+    filename: str | None = Field(None, exclude=True)
+    is_tests_bind: bool = False
+    is_modules_bind: bool = False
+
+    class Config:
+        orm_mode = True
+
+
+class InstructionForUser(Instruction):
+    journal: Journal | None
 
 
 class Profession(BaseModel):
