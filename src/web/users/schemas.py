@@ -98,7 +98,7 @@ class Material(BaseModel):
     id: int
     material_type: MaterialType
     sertificate: str | None
-    start_date: datetime | None
+    start_date: date | None
     period: int | None
     number_of_document: str | None
     quantity: int | None
@@ -110,7 +110,7 @@ class Material(BaseModel):
 class CreateMaterial(BaseModel):
     material_type_id: int
     sertificate: str | None
-    start_date: datetime | None
+    start_date: date | None
     period: int | None
     size: float | None
     quantity: int | None
