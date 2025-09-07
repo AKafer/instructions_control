@@ -76,7 +76,7 @@ async def get_all_training_modules_for_ins(
 
 @router.get(
     '/{training_module_id:int}',
-    dependencies=[Depends(current_superuser)],
+    dependencies=[Depends(current_user)],
     response_model=TrainingModule,
     responses={
         status.HTTP_400_BAD_REQUEST: {
@@ -90,7 +90,8 @@ async def get_all_training_modules_for_ins(
 async def get_training_module_by_id(
     request: Request,
     training_module_id: int,
-    db_session: AsyncSession = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session),
+    user: User = Depends(current_user)
 ):
     query = (
         select(TrainingModules)

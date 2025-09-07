@@ -151,10 +151,12 @@ async def get_all_tests(
             'model': ResponseErrorBody,
         },
     },
-    dependencies=[Depends(current_superuser)],
+    dependencies=[Depends(current_user)],
 )
 async def get_test_by_id(
-    test_id: int, db_session: AsyncSession = Depends(get_db_session)
+    test_id: int,
+    db_session: AsyncSession = Depends(get_db_session),
+    user: User = Depends(current_user),
 ):
     query = select(Tests).filter(Tests.id == test_id)
     test = await db_session.scalar(query)
