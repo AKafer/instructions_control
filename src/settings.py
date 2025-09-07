@@ -87,3 +87,5 @@ LOGGING = {
 }
 
 ORIGIN_HOSTS = os.getenv('ORIGIN_HOSTS', '').split(',')
+
+REDIS_URL = os.getenv('REDIS_URL', default='redis://localhost:6379/0')

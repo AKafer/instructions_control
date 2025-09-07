@@ -1,0 +1,2 @@
+MATERIAL_TYPE_SIMPLE_NEEDS_CACHE_KEY = 'material_type_simple_needs_{id}'
+MATERIAL_TYPE_SIMPLE_NEEDS_TTL = 60 * 60 * 24

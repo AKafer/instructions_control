@@ -17,6 +17,21 @@ services:
     networks:
       - control
 
+  redis:
+    container_name: control_redis
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: [ "redis-server", "--appendonly", "yes" ]
+    volumes:
+      - redis_data_control:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - control
+
   app:
     container_name: control_app
     image: akafer/ins_control
@@ -37,6 +52,8 @@ services:
         - ./logs:/app/src/logs
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - control
@@ -86,6 +103,7 @@ services:
 
 volumes:
   postgres_data:
+  redis_data_control:
 
 networks:
   control:

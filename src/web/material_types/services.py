@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from starlette.responses import StreamingResponse
 
+from constants import MATERIAL_TYPE_SIMPLE_NEEDS_CACHE_KEY, MATERIAL_TYPE_SIMPLE_NEEDS_TTL
 from database.models import ActivityRegistry, NormMaterials, Norms, User
 from database.models.material_types import MaterialTypes
 
@@ -286,13 +287,22 @@ async def calculate_need_process(
         with_height=with_height,
     )
 
-async def calculate_need_all_materials_simple(db_session: AsyncSession) -> Dict[str, Dict[str, Union[int, Dict[str, int]]]]:
+async def calculate_need_all_materials_simple(
+    db_session: AsyncSession,
+    cache: 'Cache',
+
+) -> Dict[str, Dict[str, Union[int, Dict[str, int]]]]:
     material_types_query = select(MaterialTypes)
     material_types = (await db_session.scalars(material_types_query)).all()
 
     results = {}
 
     for material_type in material_types:
+        data_in_cashe = await cache.get_json(MATERIAL_TYPE_SIMPLE_NEEDS_CACHE_KEY.format(id=material_type.id))
+        if data_in_cashe:
+            results[material_type.title] = data_in_cashe
+            continue
+
         norm_materials = await _get_norm_materials(db_session, material_type.id)
         if not norm_materials:
             continue
@@ -344,6 +354,12 @@ async def calculate_need_all_materials_simple(db_session: AsyncSession) -> Dict[
                 "need": total_need,
             },
         }
+
+        await cache.set_json(
+            MATERIAL_TYPE_SIMPLE_NEEDS_CACHE_KEY.format(id=material_type.id),
+            results[material_type.title],
+            ttl=MATERIAL_TYPE_SIMPLE_NEEDS_TTL
+        )
 
     return results
 

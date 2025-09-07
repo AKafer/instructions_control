@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 
 from pydantic import BaseModel, Extra
 
@@ -45,7 +45,9 @@ class Material(BaseModel):
     user: User
     material_type: MaterialType
     sertificate: str | None
-    start_date: datetime | None
+    start_date: date | None
+    end_date: date | None
+    term_to_control: int | None
     period: int | None
     number_of_document: str | None
     quantity: int | None
@@ -57,7 +59,7 @@ class CreateMaterial(BaseModel):
     user_id: str
     material_type_id: int
     sertificate: str | None
-    start_date: datetime | None
+    start_date: date | None
     period: int | None
     number_of_document: str | None
     quantity: int | None
@@ -69,7 +71,7 @@ class CreateMaterial(BaseModel):
 class MaterialData(BaseModel):
     material_type_id: int
     sertificate: str | None
-    start_date: datetime | None
+    start_date: date | None
     period: int | None
     quantity: int | None
 
@@ -85,7 +87,7 @@ class CreateMaterialBulk(BaseModel):
 
 class UpdateMaterial(BaseModel):
     sertificate: str | None
-    start_date: datetime | None
+    start_date: date | None
     period: int | None
     number_of_document: str | None
     quantity: int | None
@@ -100,4 +102,3 @@ class AddMaterials(BaseModel):
 
 class DeleteMaterials(BaseModel):
     material_ids: list[int]
-

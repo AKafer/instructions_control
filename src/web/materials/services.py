@@ -1,3 +1,5 @@
+from datetime import timedelta, datetime, date
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -48,3 +50,20 @@ async def check_material_bulk_create(
     )
     return verified_material_bulk_input
 
+
+def get_date_params(material: Materials) -> tuple | tuple[None, None]:
+    sd = material.start_date
+    period = material.period
+    today = date.today()
+
+    end_date, term_to_control = None, None
+    if sd and period is not None:
+        end = sd + timedelta(days=period)
+        if isinstance(end, datetime):
+            end = end.date()
+        if isinstance(today, datetime):
+            today = today.date()
+        end_date = end
+        term_to_control = (end - today).days
+
+    return end_date, term_to_control

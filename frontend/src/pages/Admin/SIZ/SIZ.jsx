@@ -1,18 +1,21 @@
 import styles from './SIZ.module.css';
 import Button from '../../../components/Button/Button';
 import {Modal} from '../../../components/Modals/Modal';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import useFillSelect from '../../../hooks/useFillSelect.hook';
 import {
+	getAllDivisionsUrl,
 	getAllMaterialsPaginatedUrl,
 	getAllMaterialTypesUrl,
-	getAllNormsUrl
+	getAllNormsUrl,
+	getAllProfessionsUrl
 } from '../../../helpers/constants';
 import {ManageTypes} from '../../../components/Modals/ManageTypes/ManageTypes';
 import {ManageNorms} from '../../../components/Modals/ManageNorms/ManageNorms';
 import {NormStatistics} from '../../../components/Modals/NormStatistics/NormStatistics';
 import UniversalTable from '../../../components/UTable/UTable';
-
+import Input from '../../../components/Input/Input';
+import {CustomSelect} from '../../../components/Select/Select';
 
 
 export function SIZ () {
@@ -21,6 +24,9 @@ export function SIZ () {
 	const [isNormStatisticsOpen, setIsNormStatisticsOpen] = useState(false);
 	const [totalRecords, setTotalRecords] = useState(0);
 	const [refreshKey, setRefreshKey] = useState(0);
+	const [lastNameFilter, setLastNameFilter] = useState(undefined);
+	const [selectedProfOption, setSelectedProfOption] = useState(null);
+	const [selectedDivOption, setSelectedDivOption] = useState(null);
 
 	const {
 		error: errorTypes,
@@ -39,6 +45,26 @@ export function SIZ () {
 		getItems: getNorms
 	} = useFillSelect({
 		endpoint: getAllNormsUrl,
+		labelField: 'title'
+	});
+
+	const {
+		error: errorProf,
+		options: optionsProf,
+		itemDict: professionDict,
+		getItems: getProfessions
+	} = useFillSelect({
+		endpoint: getAllProfessionsUrl,
+		labelField: 'title'
+	});
+
+	const {
+		error: errorDiv,
+		options: optionsDiv,
+		itemDict: divisionDict,
+		getItems: getDivisions
+	} = useFillSelect({
+		endpoint: getAllDivisionsUrl,
 		labelField: 'title'
 	});
 
@@ -95,39 +121,86 @@ export function SIZ () {
 			title: 'Сертификат',
 			key: 'sertificate',
 			dataIndex: 'sertificate',
-			render: (sertificate) => sertificate ?? '—'
+			render: (sertificate) => sertificate ?? '—',
+			align: 'center'
 		},
 		{
 			title: 'Номер документа',
 			dataIndex: 'number_of_document',
 			key: 'number_of_document',
-			render: (number_of_document) => number_of_document ?? '—'
+			render: (number_of_document) => number_of_document ?? '—',
+			align: 'center'
 		},
 		{
 			title: 'Дата выдачи',
 			dataIndex: 'start_date',
 			key: 'start_date',
 			render: (date) => date ? new Date(date).toLocaleDateString('ru-RU') : '—',
-			sorter: (a, b) => new Date(a.start_date) - new Date(b.start_date)
+			sorter: (a, b) => new Date(a.start_date) - new Date(b.start_date),
+			align: 'center'
 		},
 		{
 			title: 'Дата окончания',
 			dataIndex: 'end_date',
 			key: 'end_date',
 			render: (date) => date ? new Date(date).toLocaleDateString('ru-RU') : '—',
-			sorter: (a, b) => new Date(a.end_date) - new Date(b.end_date)
+			sorter: (a, b) => new Date(a.end_date) - new Date(b.end_date),
+			align: 'center'
+		},
+		{
+			title: 'Контроль через (дней)',
+			dataIndex: 'term_to_control',
+			key: 'term_to_control',
+			render: (term_to_control) => term_to_control ?? '—',
+			sorter: (a, b) => (a.term_to_control || 0) - (b.term_to_control || 0),
+			align: 'center'
 		},
 		{
 			title: 'Количество',
 			dataIndex: 'quantity',
 			key: 'quantity',
 			render: (quantity) => quantity ?? '—',
-			sorter: (a, b) => (a.quantity || 0) - (b.quantity || 0)
+			sorter: (a, b) => (a.quantity || 0) - (b.quantity || 0),
+			align: 'center'
 		}
 
 	];
 
+	const [debouncedLastName, setDebouncedLastName] = useState(lastNameFilter);
+
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			setDebouncedLastName(lastNameFilter);
+		}, 500);
+
+		return () => clearTimeout(timer);
+	}, [lastNameFilter]);
+
 	let filters = {};
+	if (lastNameFilter) {
+		filters = {
+			...filters,
+			user__last_name__ilike: `%${debouncedLastName}%`
+		};
+	}
+	if (selectedProfOption) {
+		filters = {
+			...filters,
+			user__profession_id__in: selectedProfOption.value
+		};
+	}
+	if (selectedDivOption) {
+		filters = {
+			...filters,
+			user__division_id__in: selectedDivOption.value
+		};
+	}
+
+	const ClearFilters = () => {
+		setSelectedProfOption(null);
+		setSelectedDivOption(null);
+		setLastNameFilter('');
+	};
 
 
 	return (
@@ -167,6 +240,36 @@ export function SIZ () {
 			</div>
 
 			<div className={styles.outer_table}>
+				{(errorDiv || errorProf) && <div className={styles.error}>
+					{errorDiv ? errorDiv : ''}--{errorProf ? errorProf : ''}
+				</div>}
+				<div className={styles.filters_table}>
+					<Input
+						value={lastNameFilter}
+						 onChange={(e) => setLastNameFilter(e.target.value)}
+						placeholder="Поиск по фамилии"
+					/>
+					<CustomSelect
+						value={selectedProfOption}
+						options={optionsProf}
+						placeholder="Фильтр по профессии"
+						onChange={setSelectedProfOption}
+					>
+					</CustomSelect>
+					<CustomSelect
+						value={selectedDivOption}
+						options={optionsDiv}
+						placeholder="Фильтр по подразделению"
+						onChange={setSelectedDivOption}
+					>
+					</CustomSelect>
+					<buton className={styles.filter_button} onClick={ClearFilters}>
+						<img  src="/icons/drop-filters-icon.svg" alt="drop-filters"/>
+					</buton>
+				</div>
+				<div className={styles.table_count}>
+					Количество записей: {totalRecords}
+				</div>
 				<div className={styles.table}>
 					<UniversalTable
 						endpoint={getAllMaterialsPaginatedUrl}

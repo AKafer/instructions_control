@@ -19,6 +19,21 @@ services:
     ports:
       - "5433:5432"
 
+  redis:
+    container_name: control_redis
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: [ "redis-server", "--appendonly", "yes" ]
+    volumes:
+      - redis_data_control:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - control
+
   nginx:
     container_name: control_nginx
     image: nginx:stable-alpine
@@ -54,6 +69,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - control
 
@@ -72,6 +89,7 @@ services:
 
 volumes:
   postgres_data:
+  redis_data_control:
 
 networks:
   control:

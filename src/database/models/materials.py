@@ -18,7 +18,7 @@ class Materials(BaseModel):
     )
 
     sertificate = sa.Column(sa.String(320), nullable=True)
-    start_date = sa.Column(sa.DateTime(timezone=True), nullable=True)
+    start_date = sa.Column(sa.Date(), nullable=True)
     period = sa.Column(sa.Integer, nullable=True)
     number_of_document = sa.Column(sa.String(320), nullable=True)
     quantity = sa.Column(sa.Integer, nullable=True)

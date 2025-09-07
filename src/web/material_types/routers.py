@@ -7,8 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from starlette.responses import Response
 
+from core.simple_cache import Cache
 from database.models.material_types import MaterialTypes
-from dependencies import get_db_session
+from dependencies import get_db_session, get_cache
 from starlette.exceptions import HTTPException
 
 from main_schemas import ResponseErrorBody
@@ -99,8 +100,9 @@ async def calculate_need(
 )
 async def calculate_need_all(
     db_session: AsyncSession = Depends(get_db_session),
+    cache: Cache = Depends(get_cache),
 ):
-    return await calculate_need_all_materials_simple(db_session)
+    return await calculate_need_all_materials_simple(db_session, cache)
 
 
 @router.post(

@@ -1,3 +1,5 @@
+import logging
+from contextlib import asynccontextmanager
 from logging import config as logging_config
 
 from fastapi import FastAPI
@@ -7,7 +9,11 @@ from starlette.responses import PlainTextResponse
 from starlette.staticfiles import StaticFiles
 
 import settings
+from core.simple_cache import Cache
 from routers import api_v1_router
+
+
+logger = logging.getLogger('control')
 
 
 def setup_routes(app: FastAPI):
@@ -17,12 +23,27 @@ def setup_routes(app: FastAPI):
 
 origins = settings.ORIGIN_HOSTS
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.cache = Cache(settings.REDIS_URL, namespace='control',)
+    try:
+        await app.state.cache.set("init:ping", "1", ttl=5)
+        logger.info("✅ Redis connected")
+    except Exception as e:
+        logger.exception("Redis connect failed: %s", e)
+
+    yield
+
+    await app.state.cache.close()
+
+
 
 def create_app() -> FastAPI:
     app = FastAPI(
         debug=True,
         docs_url='/api/v1/docs',
         openapi_url='/api/openapi.json',
+        lifespan=lifespan
     )
     setup_routes(app)
     add_pagination(app)
@@ -35,4 +56,5 @@ def create_app() -> FastAPI:
         allow_methods=['*'],
         allow_headers=['*'],
     )
+
     return app

@@ -5,8 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from starlette.responses import Response
 
+from constants import MATERIAL_TYPE_SIMPLE_NEEDS_CACHE_KEY
+from core.simple_cache import Cache
 from database.models import Norms, NormMaterials
-from dependencies import get_db_session
+from dependencies import get_db_session, get_cache
 from starlette.exceptions import HTTPException
 
 from main_schemas import ResponseErrorBody
@@ -133,13 +135,18 @@ async def add_materials_to_norm(
     norm_id: int,
     norm_material_input: list[NormMaterialCreateInput],
     db_session: AsyncSession = Depends(get_db_session),
+    cache: Cache = Depends(get_cache),
 ):
     try:
         for material in norm_material_input:
             db_material = NormMaterials(**material.dict(), norm_id=norm_id)
             db_session.add(db_material)
-            await db_session.commit()
-            await db_session.refresh(db_material)
+            await cache.delete(
+                MATERIAL_TYPE_SIMPLE_NEEDS_CACHE_KEY.format(
+                    id=material.material_type_id
+                )
+            )
+        await db_session.commit()
         query = select(Norms).filter(Norms.id == norm_id)
         norm = await db_session.scalar(query)
         return norm
