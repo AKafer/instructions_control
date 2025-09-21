@@ -80,7 +80,7 @@ export function SIZ () {
 		itemDict: userDict,
 		getItems: getUsers
 	} = useFillSelect({
-		endpoint: getAllUsersUrl,
+		endpoint: `${getAllUsersUrl}/`,
 		labelBuilder: (u) => {
 			return [u.last_name, u.name, u.father_name].filter(Boolean).join(' ');
 		}
