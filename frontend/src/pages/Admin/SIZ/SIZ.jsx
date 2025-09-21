@@ -8,7 +8,8 @@ import {
 	getAllMaterialsPaginatedUrl,
 	getAllMaterialTypesUrl,
 	getAllNormsUrl,
-	getAllProfessionsUrl
+	getAllProfessionsUrl,
+	getAllUsersUrl
 } from '../../../helpers/constants';
 import {ManageTypes} from '../../../components/Modals/ManageTypes/ManageTypes';
 import {ManageNorms} from '../../../components/Modals/ManageNorms/ManageNorms';
@@ -16,6 +17,8 @@ import {NormStatistics} from '../../../components/Modals/NormStatistics/NormStat
 import UniversalTable from '../../../components/UTable/UTable';
 import Input from '../../../components/Input/Input';
 import {CustomSelect} from '../../../components/Select/Select';
+import {DeleteSIZ} from '../../../components/Modals/DeleteSIZ/DeleteSIZ';
+import {CreateSIZ} from '../../../components/Modals/CreateSIZ/CreateSIZ';
 
 
 export function SIZ () {
@@ -27,6 +30,9 @@ export function SIZ () {
 	const [lastNameFilter, setLastNameFilter] = useState(undefined);
 	const [selectedProfOption, setSelectedProfOption] = useState(null);
 	const [selectedDivOption, setSelectedDivOption] = useState(null);
+	const [selectedSIZ, setSelectedSIZ] = useState(null);
+	const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+	const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
 
 	const {
 		error: errorTypes,
@@ -68,6 +74,18 @@ export function SIZ () {
 		labelField: 'title'
 	});
 
+	const {
+		error: errorUser,
+		options: optionsUser,
+		itemDict: userDict,
+		getItems: getUsers
+	} = useFillSelect({
+		endpoint: getAllUsersUrl,
+		labelBuilder: (u) => {
+			return [u.last_name, u.name, u.father_name].filter(Boolean).join(' ');
+		}
+	});
+
 	const openModalTypes = () => {
 		setIsManageTypesOpen(true);
 	};
@@ -80,6 +98,12 @@ export function SIZ () {
 		setIsNormStatisticsOpen(true);
 	};
 
+	const toKey = (v) => (v === null || v === undefined || v === '' ? null : String(v));
+	const normalizeForEditor = (r) => ({
+		...r,
+		user_id: toKey(r.user_id ?? r.user?.id),
+		material_type_id: toKey(r.material_type_id ?? r.material_type?.id)
+	});
 	const columns = [
 		{
 			title: 'Тип материала',
@@ -162,8 +186,41 @@ export function SIZ () {
 			render: (quantity) => quantity ?? '—',
 			sorter: (a, b) => (a.quantity || 0) - (b.quantity || 0),
 			align: 'center'
+		},
+		{
+			title: 'Изменить',
+			key: 'edit',
+			align: 'center',
+			render: (_, record) => (
+				<button
+					className={styles.iconButton}
+					onClick={() => {
+						setSelectedSIZ(normalizeForEditor(record));
+						setCreateModalOpen(true);
+					}}
+				>
+					<img className={styles.iconImage} src="/icons/edit-icon.svg" alt="edit" />
+				</button>
+			)
+		},
+		{
+			title: 'Удалить',
+			key: 'delete',
+			align: 'center',
+			render: (_, record) => (
+				<button className={styles.iconButton}
+					onClick={() => {
+						setSelectedSIZ(record);
+						setDeleteModalOpen(true);
+					}}
+				>
+					<img
+						className={styles.iconImage}
+						src="/icons/delete-icon.svg"
+						alt="delete"/>
+				</button>
+			)
 		}
-
 	];
 
 	const [debouncedLastName, setDebouncedLastName] = useState(lastNameFilter);
@@ -202,12 +259,30 @@ export function SIZ () {
 		setLastNameFilter('');
 	};
 
+	const openCreateModal = () => {
+		setSelectedSIZ(null);
+		setCreateModalOpen(true);
+	};
 
 	return (
 		<div className={styles.siz}>
 			<div className={styles.outer_manage}>
 				<div className={styles.manage}>
 					<h1 className={styles.title}>Управление</h1>
+					<Button onClick={openCreateModal}>
+					Выдать СИЗ
+					</Button>
+					<Modal isOpen={isCreateModalOpen} onClose={() => setCreateModalOpen(false)}>
+						<CreateSIZ
+							optionsUser={optionsUser}
+							userDict={userDict}
+							optionsTypes={optionsTypes}
+							typesDict={typesDict}
+							setCreateModalOpen={setCreateModalOpen}
+							setRefreshKey={setRefreshKey}
+							currentSIZ={selectedSIZ}
+						/>
+					</Modal>
 					<Button onClick={openModalTypes}>
 					Типы материалов
 					</Button>
@@ -283,6 +358,13 @@ export function SIZ () {
 					/>
 				</div>
 			</div>
+			<Modal isOpen={isDeleteModalOpen} onClose={() => setDeleteModalOpen(false)}>
+				<DeleteSIZ
+					SIZ={selectedSIZ}
+					setDeleteModalOpen={setDeleteModalOpen}
+					setRefreshKey={setRefreshKey}
+				/>
+			</Modal>
 		</div>
 	);
 }

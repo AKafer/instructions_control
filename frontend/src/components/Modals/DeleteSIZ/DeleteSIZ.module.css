@@ -1,0 +1,61 @@
+.help {
+    display: flex;
+	flex-direction: column;
+    align-items: center;
+}
+
+.content {
+    font-family: var(--font_default), sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: normal;
+    color: var(--color_text_default);
+    max-width: 400px;
+    padding: 20px;
+    padding-top: 35px;
+}
+
+.title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.user_bold {
+    font-weight: 700;
+}
+
+.icon {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  vertical-align: middle;
+}
+
+.text {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
+.telegramButton:hover .icon {
+    filter: invert(0.5) sepia(1) saturate(3) hue-rotate(180deg);
+}
+
+.button {
+    padding-bottom: 15px;
+}
+
+.error {
+    background: var(--color_destructive_default);
+    color: var(--color_background_default);
+    padding: 16px;
+    margin: 0 auto;
+    min-width: 500px;
+    text-align: center;
+    align-self: center;
+    font-size: 20px;
+    font-weight: 600;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}

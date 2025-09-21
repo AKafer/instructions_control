@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import useApi from './useApi.hook';
 
-const useFillSelect = ({ endpoint, labelField = 'title' }) => {
+const useFillSelect = ({ endpoint, labelField = 'title', labelBuilder }) => {
 	const [error, setError] = useState(undefined);
 	const [options, setOptions] = useState([]);
 	const [itemDict, setItemDict] = useState({});
 	const api = useApi();
+	const idKey = (id) => String(id);
 
 	const getItems = async () => {
 		try {
@@ -19,8 +20,8 @@ const useFillSelect = ({ endpoint, labelField = 'title' }) => {
 
 			const sortedOptions = data
 				.map(item => ({
-					value: item.id,
-					label: String(item[labelField]),
+					value: idKey(item.id),
+					label: labelBuilder ? labelBuilder(item) : String(item[labelField]),
 					description: item.description
 				}))
 				.sort((a, b) => a.label.localeCompare(b.label));
@@ -28,7 +29,7 @@ const useFillSelect = ({ endpoint, labelField = 'title' }) => {
 			setOptions(sortedOptions);
 
 			const itemDict = data.reduce((acc, curr) => {
-				acc[curr.id] = curr;
+				acc[idKey(curr.id)] = curr;
 				return acc;
 			}, {});
 			setItemDict(itemDict);

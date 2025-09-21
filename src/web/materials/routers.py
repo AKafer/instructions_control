@@ -210,7 +210,7 @@ async def update_material(
 
 
 @router.delete(
-    '/materials/{id}',
+    '/materials/bulk_delete',
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         status.HTTP_400_BAD_REQUEST: {
@@ -243,6 +243,44 @@ async def delete_materials(
         query = Delete(Materials).filter(
             Materials.id.in_(delete_materials_input.material_ids)
         )
+        await db_session.execute(query)
+        await db_session.commit()
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    except sqlalchemy.exc.IntegrityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Error while delete materials: {e}',
+        )
+
+
+@router.delete(
+    '/{material_id:int}',
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def delete_material(
+    material_id : int,
+    db_session: AsyncSession = Depends(get_db_session),
+    cache: Cache = Depends(get_cache)
+):
+    try:
+        query = select(Materials).filter(Materials.id==material_id)
+        material = await db_session.scalar(query)
+        if not material:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='No materials found to delete',
+            )
+        await cache.delete(
+            MATERIAL_TYPE_SIMPLE_NEEDS_CACHE_KEY.format(
+                id=material.material_type_id
+            )
+        )
+        query = Delete(Materials).filter(Materials.id==material_id)
         await db_session.execute(query)
         await db_session.commit()
         return Response(status_code=status.HTTP_204_NO_CONTENT)
