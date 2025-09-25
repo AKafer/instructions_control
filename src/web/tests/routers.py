@@ -6,7 +6,6 @@ from collections import defaultdict
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.inspection import inspect
 from starlette import status
 from starlette.requests import Request
 from starlette.responses import Response
@@ -16,6 +15,7 @@ from database.models.tests import Templates, Tests, Questions
 from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
+from externals.http.yandex_llm import YandexLLMClient
 from main_schemas import ResponseErrorBody
 from web.tests.schemas import (
     Template,
@@ -25,9 +25,15 @@ from web.tests.schemas import (
     QuestionCreateInput,
     Question,
     TestPassInput,
-    History, TestsForUser,
+    History,
+    LLM_INPUT_DATA,
 )
-from web.tests.services import update_test_in_db, calculate_test_result, sa_to_dict
+from web.tests.services import (
+    update_test_in_db,
+    calculate_test_result,
+    sa_to_dict,
+    extract_json_from_text,
+)
 from web.users.users import current_superuser, current_user
 
 router = APIRouter(
@@ -331,33 +337,45 @@ async def delete_question(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-
-
 @router.get(
     '/get_tests_instruction/{instruction_id:int}',
     response_model=dict,
-    dependencies=[Depends(current_user)]
+    dependencies=[Depends(current_user)],
 )
 async def get_test_instruction(
     instruction_id: int,
     db_session: AsyncSession = Depends(get_db_session),
-    user: User = Depends(current_user)
+    user: User = Depends(current_user),
 ):
     if user.is_superuser:
         return {}
 
-    tests = (await db_session.execute(
-        select(Tests).filter(Tests.instruction_id == instruction_id).order_by(Tests.id)
-    )).scalars().all()
+    tests = (
+        (
+            await db_session.execute(
+                select(Tests)
+                .filter(Tests.instruction_id == instruction_id)
+                .order_by(Tests.id)
+            )
+        )
+        .scalars()
+        .all()
+    )
 
     if not tests:
         return {'data': []}
 
-    histories = (await db_session.execute(
-        select(Histories)
-        .filter(Histories.user_uuid == str(user.id))
-        .filter(Histories.test_id.in_([t.id for t in tests]))
-    )).scalars().all()
+    histories = (
+        (
+            await db_session.execute(
+                select(Histories)
+                .filter(Histories.user_uuid == str(user.id))
+                .filter(Histories.test_id.in_([t.id for t in tests]))
+            )
+        )
+        .scalars()
+        .all()
+    )
 
     by_test = defaultdict(list)
     for h in histories:
@@ -370,3 +388,50 @@ async def get_test_instruction(
         data.append(td)
 
     return {'data': data}
+
+
+@router.post(
+    "/llm/questions",
+    response_model=dict | list | str,
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(current_superuser)],
+    openapi_extra={
+        "requestBody": {
+            "content": {
+                "text/plain": {
+                    "schema": {"type": "string"}
+                }
+            }
+        }
+    }
+)
+async def create_llm_question(request: Request):
+    raw_text = await request.body()
+    text =  raw_text.decode("utf-8", errors="ignore").strip()
+    if not text:
+        raise HTTPException(
+            status_code=400,
+            detail="Empty request body"
+    )
+
+    client = YandexLLMClient()
+    resp = await client.get_llm_questions(text)
+    if resp.status != 200:
+        raise HTTPException(
+            status_code=502,
+            detail=f'LLM request failed with status {resp.status}: {resp.parsed_response}'
+        )
+    try:
+        text = resp.parsed_response["result"]["alternatives"][0]["message"]["text"]
+    except (TypeError, KeyError, IndexError):
+        raise HTTPException(
+            status_code=502,
+            detail=f'Bad LLM response structure {resp.parsed_response}'
+        )
+    try:
+        return extract_json_from_text(text)
+    except Exception as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f'Failed to parse JSON: {e}'
+        )

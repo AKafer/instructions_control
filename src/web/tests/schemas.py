@@ -98,3 +98,6 @@ class History(BaseModel):
 class TestsForUser(Test):
     histories: list[History] = []
 
+
+class LLM_INPUT_DATA(BaseModel):
+    content: str

@@ -89,3 +89,10 @@ LOGGING = {
 ORIGIN_HOSTS = os.getenv('ORIGIN_HOSTS', '').split(',')
 
 REDIS_URL = os.getenv('REDIS_URL', default='redis://localhost:6379/0')
+
+YANDEX_LLM_SCHEMA = os.getenv('YANDEX_LLM_SCHEMA', default='https')
+YANDEX_LLM_API_HOST = os.getenv('YANDEX_LLM_API_HOST', default='llm.api.cloud.yandex.net')
+YANDEX_LLM_API_URL = f'{YANDEX_LLM_SCHEMA}://{YANDEX_LLM_API_HOST}'
+YANDEX_LLM_API_URI = '/foundationModels/v1/completion'
+YANDEX_LLM_API_KEY = os.getenv('YANDEX_LLM_API_KEY', default='')
+YANDEX_LLM_FOLDER_ID = os.getenv('YANDEX_LLM_FOLDER_ID', default='')

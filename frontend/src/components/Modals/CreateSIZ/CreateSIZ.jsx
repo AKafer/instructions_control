@@ -54,7 +54,7 @@ export function CreateSIZ({
 
 		return (
 			optionsUser.find(o => o.value === id) ||
-    (userDict[id] ? { value: id, label: fio(userDict[id]), description: userDict[id].description } : null)
+    		(userDict[id] ? { value: id, label: fio(userDict[id]), description: userDict[id].description } : null)
 		);
 	}, [values.user_id, optionsUser, userDict]);
 
@@ -64,7 +64,7 @@ export function CreateSIZ({
 
 		return (
 			optionsTypes.find(o => o.value === id) ||
-    (typesDict[id] ? { value: id, label: String(typesDict[id].title || ''), description: typesDict[id].description } : null)
+			(typesDict[id] ? { value: id, label: String(typesDict[id].title || ''), description: typesDict[id].description } : null)
 		);
 	}, [values.material_type_id, optionsTypes, typesDict]);
 
@@ -72,7 +72,6 @@ export function CreateSIZ({
 		dispatchForm({type: 'SET_VALUE', payload: { [e.target.name]: e.target.value}});
 		dispatchForm({type: 'SET_VALIDITY_FOR_FIELD', payload: e.target.name});
 	};
-
 
 	const selectUser = (e) => {
 		dispatchForm({type: 'SET_VALUE', payload: { 'user_id': e.value}});
@@ -127,8 +126,6 @@ export function CreateSIZ({
 			setStartDate('');
 		}
 	};
-
-
 
 	const addSIZ = (e) => {
 		e.preventDefault();

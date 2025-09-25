@@ -18,6 +18,7 @@ export const getCalculateNeedUrl = '/material_types/calculate_need_all';
 export const getAllNormsUrl = '/norms/';
 export const getAllMaterialsUrl = '/materials/';
 export const getAllMaterialsPaginatedUrl = '/materials/paginated';
+export const getAllTestsUrl = '/tests/tests';
 
 export const unitsOfMeasurements = [
 	{ value: 'шт', label: 'шт' },
