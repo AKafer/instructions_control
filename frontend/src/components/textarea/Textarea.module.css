@@ -1,0 +1,24 @@
+.base {
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color_primary_default);
+  font-family: var(--font_default), sans-serif;
+  font-size: 13px;
+  color: var(--color_text_default);
+  background: var(--color_background_default);
+  box-sizing: border-box;
+}
+
+.base:focus-visible {
+  outline: 2px solid var(--color_primary_default);
+  border-color: var(--color_primary_default);
+}
+
+.base:disabled {
+  background: var(--color_surface_default_trans);
+  color: var(--color_primary_default);
+  cursor: not-allowed;
+}

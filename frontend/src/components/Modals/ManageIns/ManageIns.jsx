@@ -92,7 +92,7 @@ export function ManageIns({
 		}
 		return Object
 			.values(modulesDict)
-			.filter(m => m.instruction_id === valueIns.value)
+			.filter(m => String(m.instruction_id) === String(valueIns.value))
 			.sort((a, b) => a.order_index - b.order_index);
 	}, [valueIns, modulesDict]);
 
@@ -463,7 +463,7 @@ export function ManageIns({
 					</div>
 					<div className={styles.binds_box}>
 						{Object.values(rulesDict)
-							.filter(rule => rule.instruction_id === valueIns?.value)  /* только нужные */
+							.filter(rule => String(rule.instruction_id) === String(valueIns?.value))
 							.map(rule => (
 								<BindedProf
 									key={rule.id}
@@ -538,4 +538,4 @@ export function ManageIns({
 			</div>
 		</div>
 	);
-};
+}
