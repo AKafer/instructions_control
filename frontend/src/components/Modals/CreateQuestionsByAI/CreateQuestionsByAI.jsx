@@ -1,11 +1,13 @@
 import styles from './CreateQuestionsByAI.module.css';
-import {useCallback, useEffect, useMemo, useReducer, useState} from 'react';
+import {useCallback, useMemo, useState} from 'react';
 import {SelectForm} from '../../SelectForm/SelectForm';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import useApi from '../../../hooks/useApi.hook';
 import Button from '../../Button/Button';
 import {Textarea} from '../../textarea/Textarea';
+import QuestionItem from '../../QuestionItem/QuestionItem';
+import Spinner from '../../Spinner/Spinner';
 
 
 export function CreateQuestionsByAI({
@@ -21,6 +23,8 @@ export function CreateQuestionsByAI({
 	const [promptText, setPromptText] = useState('');
 	const [questions, setQuestions] = useState([]);
 	const [selectedIds, setSelectedIds] = useState(new Set());
+	const [attachLoading, setAttachLoading] = useState(false);
+	const [attachedOk, setAttachedOk] = useState(false);
 
 	const selectAll = useMemo(() => questions.length > 0 && selectedIds.size === questions.length, [questions, selectedIds]);
 	const someSelected = useMemo(() => selectedIds.size > 0, [selectedIds]);
@@ -74,7 +78,9 @@ export function CreateQuestionsByAI({
 		}
 	}, [api, promptText]);
 
-	const attachSelectedToTest = useCallback(() => {
+	const attachSelectedToTest = useCallback(async () => {
+		setError(undefined);
+
 		if (!selectedTestOption?.value) {
 			setError('Выберите тест.');
 			return;
@@ -83,19 +89,44 @@ export function CreateQuestionsByAI({
 			setError('Выберите хотя бы один вопрос.');
 			return;
 		}
-		const picked = questions.filter(q => selectedIds.has(q.id));
-		// заглушка — тут сделай реальный POST на свой бэкенд
-		// например: api.post(`/api/v1/tests/${selectedTestOption.value}/questions`, picked)
-		// пока — просто уведомим:
-		// eslint-disable-next-line no-alert
-		alert(`Отправляем ${picked.length} вопрос(ов) в тест ID=${selectedTestOption.value}`);
-	}, [questions, selectedIds, selectedTestOption]);
+
+		const testId = Number(selectedTestOption.value);
+
+		const picked = questions
+			.filter(q => selectedIds.has(q.id))
+			.map(q => ({
+				question: q.question,
+				answers: (Array.isArray(q.answers) ? q.answers : []).map(a => ({
+					[String(a.id)]: String(a.text ?? '')
+				})),
+				correct_answer: Number(q.correct_answer_id),
+				test_id: testId
+			}));
+
+		if (!picked.length) {
+			setError('Нет выбранных вопросов для отправки.');
+			return;
+		}
+
+		setAttachLoading(true);
+		try {
+			await api.post('/tests/questions/bulk_create', { questions: picked });
+			setAttachedOk(true);
+			setTimeout(() => setAttachedOk(false), 1000);
+		} catch (e) {
+			const msg = e?.response?.data?.detail || e?.message || 'Ошибка при сохранении вопросов';
+			setError(msg);
+		} finally {
+			setAttachLoading(false);
+		}
+	}, [api, questions, selectedIds, selectedTestOption]);
+
 
 
 	const errorMessage = 'Обязательное поле';
+	const isDisabled = !someSelected || !selectedTestOption || loading;
 	return (
 		<>
-
 			<div className={styles['create_questions']}>
 				<h1 className={styles['title']}>Создание вопросов для теста</h1>
 				{error && <div className={styles['error']}>{error}</div>}
@@ -112,7 +143,11 @@ export function CreateQuestionsByAI({
 							/>
 						</div>
 						<div className={styles['genButton']}>
-							<Button onClick={sendToLLM}>
+							<Button
+								onClick={sendToLLM}
+								disabled={loading}
+								className={styles.actionBtn}
+							>
 							Сгенерировать
 							</Button>
 						</div>
@@ -124,7 +159,7 @@ export function CreateQuestionsByAI({
 							data-tooltip-content={errorMessage}
 							data-tooltip-id="errorTooltipProf"
 						>
-						Тесты*:
+						Тест:
 							<SelectForm
 								value={selectedTestOption}
 								options={optionsTests}
@@ -140,80 +175,45 @@ export function CreateQuestionsByAI({
 								className={styles['my-tooltip']}
 							/>
 						</span>
-						<div style={{ display: 'flex', alignItems: 'center', marginBottom: 8, gap: 8 }}>
+						<div className={styles['question_title']}>
 							<strong>Вопросы</strong>
-							<label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', userSelect: 'none' }}>
+							<label className={styles['checkbox_select_all']}>
 								<input
 									type="checkbox"
 									checked={selectAll}
 									onChange={toggleAll}
 								/>
-              			Выбрать все
+              						Выбрать все
 							</label>
 						</div>
-						<div
-							style={{
-								maxHeight: 420,
-								overflowY: 'auto',
-								border: '1px solid #eee',
-								borderRadius: 8,
-								padding: 12
-							}}
-						>
-							{questions.length === 0 ? (
-								<div style={{ color: '#888' }}>Список пуст. Сгенерируйте вопросы.</div>
+
+						<div className={styles.quetions_box} aria-busy={loading}>
+							{loading ? (
+								<div className={styles.loaderWrap}>
+									<Spinner />
+								</div>
+							) : questions.length === 0 ? (
+								<div className={styles.empty_box}>Список пуст. Сгенерируйте вопросы.</div>
 							) : (
 								questions.map((q) => (
-									<div
+									<QuestionItem
 										key={q.id}
-										style={{
-											border: '1px solid #e5e5e5',
-											borderRadius: 8,
-											padding: 10,
-											marginBottom: 10
-										}}
-									>
-										<div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-											<input
-												type="checkbox"
-												checked={selectedIds.has(q.id)}
-												onChange={() => toggleOne(q.id)}
-											/>
-											<div><strong>#{q.id}</strong> {q.question}</div>
-										</div>
-										<ul style={{ margin: '8px 0 0 24px', padding: 0 }}>
-											{Array.isArray(q.answers) && q.answers.map(a => (
-												<li key={a.id} style={{ marginBottom: 2 }}>
-													{a.id}. {a.text}
-													{q.correct_answer_id === a.id && (
-														<span style={{ marginLeft: 8, fontSize: 12, color: 'green' }}>
-                            (верный)
-														</span>
-													)}
-												</li>
-											))}
-										</ul>
-									</div>
+										question={q}
+										checked={selectedIds.has(q.id)}
+										onToggle={() => toggleOne(q.id)}
+									/>
 								))
 							)}
 						</div>
 
-						<div style={{ marginTop: 12 }}>
-							<button
-								className={styles.buttonPrimary ?? undefined}
-								type="button"
+						<div className={styles['testButton']}>
+							<Button
 								onClick={attachSelectedToTest}
-								disabled={!someSelected || !selectedTestOption || loading}
-								style={{
-									padding: '10px 14px',
-									borderRadius: 8,
-									border: 'none',
-									cursor: (!someSelected || !selectedTestOption || loading) ? 'not-allowed' : 'pointer',
-									opacity: (!someSelected || !selectedTestOption || loading) ? 0.6 : 1
-								}}
+								disabled={isDisabled}
+								className={styles.actionBtn}
 							>
-              				Включить в тест
-							</button>
+								{attachedOk ? '✓ Добавлено' : (attachLoading ? 'Сохранение…' : 'Включить в тест')}
+							</Button>
 						</div>
 					</div>
 				</div>

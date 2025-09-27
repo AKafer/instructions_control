@@ -19,6 +19,10 @@ class QuestionCreateInput(BaseModel):
     test_id: int
 
 
+class BulkCreateQuestionsInput(BaseModel):
+    questions: list[QuestionCreateInput]
+
+
 class Question(BaseModel):
     id: int
     question: str

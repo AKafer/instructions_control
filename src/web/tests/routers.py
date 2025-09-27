@@ -26,7 +26,7 @@ from web.tests.schemas import (
     Question,
     TestPassInput,
     History,
-    LLM_INPUT_DATA,
+    LLM_INPUT_DATA, BulkCreateQuestionsInput,
 )
 from web.tests.services import (
     update_test_in_db,
@@ -309,6 +309,43 @@ async def create_question(
     await db_session.commit()
     await db_session.refresh(db_question)
     return db_question
+
+
+@router.post(
+    '/questions/bulk_create',
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+        status.HTTP_404_NOT_FOUND: {
+            'model': ResponseErrorBody,
+        },
+    },
+    dependencies=[Depends(current_superuser)],
+)
+async def create_bulk_questions(
+    input_data: BulkCreateQuestionsInput,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    for q in input_data.questions:
+        print(q.question, len(q.answers))
+        if not (0 <= q.correct_answer <= len(q.answers)):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f'Correct answer index {q.correct_answer} '
+                    f'is out of range for question "{q.question}"'
+                )
+            )
+
+        db_question = Questions(**q.dict())
+        db_session.add(db_question)
+    await db_session.commit()
+    return Response(
+        content=f'Created {len(input_data.questions)} questions',
+        status_code=status.HTTP_201_CREATED
+    )
 
 
 @router.delete(

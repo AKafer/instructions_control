@@ -41,6 +41,7 @@
 
 .right_panel {
     display: flex;
+    width: 500px;
     padding-left: 30px;
     padding-right: 30px;
     flex-direction: column;
@@ -75,7 +76,20 @@
 }
 
 .textarea {
-    height: 250px
+    height: 420px
+}
+
+.question_title {
+    display: flex;
+    margin: 20px 0;
+}
+
+
+.checkbox_select_all {
+    display: inline-flex;
+    margin-left: 250px;
+    gap: 6px;
+    cursor: pointer;
 }
 
 .my-tooltip {
@@ -86,4 +100,33 @@
   border-radius: 4px !important;
   font-size: 13px !important;
   transform: translateY(42px) !important;
+}
+
+.empty_box{
+    height: 320px;
+    color: var(--color_test_disabled);
+}
+
+.quetions_box {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 320px;
+    overflow-y: auto;
+}
+
+.testButton {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.actionBtn {
+  cursor: pointer;
+}
+
+.actionBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
 }
