@@ -12,9 +12,17 @@ class Template(BaseModel):
         orm_mode = True
 
 
+class Answer(BaseModel):
+    id: int
+    text: str
+
+    class Config:
+        orm_mode = True
+
+
 class QuestionCreateInput(BaseModel):
     question: str
-    answers: list[dict]
+    answers: list[Answer]
     correct_answer: int
     test_id: int
 
@@ -26,7 +34,7 @@ class BulkCreateQuestionsInput(BaseModel):
 class Question(BaseModel):
     id: int
     question: str
-    answers: list[dict]
+    answers: list[Answer]
     correct_answer: int
     test_id: int
 

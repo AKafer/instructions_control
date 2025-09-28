@@ -39,7 +39,7 @@ class YandexLLMClient(BaseApiClient):
             'modelUri': f'gpt://{settings.YANDEX_LLM_FOLDER_ID}/yandexgpt/latest',
             'completionOptions': {
                 'stream': False,
-                'temperature': 0.0,
+                'temperature': 0.2,
                 'maxTokens': 5000,
             },
             'messages': [

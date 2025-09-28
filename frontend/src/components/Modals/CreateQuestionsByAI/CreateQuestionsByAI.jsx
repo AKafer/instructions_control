@@ -95,10 +95,13 @@ export function CreateQuestionsByAI({
 		const picked = questions
 			.filter(q => selectedIds.has(q.id))
 			.map(q => ({
-				question: q.question,
-				answers: (Array.isArray(q.answers) ? q.answers : []).map(a => ({
-					[String(a.id)]: String(a.text ?? '')
-				})),
+				question: String(q.question ?? ''),
+				answers: (Array.isArray(q.answers) ? q.answers : [])
+					.filter(a => a && a.id != null && a.text != null)
+					.map(a => ({
+						id: String(a.id),
+						text: String(a.text ?? '')
+					})),
 				correct_answer: Number(q.correct_answer_id),
 				test_id: testId
 			}));
