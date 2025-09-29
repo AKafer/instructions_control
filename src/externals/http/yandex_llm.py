@@ -4,6 +4,8 @@ from constants import (
     PROMPT_TEMPLATE,
     MIN_NUMBER_OF_QUESTIONS,
     MAX_NUMBER_OF_QUESTIONS,
+    COMPLETION_TEMPERATURE,
+    COMPLETION_MAX_TOKENS,
 )
 from externals.http.base import BaseApiClient
 
@@ -39,13 +41,53 @@ class YandexLLMClient(BaseApiClient):
             'modelUri': f'gpt://{settings.YANDEX_LLM_FOLDER_ID}/yandexgpt/latest',
             'completionOptions': {
                 'stream': False,
-                'temperature': 0.2,
-                'maxTokens': 5000,
+                'temperature': COMPLETION_TEMPERATURE,
+                'maxTokens': COMPLETION_MAX_TOKENS,
             },
             'messages': [
                 {'role': 'system', 'text': prompt},
                 {'role': 'user', 'text': content},
             ],
+            'json_schema': {
+                'schema': {
+                    'properties': {
+                        'questions': {
+                            'type': 'array',
+                            'items': {
+                                'type': 'object',
+                                'properties': {
+                                    'id': {'type': 'integer'},
+                                    'question': {'type': 'string'},
+                                    'answers': {
+                                        'type': 'array',
+                                        'items': {
+                                            'type': 'object',
+                                            'properties': {
+                                                'id': {'type': 'integer'},
+                                                'text': {'type': 'string'},
+                                            },
+                                            'required': ['id', 'text'],
+                                        },
+                                        'minItems': 3,
+                                        'maxItems': 4,
+                                    },
+                                    'correct_answer_id': {'type': 'integer'},
+                                },
+                                'required': [
+                                    'id',
+                                    'question',
+                                    'answers',
+                                    'correct_answer_id',
+                                ],
+                            },
+                            'minItems': min(1, target_q),
+                            'maxItems': max(1, target_q),
+                        }
+                    },
+                },
+                'required': ['questions'],
+                'type': 'object',
+            },
         }
 
     def get_headers(self):

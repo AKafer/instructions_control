@@ -192,9 +192,7 @@ export function CreateQuestionsByAI({
 
 						<div className={styles.quetions_box} aria-busy={loading}>
 							{loading ? (
-								<div className={styles.loaderWrap}>
-									<Spinner />
-								</div>
+								<Spinner showSeconds={true}/>
 							) : questions.length === 0 ? (
 								<div className={styles.empty_box}>Список пуст. Сгенерируйте вопросы.</div>
 							) : (
