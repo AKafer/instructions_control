@@ -13,24 +13,31 @@ import {DeleteSIZ} from '../../../components/Modals/DeleteSIZ/DeleteSIZ';
 import {useState} from 'react';
 import useFillSelect from '../../../hooks/useFillSelect.hook';
 import {CreateQuestionsByAI} from '../../../components/Modals/CreateQuestionsByAI/CreateQuestionsByAI';
+import {ManageTests} from '../../../components/Modals/ManageTests/ManageTests';
 
 
 export function Education () {
-	const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+	const [isQAIModalOpen, setIsQAIModalOpen] = useState(false);
+	const [isManageTestsOpen, setIsManageTestsOpen] = useState(false);
+
 
 	const {
 		error: errorTests,
 		options: optionsTests,
 		itemDict: testsDict,
-		getItems: getTypes
+		getItems: getTests
 	} = useFillSelect({
 		endpoint: getAllTestsUrl,
 		labelField: 'title'
 	});
 
-	const openCreateModal = () => {
-		// setSelectedSIZ(null);
-		setCreateModalOpen(true);
+	const openQAIModal = () => {
+		setIsQAIModalOpen(true);
+	};
+
+	const openManageTestsModal = () => {
+		getTests();
+		setIsManageTestsOpen(true);
 	};
 
 	return (
@@ -38,17 +45,28 @@ export function Education () {
 			<div className={styles.outer_manage}>
 				<div className={styles.manage}>
 					<h1 className={styles.title}>Управление</h1>
-					<Button onClick={openCreateModal}>
-					Вопросы от AI
+					<Button onClick={openManageTestsModal}>
+					Тесты
 					</Button>
-					<Modal isOpen={isCreateModalOpen} onClose={() => setCreateModalOpen(false)}>
-						<CreateQuestionsByAI
+					<Modal isOpen={isManageTestsOpen} onClose={() => setIsManageTestsOpen(false)}>
+						<ManageTests
 							optionsTests={optionsTests}
 							testsDict={testsDict}
-							setCreateModalOpen={setCreateModalOpen}
+							setCreateModalOpen={setIsManageTestsOpen}
 						/>
 					</Modal>
 
+
+					<Button onClick={openQAIModal}>
+					Вопросы от AI
+					</Button>
+					<Modal isOpen={isQAIModalOpen} onClose={() => setIsQAIModalOpen(false)}>
+						<CreateQuestionsByAI
+							optionsTests={optionsTests}
+							testsDict={testsDict}
+							setCreateModalOpen={setIsQAIModalOpen}
+						/>
+					</Modal>
 				</div>
 			</div>
 

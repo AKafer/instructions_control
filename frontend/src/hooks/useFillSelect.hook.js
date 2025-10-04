@@ -5,10 +5,12 @@ const useFillSelect = ({ endpoint, labelField = 'title', labelBuilder }) => {
 	const [error, setError] = useState(undefined);
 	const [options, setOptions] = useState([]);
 	const [itemDict, setItemDict] = useState({});
+	const [loading, setLoading] = useState(true);
 	const api = useApi();
 	const idKey = (id) => String(id);
 
 	const getItems = async () => {
+		setLoading(true);
 		try {
 			const params = new URLSearchParams();
 			const { data } = await api.get(`${endpoint}`, {
@@ -37,14 +39,17 @@ const useFillSelect = ({ endpoint, labelField = 'title', labelBuilder }) => {
 			setError(
 				e.response?.data?.detail || e.response?.data?.message || `Неизвестная ошибка: ${e.message}`
 			);
+		} finally {
+			setLoading(false);
 		}
+
 	};
 
 	useEffect(() => {
 		getItems();
 	}, []);
 
-	return { error, options, itemDict, getItems };
+	return { error, options, itemDict, getItems, loading };
 };
 
 export default useFillSelect;
