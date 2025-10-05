@@ -12,22 +12,24 @@
 }
 
 .checkbox {
-  /* при желании можно задать размер/отступы */
+
 }
 
 .questionText {
-  /* здесь можно настроить типографику вопроса */
+    color: var(--color_text_default);
+    font-size: 16px;
 }
 
 .answers {
+  color: var(--color_text_default);
+  font-size: 14px;
+  font-style: italic;
   margin: 8px 0 0 24px;
   padding: 0;
 }
 
 .answerItem {
   margin-bottom: 2px;
-  /* если не хотите маркеры списка — раскомментируйте: */
-  /* list-style: none; */
 }
 
 .correctMark {

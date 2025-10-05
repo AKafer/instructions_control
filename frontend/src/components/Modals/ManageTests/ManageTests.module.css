@@ -30,9 +30,9 @@
 
 .right_panel {
     display: flex;
+    flex-direction: column;
     padding-left: 30px;
     padding-right: 30px;
-    flex-direction: row;
 }
 
 .span {
@@ -145,6 +145,7 @@
     font-weight: 600;
     border-radius: 4px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
 }
 
 .my-tooltip {
@@ -267,5 +268,21 @@
 
 .excludedText {
     text-decoration: line-through;
+}
+
+.empty_box{
+    height: 320px;
+    width: 500px;
+    color: var(--color_test_disabled);
+}
+
+.questions_box {
+    display: flex;
+    width: 500px;
+    flex-direction: column;
+    gap: 10px;
+    height: 520px;
+    overflow-y: auto;
+    min-height: 0;
 }
 

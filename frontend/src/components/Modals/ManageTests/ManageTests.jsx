@@ -1,7 +1,7 @@
 import styles from './ManageTests.module.css';
 import Button from '../../Button/Button';
 
-import React, { useEffect, useMemo, useReducer, useState } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 import { SelectForm } from '../../SelectForm/SelectForm';
 import { Tooltip } from 'react-tooltip';
 import InputForm from '../../InputForm/InputForm';
@@ -9,14 +9,45 @@ import useApi from '../../../hooks/useApi.hook';
 import { nullTestOption, INITIAL_STATE, formReducer } from './ManageTests.state';
 import useFillSelect from '../../../hooks/useFillSelect.hook';
 import { getAllInstructionsUrl, getAllTestsUrl } from '../../../helpers/constants';
+import QuestionItem from '../../QuestionItem/QuestionItem';
 
-export function ManageTests({ optionsTests, getTests }) {
+export function ManageTests({optionsTests, getTests}) {
 	const [errorApi, setErrorApi] = useState(undefined);
 	const [successInfo, setSuccessInfo] = useState({ show: false, text: '' });
-	const [insError, setInsError] = useState('');
 	const [pendingInsId, setPendingInsId] = useState(null);
+	const optionsTestsWide = [nullTestOption, ...optionsTests];
+	const [testQuestions, setTestQuestions] = useState([]);
+	const [addModalOpen, setAddModalOpen] = useState(false);
+	const [newQ, setNewQ] = useState({
+		question: '',
+		answers: [
+			{ id: 1, text: '' },
+			{ id: 2, text: '' },
+			{ id: 3, text: '' },
+			{ id: 4, text: '' }
+		],
+		correct: 1
+	});
 
-	const optionsTestsWide = useMemo(() => [nullTestOption, ...optionsTests], [optionsTests]);
+	const closeAdd = () => setAddModalOpen(false);
+
+	const openCloseSubModal = () => setAddModalOpen(prev => !prev);
+
+	const onChangeNewQText = (e) => {
+		setNewQ(prev => ({ ...prev, question: e.target.value }));
+	};
+
+	const onChangeAnsText = (idx, val) => {
+		setNewQ(prev => {
+			const answers = [...prev.answers];
+			answers[idx] = { ...answers[idx], text: val };
+			return { ...prev, answers };
+		});
+	};
+
+	const onChangeCorrect = (val) => {
+		setNewQ(prev => ({ ...prev, correct: Number(val) }));
+	};
 
 	const [state, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
 	const {
@@ -40,18 +71,10 @@ export function ManageTests({ optionsTests, getTests }) {
 
 	const api = useApi();
 
-	const mergedTestOptions = useMemo(() => {
-		const base = optionsTestsWide.slice();
-		const v = valueTest?.value;
-		if (v && !base.some(o => o.value === v)) {
-			base.push(valueTest);
-		}
-		return base;
-	}, [optionsTestsWide, valueTest]);
-
 	const hydrateFromDetails = (details) => {
 		const { id, title, description, success_rate, instruction_id } = details || {};
-		dispatchForm({ type: 'SET_VALUE_TEST', payload: { value: id, label: title } });
+		const found = [nullTestOption, ...optionsTests].find(o => String(o.value) === String(id));
+		dispatchForm({ type: 'SET_VALUE_TEST', payload: found ?? { value: id, label: title } });
 		dispatchForm({
 			type: 'SET_VALUE',
 			payload: {
@@ -62,13 +85,16 @@ export function ManageTests({ optionsTests, getTests }) {
 		});
 		dispatchForm({ type: 'SET_VISIBLE_DEL_BUTTON', payload: true });
 		setPendingInsId(instruction_id ?? null);
+		const qs = Array.isArray(details?.questions)
+			? details.questions.map(q => ({ ...q, correct_answer_id: q.correct_answer }))
+			: [];
+		setTestQuestions(qs);
 	};
 
 	const selectTest = async (option) => {
 		dispatchForm({ type: 'SET_VALUE_TEST', payload: option });
 		dispatchForm({ type: 'RESET_VALIDITY' });
 		setSuccessInfo({ show: false, text: '' });
-		setInsError('');
 		setPendingInsId(null);
 
 		if (option?.value && option.value !== 0) {
@@ -76,7 +102,7 @@ export function ManageTests({ optionsTests, getTests }) {
 				const { data } = await api.get(`${getAllTestsUrl}/${option.value}`);
 				hydrateFromDetails(data);
 			} catch (e) {
-				// fallback: хотя бы имя поставим
+				setTestQuestions([]);
 				dispatchForm({
 					type: 'SET_VALUE',
 					payload: { title: option.label }
@@ -89,6 +115,7 @@ export function ManageTests({ optionsTests, getTests }) {
 				);
 			}
 		} else {
+			setTestQuestions([]);
 			dispatchForm({ type: 'CLEAR' });
 			dispatchForm({ type: 'SET_VISIBLE_DEL_BUTTON', payload: false });
 		}
@@ -105,7 +132,7 @@ export function ManageTests({ optionsTests, getTests }) {
 
 	const selectIns = (option) => {
 		dispatchForm({ type: 'SET_VALUE', payload: { valueIns: option } });
-		setInsError('');
+		dispatchForm({ type: 'RESET_VALIDITY' });
 	};
 
 	const onChange = (e) => {
@@ -129,10 +156,6 @@ export function ManageTests({ optionsTests, getTests }) {
 	};
 
 	const createEditTest = () => {
-		if (!values?.valueIns?.value) {
-			setInsError('Обязательное поле');
-			return;
-		}
 		dispatchForm({ type: 'SUBMIT' });
 	};
 
@@ -146,13 +169,22 @@ export function ManageTests({ optionsTests, getTests }) {
 			} else {
 				response = await api.post(getAllTestsUrl, payload);
 			}
-
-			if (response?.data) {
-				hydrateFromDetails(response.data);
-			}
-
-			if (typeof getTests === 'function') {
-				await getTests();
+			getTests();
+			if (response) {
+				const { id, title, description, success_rate, instruction_id } = response.data;
+				const newOption = { value: id, label: title };
+				dispatchForm({ type: 'SET_VALUE_TEST', payload: newOption });
+				dispatchForm({ type: 'SET_VISIBLE_DEL_BUTTON', payload: true });
+				dispatchForm({ type: 'RESET_VALIDITY' });
+				dispatchForm({
+					type: 'SET_VALUE',
+					payload: {
+						title: title ?? '',
+						description: description ?? '',
+						success_rate: (success_rate ?? '') === '' ? '' : String(success_rate)
+					}
+				});
+				setPendingInsId(instruction_id ?? null);
 			}
 
 			setSuccessInfo({
@@ -162,11 +194,12 @@ export function ManageTests({ optionsTests, getTests }) {
 		} catch (e) {
 			setErrorApi(
 				e.response?.data?.detail ||
-        e.response?.data?.message ||
-        `Неизвестная ошибка: ${e.message}`
+      e.response?.data?.message ||
+      `Неизвестная ошибка: ${e.message}`
 			);
 		}
 	};
+
 
 	useEffect(() => {
 		if (!successInfo.show) return;
@@ -185,48 +218,127 @@ export function ManageTests({ optionsTests, getTests }) {
 			manageTestsApi(payload);
 			dispatchForm({ type: 'SET_SUBMIT_FALSE' });
 		}
-	}, [isFormReadyToSubmit]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [isFormReadyToSubmit]);
 
 	const deleteTest = async () => {
 		try {
 			if (valueTest?.value) {
-				await api.delete(`/tests/${valueTest.value}`);
+				await api.delete(`${getAllTestsUrl}/${valueTest.value}`);
 			}
-			if (typeof getTests === 'function') {
-				await getTests();
-			}
+
 			dispatchForm({ type: 'CLEAR' });
 			dispatchForm({ type: 'SET_VALUE_TEST', payload: nullTestOption });
 			dispatchForm({ type: 'SET_SUB_MODAL', payload: false });
 			dispatchForm({ type: 'SET_VISIBLE_DEL_BUTTON', payload: false });
+			setTestQuestions([]);
+			if (typeof getTests === 'function') {
+				await getTests();
+			}
+
 			setSuccessInfo({ show: true, text: '✓ Удалено' });
-			setInsError('');
 		} catch (e) {
 			setErrorApi(
 				e.response?.data?.detail ||
-        e.response?.data?.message ||
-        `Неизвестная ошибка: ${e.message}`
+      e.response?.data?.message ||
+      `Неизвестная ошибка: ${e.message}`
 			);
 		}
 	};
 
+	const addQuestion = async () => {
+		if (!valueTest?.value) return;
+
+		const qText = String(newQ.question || '').trim();
+		const filledAnswers = newQ.answers
+			.filter(a => String(a.text || '').trim() !== '')
+			.map(a => ({ id: a.id, text: String(a.text).trim() }));
+
+		if (!qText || filledAnswers.length < 3) {
+			setErrorApi('Заполните текст вопроса и минимум 3 варианта ответа.');
+			return;
+		}
+		if (newQ.correct < 1 || newQ.correct > filledAnswers.length) {
+			setErrorApi('Номер верного варианта вне диапазона.');
+			return;
+		}
+
+		const payload = {
+			question: qText,
+			answers: filledAnswers,
+			correct_answer: newQ.correct,
+			test_id: Number(valueTest.value)
+		};
+
+		try {
+			await api.post('/tests/questions/', payload);
+			setAddModalOpen(false);
+			setNewQ({
+				question: '',
+				answers: [
+					{ id: 1, text: '' },
+					{ id: 2, text: '' },
+					{ id: 3, text: '' },
+					{ id: 4, text: '' }
+				],
+				correct: 1
+			});
+
+			if (typeof getTests === 'function') {
+				await getTests(); // обновить список тестов у родителя
+			}
+			// подтянуть актуальные вопросы выбранного теста и обновить правую панель
+			try {
+				const { data } = await api.get(`${getAllTestsUrl}/${valueTest.value}`);
+				hydrateFromDetails(data);
+			} catch {}
+		} catch (e) {
+			setErrorApi(
+				e?.response?.data?.detail ||
+      e?.response?.data?.message ||
+      `Неизвестная ошибка: ${e.message}`
+			);
+		}
+	};
+
+
+	useEffect(() => {
+		const id = valueTest?.value;
+		if (id == null) return;
+		const opt = optionsTestsWide.find(o => String(o.value) === String(id));
+		if (opt && opt !== valueTest) {
+			dispatchForm({ type: 'SET_VALUE_TEST', payload: opt });
+		}
+	}, [optionsTests, valueTest?.value]);
+
 	return (
 		<div className={styles['manage_activities']}>
 			<h1 className={styles['title']}>Управление тестами</h1>
-			{errorApi && <div className={styles['error']}>{errorApi}</div>}
+			{errorApi && (
+				<div
+					className={styles['error']}
+					role="alert"
+					tabIndex={0}
+					onClick={() => setErrorApi(undefined)}
+					onKeyDown={(e) => {
+						if (e.key === 'Enter' || e.key === ' ') setErrorApi(undefined);
+					}}
+					title="Нажмите, чтобы скрыть"
+				>
+					{errorApi}
+				</div>
+			)}
 
 			<div className={styles['content']}>
 				<div className={styles['left_panel']}>
 					<span className={styles['span']}>
-            Тесты:
+            			Тесты:
 						<SelectForm
-							value={valueTest}
-							options={mergedTestOptions}
+							value={optionsTestsWide.find(o => String(o.value) === String(valueTest?.value)) || nullTestOption}
+							options={optionsTestsWide}
 							name="test_id"
 							onChange={selectTest}
 						/>
 					</span>
-
 					<div className={styles['box']}>
 						<span className={styles['box-title']}>Параметры теста</span>
 						<div className={styles['box-content']}>
@@ -235,7 +347,7 @@ export function ManageTests({ optionsTests, getTests }) {
 								data-tooltip-content={errors.title}
 								data-tooltip-id="errorTooltipTitleTest"
 							>
-                Наименование*:
+                				Наименование*:
 								<InputForm
 									maxLength={64}
 									value={values.title}
@@ -255,7 +367,7 @@ export function ManageTests({ optionsTests, getTests }) {
 							</span>
 
 							<span className={styles['span']}>
-                Описание:
+                			Описание:
 								<InputForm
 									value={values.description ?? ''}
 									type="text"
@@ -270,7 +382,7 @@ export function ManageTests({ optionsTests, getTests }) {
 								data-tooltip-content={errors.success_rate}
 								data-tooltip-id="errorTooltipSuccessRate"
 							>
-                Процент успешности* (0–100):
+                			Процент успешности* (0–100):
 								<InputForm
 									value={values.success_rate}
 									isValid={isValid.success_rate}
@@ -289,22 +401,31 @@ export function ManageTests({ optionsTests, getTests }) {
 									className={styles['my-tooltip']}
 								/>
 							</span>
-
-							<span className={styles['span']}>
-                Инструкции*:
+							<span
+								className={styles['span']}
+								data-tooltip-content={errors.instructions}
+								data-tooltip-id="errorTooltipInstructions"
+							>
+                			Инструкции*:
 								{loadingIns ? (
 									<span>Загрузка инструкций...</span>
 								) : (
-									<SelectForm
-										value={values.valueIns ?? null}
-										placeholder="---Выберите инструкцию---"
-										options={optionsIns}
-										name="ins_id"
-										onChange={selectIns}
-									/>
-								)}
-								{(insError || errorIns) && (
-									<div className={styles.error}>{insError || errorIns}</div>
+									<>
+										<SelectForm
+											value={values.valueIns ?? null}
+											placeholder="---Выберите инструкцию---"
+											options={optionsIns}
+											name="ins_id"
+											onChange={selectIns}
+										/>
+										<Tooltip
+											id="errorTooltipInstructions"
+											place="top-end"
+											content={errors.instructions}
+											isOpen={!isValid.instructions}
+											className={styles['my-tooltip']}
+										/>
+									</>
 								)}
 							</span>
 
@@ -352,6 +473,68 @@ export function ManageTests({ optionsTests, getTests }) {
 								? successInfo.text
 								: (valueTest?.value ? 'Редактировать' : 'Создать')}
 						</Button>
+					</div>
+				</div>
+
+				<div className={styles['right_panel']}>
+					<div className={styles['questions_box']}>
+
+						<div className={styles['right_header']}>
+							{Boolean(valueTest?.value) && (
+								<button className={styles.iconButton} onClick={openCloseSubModal}>
+									<img className={styles.iconImage} src="/icons/plus-icon.svg" alt="add" />
+								</button>
+							)}
+						</div>
+
+						{addModalOpen && (
+							<div className={styles['submodal']}>
+								<div className={styles['addq_box']}>
+									<InputForm
+										value={newQ.question}
+										name="new_question"
+										placeholder="Текст вопроса"
+										onChange={onChangeNewQText}
+									/>
+									{newQ.answers.map((a, idx) => (
+										<InputForm
+											key={a.id}
+											value={a.text}
+											name={`answer_${a.id}`}
+											placeholder={`Вариант ${a.id}`}
+											onChange={(e) => onChangeAnsText(idx, e.target.value)}
+										/>
+									))}
+									<InputForm
+										value={newQ.correct}
+										type="number"
+										min={1}
+										max={4}
+										name="correct_answer"
+										placeholder="Номер верного (1–4)"
+										onChange={(e) => onChangeCorrect(e.target.value)}
+									/>
+								</div>
+								<div className={styles['addq_actions']}>
+									<Button className={styles.button_submodal} onClick={addQuestion}>
+          								Добавить
+									</Button>
+									<Button className={styles.button_submodal} onClick={closeAdd}>
+          								Свернуть
+									</Button>
+								</div>
+							</div>
+						)}
+
+						{(!valueTest?.value || testQuestions.length === 0) ? (
+							<div className={styles['empty_box']}>
+								{valueTest?.value ? 'Список вопросов пуст.' : 'Выберите тест, чтобы посмотреть вопросы.'}
+							</div>
+						) : (
+							testQuestions.map(q => (
+								<QuestionItem key={q.id} question={q} />
+							))
+						)}
 					</div>
 				</div>
 			</div>

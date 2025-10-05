@@ -6,7 +6,8 @@ export const INITIAL_STATE = {
 	visibleDelButton: true,
 	isValid: {
 		title: true,
-		success_rate: true
+		success_rate: true,
+		instructions: true
 	},
 	values: {
 		title: '',
@@ -16,7 +17,8 @@ export const INITIAL_STATE = {
 	},
 	errors: {
 		title: '',
-		success_rate: ''
+		success_rate: '',
+		instructions: ''
 	},
 	isFormReadyToSubmit: false
 };
@@ -59,23 +61,24 @@ export function formReducer(state, action) {
 
 	case 'SUBMIT': {
 		const titleValidity = Boolean(String(state.values.title || '').trim().length);
-
-		// success_rate: число 0..100
 		const srRaw = String(state.values.success_rate ?? '').trim();
 		const srNum = Number(srRaw);
 		const srValidity = srRaw !== '' && Number.isFinite(srNum) && srNum >= 0 && srNum <= 100;
+		const insValidity = Boolean(state.values.valueIns?.value);
 
 		return {
 			...state,
 			isValid: {
 				title: titleValidity,
-				success_rate: srValidity
+				success_rate: srValidity,
+				instructions: insValidity
 			},
 			errors: {
 				title: titleValidity ? '' : 'Обязательное поле',
-				success_rate: srValidity ? '' : 'Число от 0 до 100'
+				success_rate: srValidity ? '' : 'Число от 0 до 100',
+				instructions: insValidity ? '' : 'Обязательное поле'
 			},
-			isFormReadyToSubmit: (titleValidity && srValidity)
+			isFormReadyToSubmit: (titleValidity && srValidity && insValidity)
 		};
 	}
 

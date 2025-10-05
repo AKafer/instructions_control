@@ -51,12 +51,9 @@ export function Education () {
 					<Modal isOpen={isManageTestsOpen} onClose={() => setIsManageTestsOpen(false)}>
 						<ManageTests
 							optionsTests={optionsTests}
-							testsDict={testsDict}
-							setCreateModalOpen={setIsManageTestsOpen}
+							getTests={getTests}
 						/>
 					</Modal>
-
-
 					<Button onClick={openQAIModal}>
 					Вопросы от AI
 					</Button>
