@@ -310,6 +310,24 @@ export function ManageTests({optionsTests, getTests}) {
 		}
 	}, [optionsTests, valueTest?.value]);
 
+	const deleteQuestion = async (qId) => {
+		if (!qId) return;
+		try {
+			await api.delete(`/tests/questions/${qId}`);
+			if (valueTest?.value) {
+				const { data } = await api.get(`${getAllTestsUrl}/${valueTest.value}`);
+				hydrateFromDetails(data); // обновит testQuestions
+			}
+			getTests();
+		} catch (e) {
+			setErrorApi(
+				e?.response?.data?.detail ||
+      e?.response?.data?.message ||
+      `Неизвестная ошибка: ${e.message}`
+			);
+		}
+	};
+
 	return (
 		<div className={styles['manage_activities']}>
 			<h1 className={styles['title']}>Управление тестами</h1>
@@ -450,7 +468,7 @@ export function ManageTests({optionsTests, getTests}) {
 								{subModalOpen && (
 									<div className={styles['submodal']}>
 										<Button className={styles.button_submodal} onClick={deleteTest}>
-                      Удалить
+                                            Удалить
 										</Button>
 										<Button
 											className={styles.button_submodal}
@@ -459,7 +477,7 @@ export function ManageTests({optionsTests, getTests}) {
 												dispatchForm({ type: 'SET_VISIBLE_DEL_BUTTON', payload: Boolean(valueTest?.value) });
 											}}
 										>
-                      Отмена
+                      						Отмена
 										</Button>
 									</div>
 								)}
@@ -477,34 +495,34 @@ export function ManageTests({optionsTests, getTests}) {
 				</div>
 
 				<div className={styles['right_panel']}>
-					<div className={styles['questions_box']}>
+					<div className={styles['right_header']}>
+						{Boolean(valueTest?.value) && (
+							<button className={styles.iconButton} onClick={openCloseSubModal}>
+								<img className={styles.iconImage} src="/icons/plus-icon.svg" alt="add" />
+							</button>
+						)}
+					</div>
 
-						<div className={styles['right_header']}>
-							{Boolean(valueTest?.value) && (
-								<button className={styles.iconButton} onClick={openCloseSubModal}>
-									<img className={styles.iconImage} src="/icons/plus-icon.svg" alt="add" />
-								</button>
-							)}
-						</div>
-
-						{addModalOpen && (
-							<div className={styles['submodal']}>
-								<div className={styles['addq_box']}>
+					{addModalOpen && (
+						<div className={styles['submodal']}>
+							<div className={styles['addq_box']}>
+								<InputForm
+									value={newQ.question}
+									name="new_question"
+									placeholder="Текст вопроса"
+									onChange={onChangeNewQText}
+								/>
+								{newQ.answers.map((a, idx) => (
 									<InputForm
-										value={newQ.question}
-										name="new_question"
-										placeholder="Текст вопроса"
-										onChange={onChangeNewQText}
+										key={a.id}
+										value={a.text}
+										name={`answer_${a.id}`}
+										placeholder={`Вариант ${a.id}`}
+										onChange={(e) => onChangeAnsText(idx, e.target.value)}
 									/>
-									{newQ.answers.map((a, idx) => (
-										<InputForm
-											key={a.id}
-											value={a.text}
-											name={`answer_${a.id}`}
-											placeholder={`Вариант ${a.id}`}
-											onChange={(e) => onChangeAnsText(idx, e.target.value)}
-										/>
-									))}
+								))}
+								<span className={styles.span_small}>
+										Верный ответ:
 									<InputForm
 										value={newQ.correct}
 										type="number"
@@ -514,25 +532,30 @@ export function ManageTests({optionsTests, getTests}) {
 										placeholder="Номер верного (1–4)"
 										onChange={(e) => onChangeCorrect(e.target.value)}
 									/>
-								</div>
-								<div className={styles['addq_actions']}>
-									<Button className={styles.button_submodal} onClick={addQuestion}>
-          								Добавить
-									</Button>
-									<Button className={styles.button_submodal} onClick={closeAdd}>
-          								Свернуть
-									</Button>
-								</div>
+								</span>
 							</div>
-						)}
+							<div className={styles['addq_actions']}>
+								<Button className={styles.button_submodal} onClick={addQuestion}>
+          								Добавить
+								</Button>
+							</div>
+						</div>
+					)}
 
+					<div className={styles.questions_box}>
 						{(!valueTest?.value || testQuestions.length === 0) ? (
 							<div className={styles['empty_box']}>
 								{valueTest?.value ? 'Список вопросов пуст.' : 'Выберите тест, чтобы посмотреть вопросы.'}
 							</div>
 						) : (
 							testQuestions.map(q => (
-								<QuestionItem key={q.id} question={q} />
+								<QuestionItem
+									key={q.id}
+									question={q}
+									showCheckbox={false}
+									deletable
+									onDelete={() => deleteQuestion(q.id)}
+								/>
 							))
 						)}
 					</div>

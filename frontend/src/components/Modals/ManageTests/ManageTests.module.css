@@ -33,6 +33,21 @@
     flex-direction: column;
     padding-left: 30px;
     padding-right: 30px;
+    height: 520px;
+    min-height: 0;
+}
+
+.right_header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.submodal {
+  flex: 0 0 auto;
+  margin-top: 8px;
 }
 
 .span {
@@ -158,27 +173,6 @@
   transform: translateY(42px) !important;
 }
 
-.profSelect {
-    margin-bottom: 38px;
-}
-
-
-.listBox {
-    width: 310px;
-    max-height: 300px;
-    overflow-y: scroll;
-    overflow-x: hidden;
-    min-width: 0;
-    -ms-overflow-style: auto;
-}
-
-.listBox::-webkit-scrollbar {
-    width: 10px;
-}
-.listBox::-webkit-scrollbar-thumb {
-    background: #bdbdbd;
-    border-radius: 6px;
-}
 
 
 .checkbox {
@@ -218,53 +212,6 @@
     margin-top: 3px;
 }
 
-.bindTitle {
-    font-family: var(--font_default), sans-serif;
-    color: var(--color_text_default);
-    font-size: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    padding: 58px 0 2px;
-    width: 300px;
-    text-align: center;
-}
-
-.bindTitleAbsolute {
-    position: absolute;
-    top: 75px;
-    left: 790px;
-    font-family: var(--font_default), sans-serif;
-    color: var(--color_text_default);
-    font-size: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    width: 300px;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
-    text-align: center;
-    word-break: break-word;
-}
-
-.listBox2 {
-    width: 310px;
-    max-height: 300px;
-    overflow-y: scroll;
-    overflow-x: hidden;
-    min-width: 0;
-    -ms-overflow-style: auto;
-}
-
-.listBox2::-webkit-scrollbar {
-    width: 10px;
-}
-.listBox2::-webkit-scrollbar-thumb {
-    background: #bdbdbd;
-    border-radius: 6px;
-}
 
 .excludedText {
     text-decoration: line-through;
@@ -277,12 +224,35 @@
 }
 
 .questions_box {
+    margin-top: 15px;
     display: flex;
     width: 500px;
     flex-direction: column;
     gap: 10px;
-    height: 520px;
+    flex: 1 1 auto;
     overflow-y: auto;
     min-height: 0;
 }
 
+.addq_box {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width:100%;
+}
+
+.addq_actions {
+    display: flex;
+    justify-content: center;
+}
+
+.span_small {
+    font-family: var(--font_default), sans-serif;
+    color: var(--color_text_default);
+    font-size: 14px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding-top: 10px;
+}
