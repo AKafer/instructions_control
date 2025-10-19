@@ -150,7 +150,6 @@ async def add_lines_to_journals_for_new_rule(
             db_session.add(journal)
         else:
             journal.actual = True
-    await db_session.commit()
 
 
 async def remove_lines_to_journals_for_delete_rule(

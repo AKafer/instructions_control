@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database.models import Instructions, Professions
 from database.models.rules import Rules
 from web.exceptions import DuplicateError, ItemNotFound
+from web.journals.services import add_lines_to_journals_for_new_rule
 from web.rules.exceptions import BindToManyError
 
 
@@ -68,6 +69,8 @@ async def bind_to_many_professions(
                 instruction_id=instruction_id,
             )
             db_session.add(rule)
-        await db_session.commit()
+            await add_lines_to_journals_for_new_rule(
+                db_session, profession_id, instruction_id
+            )
     except sqlalchemy.exc.IntegrityError as e:
         raise BindToManyError(f'Error while save rules to database {e}')

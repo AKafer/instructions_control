@@ -92,10 +92,10 @@ async def create_rule(
         )
     db_rule = Rules(**rule_input.dict())
     db_session.add(db_rule)
-    await db_session.commit()
-    await db_session.refresh(db_rule)
     await add_lines_to_journals_for_new_rule(
         db_session, rule_input.profession_id, rule_input.instruction_id)
+    await db_session.commit()
+    await db_session.refresh(db_rule)
     return db_rule
 
 
@@ -109,7 +109,7 @@ async def create_rule(
         },
     },
 )
-async def create_rule(
+async def create_many_rules(
     rule_input: RuleCreateManyInput,
     db_session: AsyncSession = Depends(get_db_session),
 ):
@@ -120,6 +120,7 @@ async def create_rule(
             rule_input.profession_ids,
             rule_input.bind_to_all
         )
+        await db_session.commit()
     except BindToManyError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
