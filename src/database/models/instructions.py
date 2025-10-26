@@ -46,3 +46,10 @@ class Instructions(BaseModel):
         cascade="all, delete, delete-orphan",
         single_parent=True,
     )
+    histories = relationship(
+        "Histories",
+        back_populates="instruction",
+        lazy='selectin',
+        cascade="all, delete, delete-orphan",
+        single_parent=True,
+    )

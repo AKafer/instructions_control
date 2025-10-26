@@ -51,3 +51,13 @@ class Histories(BaseModel):
         lazy='selectin',
         passive_deletes=True
     )
+    instruction = sa.orm.relationship(
+        'Instructions',
+        lazy='selectin',
+        passive_deletes=True
+    )
+    test = sa.orm.relationship(
+        'Tests',
+        lazy='selectin',
+        passive_deletes=True
+    )

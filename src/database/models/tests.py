@@ -53,3 +53,10 @@ class Tests(BaseModel):
         cascade="all, delete, delete-orphan",
         single_parent=True
     )
+    histories = relationship(
+        "Histories",
+        back_populates="test",
+        lazy='selectin',
+        cascade="all, delete, delete-orphan",
+        single_parent=True,
+    )

@@ -1,5 +1,3 @@
-from datetime import timedelta, datetime
-
 import sqlalchemy
 from fastapi import APIRouter, Depends
 from fastapi_filter import FilterDepends
