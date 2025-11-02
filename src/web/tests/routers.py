@@ -350,6 +350,7 @@ async def create_bulk_questions(
 
 @router.patch(
     '/questions/{question_id}',
+    response_model=Question,
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_404_NOT_FOUND: {
