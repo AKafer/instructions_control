@@ -5,20 +5,30 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.inspection import inspect
 
-from database.models import Tests, User, Histories
+from database.models import Tests, User, Histories, Questions
 from web.tests.schemas import TestPassInput
 
 
 async def update_test_in_db(
-        db_session: AsyncSession,
-        test: Tests,
-        **update_data: dict
+    db_session: AsyncSession,
+    test: Tests,
+    **update_data: dict
 ) -> Tests:
     for field, value in update_data.items():
         setattr(test, field, value)
     await db_session.commit()
     await db_session.refresh(test)
     return test
+
+
+def update_question_in_db(
+    db_question: Questions,
+    **update_data: dict
+) -> Questions:
+    for field, value in update_data.items():
+        setattr(db_question, field, value)
+    return db_question
+
 
 async def calculate_test_result(
     test: Tests,

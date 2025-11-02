@@ -45,6 +45,15 @@ export function CreateQuestionsByAI({
 		});
 	}, [questions]);
 
+	const handleQuestionChange = useCallback((updatedQuestion) => {
+		setQuestions(prev => prev.map(q => q.id === updatedQuestion.id ? {
+			...q,
+			question: updatedQuestion.question,
+			answers: updatedQuestion.answers,
+			correct_answer_id: updatedQuestion.correct_answer_id
+		} : q));
+	}, []);
+
 	const sendToLLM = useCallback(async () => {
 		setError(undefined);
 		setLoading(true);
@@ -202,6 +211,8 @@ export function CreateQuestionsByAI({
 										question={q}
 										checked={selectedIds.has(q.id)}
 										onToggle={() => toggleOne(q.id)}
+										editable={true}
+										onChange={handleQuestionChange}
 									/>
 								))
 							)}

@@ -156,7 +156,7 @@ export function ManageTypes({optionsTypes, typesDict, getTypes}) {
 						>
 								Наименование*:
 							<InputForm
-								maxLength={64}
+								maxLength={640}
 								value={values.title}
 								isValid={isValid.title}
 								type="text"

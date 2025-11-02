@@ -47,7 +47,6 @@ const UniversalTable = ({
 
 	return (
 		<div className={styles.tableWrapper}>
-			{/* Вешаем фиксированную высоту и прокрутку только при отключённой пагинации */}
 			<div
 				className={styles.tableContainer}
 				style={!usePagination ? { height: `${height}px`, overflowY: 'auto' } : {}}

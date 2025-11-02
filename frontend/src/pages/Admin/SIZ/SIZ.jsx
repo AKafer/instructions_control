@@ -351,7 +351,7 @@ export function SIZ () {
 						columns={columns}
 						usePagination={true}
 						initialPage={1}
-						initialPageSize={10}
+						initialPageSize={20}
 						filters={filters}
 						onTotalRecordsChange={setTotalRecords}
 						refreshKey={refreshKey}

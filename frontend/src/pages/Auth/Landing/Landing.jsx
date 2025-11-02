@@ -18,7 +18,7 @@ const Landing = () => {
 			</div>
 
 			<div className={styles['button']}>
-				<Button onClick={handleLoginClick}>
+				<Button data-testid="nav-start-button" onClick={handleLoginClick}>
         			Начать работу
 				</Button>
 			</div>

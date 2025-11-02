@@ -27,6 +27,12 @@ class QuestionCreateInput(BaseModel):
     test_id: int
 
 
+class QuestionUpdateInput(BaseModel):
+    question: str
+    answers: list[Answer]
+    correct_answer: int
+
+
 class BulkCreateQuestionsInput(BaseModel):
     questions: list[QuestionCreateInput]
 

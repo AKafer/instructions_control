@@ -55,7 +55,7 @@ const Login = () => {
 					<label htmlFor="password">Ваш пароль</label>
 					<Input id="password" type="password" placeholder='Пароль'/>
 				</div>
-				<Button appearance="big">Вход</Button>
+				<Button data-testid="nav-login-button" appearance="big">Вход</Button>
 			</form>
 		</div>
 	);

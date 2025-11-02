@@ -26,13 +26,13 @@ from web.tests.schemas import (
     Question,
     TestPassInput,
     History,
-    LLM_INPUT_DATA, BulkCreateQuestionsInput,
+    LLM_INPUT_DATA, BulkCreateQuestionsInput, QuestionUpdateInput,
 )
 from web.tests.services import (
     update_test_in_db,
     calculate_test_result,
     sa_to_dict,
-    extract_json_from_text,
+    extract_json_from_text, update_question_in_db,
 )
 from web.users.users import current_superuser, current_user
 
@@ -346,6 +346,34 @@ async def create_bulk_questions(
         content=f'Created {len(input_data.questions)} questions',
         status_code=status.HTTP_201_CREATED
     )
+
+
+@router.patch(
+    '/questions/{question_id}',
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            'model': ResponseErrorBody,
+        },
+    },
+    dependencies=[Depends(current_superuser)],
+)
+async def update_question(
+    question_id: int,
+    input_data: QuestionUpdateInput,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    query = select(Questions).filter(Questions.id == question_id)
+    question = await db_session.scalar(query)
+    if question is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'Test with id {question_id} not found',
+        )
+    question = update_question_in_db(question, **input_data.dict(exclude_none=True))
+    await db_session.commit()
+    await db_session.refresh(question)
+    return question
 
 
 @router.delete(

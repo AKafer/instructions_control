@@ -284,9 +284,8 @@ export function ManageTests({optionsTests, getTests}) {
 			});
 
 			if (typeof getTests === 'function') {
-				await getTests(); // обновить список тестов у родителя
+				await getTests();
 			}
-			// подтянуть актуальные вопросы выбранного теста и обновить правую панель
 			try {
 				const { data } = await api.get(`${getAllTestsUrl}/${valueTest.value}`);
 				hydrateFromDetails(data);
@@ -316,7 +315,7 @@ export function ManageTests({optionsTests, getTests}) {
 			await api.delete(`/tests/questions/${qId}`);
 			if (valueTest?.value) {
 				const { data } = await api.get(`${getAllTestsUrl}/${valueTest.value}`);
-				hydrateFromDetails(data); // обновит testQuestions
+				hydrateFromDetails(data);
 			}
 			getTests();
 		} catch (e) {
@@ -324,6 +323,34 @@ export function ManageTests({optionsTests, getTests}) {
 				e?.response?.data?.detail ||
       e?.response?.data?.message ||
       `Неизвестная ошибка: ${e.message}`
+			);
+		}
+	};
+
+	const saveQuestion = async (updatedQuestion) => {
+		if (!updatedQuestion || !updatedQuestion.id) return;
+		try {
+			const payload = {
+				question: String(updatedQuestion.question || '').trim(),
+				answers: (Array.isArray(updatedQuestion.answers) ? updatedQuestion.answers : [])
+					.filter(a => a && (a.text != null))
+					.map(a => ({ id: a.id, text: String(a.text ?? '') })),
+				correct_answer: Number(updatedQuestion.correct_answer_id ?? updatedQuestion.correct_answer)
+			};
+
+			await api.patch(`/tests/questions/${updatedQuestion.id}`, payload);
+			setTestQuestions(prev =>
+				prev.map(q => q.id === updatedQuestion.id
+					? { ...q, ...updatedQuestion }
+					: q
+				)
+			);
+			setSuccessInfo({ show: true, text: '✓ Сохранено' });
+		} catch (e) {
+			setErrorApi(
+				e?.response?.data?.detail ||
+			e?.response?.data?.message ||
+			`Неизвестная ошибка: ${e.message}`
 			);
 		}
 	};
@@ -555,6 +582,9 @@ export function ManageTests({optionsTests, getTests}) {
 									showCheckbox={false}
 									deletable
 									onDelete={() => deleteQuestion(q.id)}
+									editable={true}
+									showSave={true}
+									onSave={saveQuestion}
 								/>
 							))
 						)}

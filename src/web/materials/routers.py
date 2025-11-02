@@ -1,15 +1,18 @@
+import time
+
 import sqlalchemy
 from fastapi import APIRouter, Depends
 from fastapi_filter import FilterDepends
 from pygments.styles import material
-from sqlalchemy import select, Delete
+from sqlalchemy import select, Delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload, joinedload
 from starlette import status
 from starlette.responses import Response
 
 from constants import MATERIAL_TYPE_SIMPLE_NEEDS_CACHE_KEY
 from core.simple_cache import Cache
-from database.models import Materials
+from database.models import Materials, User
 from dependencies import get_db_session, get_cache
 from starlette.exceptions import HTTPException
 from fastapi_pagination import Page
@@ -18,9 +21,19 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from main_schemas import ResponseErrorBody
 from web.materials.exceptions import MaterialCreateError
 from web.materials.filters import MaterialsFilter
-from web.materials.schemas import Material, CreateMaterial, UpdateMaterial, DeleteMaterials, CreateMaterialBulk
-from web.materials.services import check_material_create, update_material_db, check_material_bulk_create, \
+from web.materials.schemas import (
+    Material,
+    CreateMaterial,
+    UpdateMaterial,
+    DeleteMaterials,
+    CreateMaterialBulk
+)
+from web.materials.services import (
+    check_material_create,
+    update_material_db,
+    check_material_bulk_create,
     get_date_params
+)
 from web.users.users import current_superuser
 
 router = APIRouter(
@@ -44,13 +57,33 @@ async def get_paginated_materials(
     materials_filter: MaterialsFilter = FilterDepends(MaterialsFilter),
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    query = select(Materials).order_by(Materials.id.desc())
+    start_total = time.perf_counter()
+
+    query = (
+        select(Materials)
+        .options(
+            joinedload(Materials.material_type),
+            joinedload(Materials.user).joinedload(User.profession),
+            joinedload(Materials.user).joinedload(User.division),
+        )
+    )
     query = materials_filter.filter(query)
+
+    start_db = time.perf_counter()
     page = await paginate(db_session, query)
+    end_db = time.perf_counter()
+    print(f'DB fetch time: {end_db - start_db:.4f}s')
+
+    start_proc = time.perf_counter()
     for material in page.items:
         material.end_date, material.term_to_control = get_date_params(material)
-    return page
+    end_proc = time.perf_counter()
+    print(f'Post-processing time: {end_proc - start_proc:.4f}s')
 
+    end_total = time.perf_counter()
+    print(f'Total time: {end_total - start_total:.4f}s')
+
+    return page
 
 
 @router.get(

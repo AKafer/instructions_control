@@ -1,14 +1,14 @@
-describe('Главная страница', () => {
+describe('Landing page', () => {
 	beforeEach(() => {
 		cy.visit('/');
 	});
 
-	it('Проверка работы Cypress', () => {
+	it('Show main branding', () => {
 		cy.contains('Ваш надежный партнер в управлении учетными данными');
 	});
 
-	it('Переходит на страницу логина при клике на кнопку "Начать работу"', () => {
-		cy.contains('Начать работу').click();
+	it('Go to login page if click button "Начать работу"', () => {
+		cy.get('button[data-testid="nav-start-button"]').click();
 		cy.url().should('include', '/login');
 		cy.contains('Ваш email').should('exist');
 		cy.contains('Ваш пароль').should('exist');

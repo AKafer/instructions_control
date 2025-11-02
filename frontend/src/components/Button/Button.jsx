@@ -6,7 +6,8 @@ const Button = ({
 	children,
 	onClick,
 	disabled,
-	className
+	className,
+	...rest
 }) => {
 	const handleClick = (e) => {
 		if (disabled) {
@@ -24,6 +25,7 @@ const Button = ({
 			className={cn(styles.button, className)}
 			disabled={disabled}
 			onClick={handleClick}
+			{...rest}
 		>
 			{children}
 		</button>
