@@ -3,14 +3,16 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select, Delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
-from starlette.responses import Response
+from starlette.responses import Response, JSONResponse
 
-from database.models import Documents
+from database.models import Documents, Professions
 from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
+from externals.http.yandex_llm.yandex_llm_base import LLMResonseError
+from externals.http.yandex_llm.yandex_llm_non_qualify_prof_list import NonQualifyProfListClient
 from main_schemas import ResponseErrorBody
-from web.documents.schemas import Document, CreateDocument, UpdateDocument, DeleteDocuments
+from web.documents.schemas import Document, CreateDocument, UpdateDocument, DeleteDocuments, ProfessionListInput
 from web.documents.services import check_document_create, update_document_db, DocumentCreateError
 from web.users.users import current_superuser
 
@@ -148,4 +150,49 @@ async def delete_documents(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f'Error while delete documents: {e}',
+        )
+
+
+@router.post(
+    '/non_qualify_prof_list',
+    status_code=status.HTTP_200_OK,
+    response_model=None,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def get_non_qualify_prof_list(
+    input_data: ProfessionListInput,
+    db_session: AsyncSession = Depends(get_db_session)
+):
+    client = NonQualifyProfListClient()
+    if input_data.all_db_professions:
+        query = select(Professions.title)
+        result = await db_session.execute(query)
+        profession_list = result.scalars().all()
+    else:
+        if not input_data.profession_list:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='profession_list must be provided if all_db_professions is False'
+            )
+        profession_list = input_data.profession_list
+
+    profession_list_str = ', '.join(profession_list)
+    content =  (
+        f'Список профессий: {profession_list_str}\n\n'
+        f'Выбери только те профессии, которые могут быть'
+        f' освобождены от первичного инструктажа.'
+    )
+    print("content:", content)
+    try:
+        resp = await client.get_llm_answer(content)
+        resp['initial_profession_list'] = profession_list
+        return JSONResponse(content=resp)
+    except LLMResonseError as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f'LLM service error: {e}'
         )

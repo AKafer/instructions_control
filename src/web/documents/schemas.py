@@ -52,3 +52,8 @@ class UpdateDocument(BaseModel):
 
 class DeleteDocuments(BaseModel):
     document_ids: list[int]
+
+
+class ProfessionListInput(BaseModel):
+    profession_list: list | None = None
+    all_db_professions: bool | None = False

@@ -74,12 +74,3 @@ async def calculate_test_result(
 
 def sa_to_dict(obj):
     return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
-
-def extract_json_from_text(text: str):
-    s = text.strip()
-    s = re.sub(r'^\s*```(?:json)?\s*', '', s, flags=re.IGNORECASE)
-    s = re.sub(r'\s*```\s*$', '', s)
-    i, j = s.find('{'), s.rfind('}')
-    if i == -1 or j == -1 or i >= j:
-        raise ValueError('No JSON object found in LLM response text')
-    return json.loads(s[i:j+1])

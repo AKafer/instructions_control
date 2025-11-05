@@ -9,7 +9,7 @@ export function AdminMenu() {
 			<Link to={'/admin/education'} className={styles['menu-item']}>Обучение</Link>
 			<Link to={'/admin/SIZ'} className={styles['menu-item']}>СИЗ</Link>
 			<Link to={'/admin/medicine'} className={styles['menu-item']}>Медосмотры</Link>
-			<Link to={'/admin/terminal'} className={styles['menu-item']}>Терминал</Link>
+			<Link to={'/admin/documents'} className={styles['menu-item']}>Документы</Link>
 		</>
 	);
 }

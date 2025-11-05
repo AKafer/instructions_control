@@ -25,7 +25,7 @@ router = APIRouter(
 async def get_all_document_types(
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    query = select(DocumentTypes).order_by(DocumentTypes.id.desc())
+    query = select(DocumentTypes)
     document_types = await db_session.execute(query)
     return document_types.scalars().all()
 

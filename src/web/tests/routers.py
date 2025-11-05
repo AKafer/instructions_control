@@ -15,7 +15,8 @@ from database.models.tests import Templates, Tests, Questions
 from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
-from externals.http.yandex_llm import YandexLLMClient
+from externals.http.yandex_llm.yandex_llm_base import LLMResonseError
+from externals.http.yandex_llm.yandex_llm_gen_test_questions import QuestionsForTestsLLMClient
 from main_schemas import ResponseErrorBody
 from web.tests.schemas import (
     Template,
@@ -32,7 +33,7 @@ from web.tests.services import (
     update_test_in_db,
     calculate_test_result,
     sa_to_dict,
-    extract_json_from_text, update_question_in_db,
+    update_question_in_db,
 )
 from web.users.users import current_superuser, current_user
 
@@ -480,24 +481,11 @@ async def create_llm_question(request: Request):
             detail="Empty request body"
     )
 
-    client = YandexLLMClient()
-    resp = await client.get_llm_questions(text)
-    if resp.status != 200:
-        raise HTTPException(
-            status_code=502,
-            detail=f'LLM request failed with status {resp.status}: {resp.parsed_response}'
-        )
+    client = QuestionsForTestsLLMClient()
     try:
-        text = resp.parsed_response["result"]["alternatives"][0]["message"]["text"]
-    except (TypeError, KeyError, IndexError):
+        return await client.get_llm_answer(text)
+    except LLMResonseError as e:
         raise HTTPException(
             status_code=502,
-            detail=f'Bad LLM response structure {resp.parsed_response}'
-        )
-    try:
-        return extract_json_from_text(text)
-    except Exception as e:
-        raise HTTPException(
-            status_code=502,
-            detail=f'Failed to parse JSON: {e}'
+            detail=f'LLM service error: {e}'
         )

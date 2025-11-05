@@ -14,7 +14,7 @@ import {Users} from './pages/Admin/Users/Users';
 import {Education} from './pages/Admin/Education/Education';
 import {SIZ} from './pages/Admin/SIZ/SIZ';
 import {Medicine} from './pages/Admin/Medicine/Medicine';
-import {Terminal} from './pages/Admin/Terminal/Terminal';
+import {Documents} from './pages/Admin/Terminal/Documents';
 import {Instructions} from './pages/Admin/Instructions/Instructions';
 
 const router = createBrowserRouter([
@@ -61,8 +61,8 @@ const router = createBrowserRouter([
 				element: <Medicine/>
 			},
 			{
-				path: '/admin/terminal',
-				element: <Terminal/>
+				path: '/admin/documents',
+				element: <Documents/>
 			}
 		]
 	},
