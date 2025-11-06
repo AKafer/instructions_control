@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import styles from './Documents.module.css';
-import {AIHelper} from '../../../components/DocumentTabs/DocumentTab1/AIHelper';
+import {AIHelper} from '../../../components/DocumentTabs/AIHelper/AIHelper';
 import {DocumentsTab2} from '../../../components/DocumentTabs/DocumentsTab2';
 import {DocumentsTab3} from '../../../components/DocumentTabs/DocumentsTab3';
+import {Templates} from '../../../components/DocumentTabs/Temlates/Templates';
 
 
 export function Documents() {
@@ -11,7 +12,9 @@ export function Documents() {
 	const tabs = [
 		{ id: 'tab1', label: 'AI помощник', component: <AIHelper /> },
 		{ id: 'tab2', label: 'Персональные', component: <DocumentsTab2 /> },
-		{ id: 'tab3', label: 'Для организации', component: <DocumentsTab3 /> }
+		{ id: 'tab3', label: 'Для организации', component: <DocumentsTab3 /> },
+		{ id: 'tab4', label: 'Шаблоны', component: <Templates /> }
+
 	];
 
 	const activeComponent = tabs.find(tab => tab.id === activeTab)?.component;

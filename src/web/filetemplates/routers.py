@@ -1,4 +1,5 @@
 import io
+import logging
 import os
 import zipfile
 
@@ -12,18 +13,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from starlette.exceptions import HTTPException
 from starlette.responses import Response
-from web.filetemplates.schemas import FileTemplate, RequestModel
+from web.filetemplates.schemas import FileTemplate, RequestModel, TemplateCreateInput
 from web.filetemplates.services import (
     delete_file,
     delete_files,
     get_full_link,
     run_generated_file,
-    save_file,
+    save_file, is_allowed_name, rename_old_file, roolback_rename_file,
 )
 from web.users.users import current_superuser
 
 router = APIRouter(prefix='/file_templates', tags=['file_templates'])
-
+logger = logging.getLogger('control')
 
 @router.get(
     '/',
@@ -60,6 +61,9 @@ async def get_all_file_templates(
 )
 async def create_file_template(
     request: Request,
+    input_data: TemplateCreateInput = Depends(
+        TemplateCreateInput.as_form
+    ),
     file: UploadFile = File(...),
     db_session: AsyncSession = Depends(get_db_session),
 ):
@@ -68,21 +72,44 @@ async def create_file_template(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='File must be provided',
         )
-    file_name = file.filename
+    file_name = input_data.title
+    if not is_allowed_name(file_name):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='File name is not allowed',
+        )
+
     query = select(FileTemplates).where(FileTemplates.file_name == file_name)
     result = await db_session.execute(query)
     file_template = result.scalar()
+    old_name = None
     if file_template is not None:
+        old_name, renamed_count = rename_old_file(file_name)
+        if renamed_count != 1 or not old_name:
+            logger.warning('Some problems with renaming file %s', file_name)
+
+    try:
+        await save_file(file, file_name)
+        if not file_template:
+            db_file_template = FileTemplates(file_name=file_name)
+            db_session.add(db_file_template)
+        else:
+            db_file_template = file_template
+        await db_session.commit()
+        await db_session.refresh(db_file_template)
+        db_file_template.link = get_full_link(request, file_name)
+    except Exception as e:
+        logger.error('Error saving file template: %s', e)
+        delete_file(file_name)
+        roolback_rename_file(file_name)
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail='File with such name already exists',
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f'Error saving file template: {e}',
         )
-    await save_file(file)
-    db_file_template = FileTemplates(file_name=file_name)
-    db_session.add(db_file_template)
-    await db_session.commit()
-    await db_session.refresh(db_file_template)
-    db_file_template.link = get_full_link(request, file_name)
+    else:
+        if old_name:
+            delete_file(old_name)
+
     return db_file_template
 
 

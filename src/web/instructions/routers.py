@@ -1,7 +1,5 @@
 import sqlalchemy
 from fastapi import File, UploadFile, APIRouter, Depends, Request
-from fastapi_pagination import Page
-from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status

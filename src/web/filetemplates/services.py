@@ -6,6 +6,9 @@ import unicodedata
 import aiofiles as aiof
 from docx import Document
 from fastapi import Request, UploadFile
+from sqlalchemy.testing import startswith_
+
+from constants import FileTemplatesNamingEnum
 from settings import (
     BASE_URL,
     STATIC_FOLDER,
@@ -17,8 +20,17 @@ from web.filetemplates.schemas import DocumentField, RequestModel
 logger = logging.getLogger('control')
 
 
-async def save_file(new_file: UploadFile) -> str:
-    filename = new_file.filename
+def is_allowed_name(filename: str) -> bool:
+    try:
+        FileTemplatesNamingEnum(filename)
+        return True
+    except ValueError:
+        return False
+
+
+async def save_file(new_file: UploadFile, title) -> str:
+    _, suffix = os.path.splitext(new_file.filename)
+    filename = f'{title}{suffix}'
     path_to_file = os.path.join(TEMPLATES_DIR, filename)
     async with aiof.open(path_to_file, 'wb+') as f:
         await f.write(new_file.file.read())
@@ -26,14 +38,48 @@ async def save_file(new_file: UploadFile) -> str:
 
 
 def get_full_link(request: Request, filename: str) -> str:
+    for file in os.listdir(TEMPLATES_DIR):
+        if file.startswith(filename):
+            filename = file
+            break
     base_url = BASE_URL or str(request.base_url)
     return f'{base_url}api/{STATIC_FOLDER}/{TEMPLATES_FOLDER}/{filename}'
+
+
+def rename_old_file(filename: str) -> (str | None, int):
+    old_name = None
+    renamed_count = 0
+    for file in os.listdir(TEMPLATES_DIR):
+        if file.startswith(filename):
+            renamed_count += 1
+            old_name = f'old--{file}'
+            os.rename(
+                os.path.join(TEMPLATES_DIR, file),
+                os.path.join(TEMPLATES_DIR, old_name),
+            )
+    return old_name, renamed_count
+
+
+def roolback_rename_file(filename: str) -> None:
+    try:
+        for file in os.listdir(TEMPLATES_DIR):
+            if file.startswith(f'old--{filename}'):
+                new_name = file.split('--')[-1]
+                os.rename(
+                    os.path.join(TEMPLATES_DIR, file),
+                    os.path.join(TEMPLATES_DIR, new_name),
+                )
+    except (FileNotFoundError, OSError):
+        pass
+
 
 
 def delete_file(filename: str) -> None:
     logger.debug(f'Delete file {filename}')
     try:
-        os.remove(os.path.join(TEMPLATES_DIR, filename))
+        for file in os.listdir(TEMPLATES_DIR):
+            if file.startswith(filename):
+                os.remove(os.path.join(TEMPLATES_DIR, file))
     except FileNotFoundError:
         pass
 

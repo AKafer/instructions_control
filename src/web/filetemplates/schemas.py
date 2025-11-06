@@ -1,8 +1,22 @@
+from fastapi import Form
 from pydantic import BaseModel
+
+
+class TemplateCreateInput(BaseModel):
+    title: str
+
+    @classmethod
+    def as_form(
+            cls,
+            title: str = Form(...),
+
+    ):
+        return cls(title=title)
 
 
 class FileTemplate(BaseModel):
     id: int
+    file_name: str
     link: str
 
     class Config:

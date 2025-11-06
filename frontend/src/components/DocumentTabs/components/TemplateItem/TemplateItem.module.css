@@ -1,0 +1,52 @@
+.row {}
+
+.cellIndex { width: 48px; color: var(--color_text_default_trans); }
+.cellName { font-weight: 500; color: var(--color_text_default); }
+.cellFile { width: 80px; text-align: center; }
+
+.fileLink {
+  display: inline-block;
+  opacity: 1;
+}
+
+.fileLinkDisabled {
+  display: inline-block;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.iconActive {
+  width: 24px;
+  height: 24px;
+  filter: none;
+}
+
+.iconDisabled {
+  width: 24px;
+  height: 24px;
+  filter: grayscale(100%);
+  opacity: 0.6;
+}
+
+.cellAction { width: 200px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+
+.hiddenInput {
+  display: none;
+}
+
+.uploadBtn {
+  padding: 6px 10px;
+}
+
+.uploadedOkBtn {
+  background-color: var(--color_primary_default);
+  color: var(--color_primary_contrast_default);
+  border-color: transparent;
+  transition: background-color 0.2s ease;
+}
+
+.error {
+  margin-top: 6px;
+  color: var(--color_destructive_default);
+  font-size: 13px;
+}
