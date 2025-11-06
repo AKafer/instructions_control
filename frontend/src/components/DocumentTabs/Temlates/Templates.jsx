@@ -21,7 +21,7 @@ export function Templates() {
 		setError(undefined);
 		setLoading(true);
 		try {
-			const res = await api.get('/file_templates');
+			const res = await api.get('/file_templates/');
 			setFiles(Array.isArray(res?.data) ? res.data : []);
 		} catch (e) {
 			setError(e?.response?.data?.detail || e?.message || 'Ошибка при получении списка файлов');
