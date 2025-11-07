@@ -1,10 +1,13 @@
+import os
+
 import sqlalchemy
 from fastapi import APIRouter, Depends
 from sqlalchemy import select, Delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
-from starlette.responses import Response, JSONResponse
+from starlette.responses import Response, JSONResponse, StreamingResponse
 
+from constants import FileTemplatesNamingEnum
 from database.models import Documents, Professions
 from dependencies import get_db_session
 from starlette.exceptions import HTTPException
@@ -12,8 +15,22 @@ from starlette.exceptions import HTTPException
 from externals.http.yandex_llm.yandex_llm_base import LLMResonseError
 from externals.http.yandex_llm.yandex_llm_non_qualify_prof_list import NonQualifyProfListClient
 from main_schemas import ResponseErrorBody
-from web.documents.schemas import Document, CreateDocument, UpdateDocument, DeleteDocuments, ProfessionListInput
-from web.documents.services import check_document_create, update_document_db, DocumentCreateError
+from settings import TEMPLATES_DIR
+from web.documents.schemas import (
+    Document,
+    CreateDocument,
+    UpdateDocument,
+    DeleteDocuments,
+    ProfessionListInput,
+    DownloadProfessionListInput
+)
+
+from web.documents.services import (
+    check_document_create,
+    update_document_db,
+    DocumentCreateError,
+    generate_doc_non_qualify_prof_list_in_memory
+)
 from web.users.users import current_superuser
 
 router = APIRouter(
@@ -196,3 +213,50 @@ async def get_non_qualify_prof_list(
             status_code=502,
             detail=f'LLM service error: {e}'
         )
+
+
+@router.post(
+    '/non_qualify_prof_list/download',
+    status_code=status.HTTP_200_OK,
+    response_model=None,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def generate_non_qualify_prof_list_document(
+    input_data: DownloadProfessionListInput,
+):
+    filename = None
+    for file in os.listdir(TEMPLATES_DIR):
+        if file.startswith(
+            FileTemplatesNamingEnum.NON_QUALIFY_PROF_LIST.value
+        ):
+            filename = file
+            break
+
+    if filename is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Template file for non-qualify profession list not found.'
+        )
+
+    template_path = os.path.join(TEMPLATES_DIR, filename)
+    try:
+        buf = generate_doc_non_qualify_prof_list_in_memory(
+            template_path=template_path,
+            professions=input_data.profession_list or []
+        )
+    except DocumentCreateError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Unexpected error: {e}')
+
+    download_filename = f'{FileTemplatesNamingEnum.NON_QUALIFY_PROF_LIST.value}.docx'
+    media_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    headers = {
+        'Content-Disposition': f'attachment; filename="{download_filename}"'
+    }
+
+    return StreamingResponse(buf, media_type=media_type, headers=headers)

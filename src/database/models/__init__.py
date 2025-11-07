@@ -2,6 +2,7 @@ __all__ = [
     'Activities',
     'ActivityRegistry',
     'BaseModel',
+    'Config',
     'Divisions',
     'Documents',
     'DocumentTypes',
@@ -40,3 +41,4 @@ from .file_templates import FileTemplates
 from .documents import Documents
 from .document_types import DocumentTypes
 from .training_modules import TrainingModules, TrainingModuleProgresses
+from .config import Config

@@ -4,6 +4,7 @@ import Button from '../../Button/Button';
 import {Textarea} from '../../textarea/Textarea';
 import Spinner from '../../Spinner/Spinner';
 import useApi from '../../../hooks/useApi.hook';
+import cn from 'classnames';
 
 export function AIHelper() {
 	const api = useApi();
@@ -44,7 +45,7 @@ export function AIHelper() {
 						text={resultRequest}
 						setText={setResultRequest}
 						placeholder="Результат будет показан здесь"
-						disabled={true}
+						disabled={false}
 						className={styles['textarea']}
 					/>
 					{loading && (
@@ -54,10 +55,21 @@ export function AIHelper() {
 					)}
 				</div>
 			</div>
-			<div className={styles['button']}>
-				<Button onClick={handleRequest} disabled={loading}>
-					{loading ? 'Запрос в обработке...' : 'Сформировать'}
-				</Button>
+			<div className={styles['buttons-container']}>
+				<div className={styles['button']}>
+					<Button onClick={handleRequest} disabled={loading}>
+						{loading ? 'Запрос в обработке...' : 'Сформировать'}
+					</Button>
+				</div>
+				<div className={styles['button']}>
+					<Button
+						onClick={handleRequest}
+						disabled={!resultRequest}
+						className={cn({ [styles.disabled]: !resultRequest })}
+					>
+					Выгрузить в файл
+					</Button>
+				</div>
 			</div>
 			{error && <div className={styles['error']}>{error}</div>}
 		</>

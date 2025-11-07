@@ -1,0 +1,93 @@
+.row {}
+
+.cellIndex {
+  width: 40px;
+  padding: 8px 10px;
+}
+
+.cellKey,
+.cellValue {
+  padding: 8px 10px;
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid var(--color_element_border);
+  border-radius: 4px;
+  background: var(--color_background_default);
+  color: var(--color_text_default);
+}
+
+.cellSave,
+.cellDelete {
+  width: 56px;
+  text-align: center;
+  vertical-align: middle;
+  padding: 8px 10px;
+}
+
+.iconButton {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.iconButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.icon {
+  width: 25px;
+  height: 25px;
+}
+
+.saved {
+  background: rgba(0, 150, 0, 0.08);
+  border-radius: 6px;
+}
+
+.deleteWrap {
+  position: relative;
+  display: inline-block;
+}
+
+.confirmPopup {
+  position: absolute;
+  right: 0;
+  top: 32px;
+  z-index: 40;
+  min-width: 180px;
+  padding: 8px;
+  background: var(--color_background_default);
+  border: 1px solid var(--color_element_border);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  border-radius: 8px;
+}
+
+.confirmText {
+  margin-bottom: 8px;
+  color: var(--color_text_default);
+}
+
+.confirmButtons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btnConfirm {
+}
+
+.btnCancel {
+  background: transparent;
+}
+
+.rowError {
+  color: var(--color_destructive_default);
+  padding: 8px 12px;
+}

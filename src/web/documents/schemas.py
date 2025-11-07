@@ -57,3 +57,7 @@ class DeleteDocuments(BaseModel):
 class ProfessionListInput(BaseModel):
     profession_list: list | None = None
     all_db_professions: bool | None = False
+
+
+class DownloadProfessionListInput(BaseModel):
+    profession_list: list | None = None
