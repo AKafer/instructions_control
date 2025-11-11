@@ -36,6 +36,38 @@ export function AIHelper() {
 		}
 	};
 
+	const handleDownload = async () => {
+		setError(undefined);
+		setLoading(true);
+
+		try {
+			const profession_list = resultRequest.split('\n').map(s => s.trim()).filter(Boolean);
+
+			const response = await api.post(
+				'/documents/non_qualify_prof_list/download',
+				{ profession_list },
+				{ responseType: 'blob' }
+			);
+
+			const blob = new Blob([response.data], {
+				type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+			});
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = 'Non_qualify_prof_list.docx';
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			window.URL.revokeObjectURL(url);
+		} catch (e) {
+			const msg = e?.response?.data?.detail || e?.message || 'Ошибка при запросе к серверу';
+			setError(msg);
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	return (
 		<>
 			<h1 className={styles['title']}>Профессии освобождаемые от инструктажа</h1>
@@ -63,7 +95,7 @@ export function AIHelper() {
 				</div>
 				<div className={styles['button']}>
 					<Button
-						onClick={handleRequest}
+						onClick={handleDownload}
 						disabled={!resultRequest}
 						className={cn({ [styles.disabled]: !resultRequest })}
 					>

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import styles from './Templates.module.css';
 import useApi from '../../../hooks/useApi.hook';
 import TemplateItem from '../components/TemplateItem/TemplateItem';
-import Button from '../../Button/Button';
 import ConfigItem from '../components/ConfigItem/ConfigItem';
 
 const TEMPLATES = [

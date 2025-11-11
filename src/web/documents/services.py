@@ -1,10 +1,14 @@
+import os
 from copy import deepcopy
 from io import BytesIO
+import random
+import string
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from docx import Document
 
+from core.global_placeholders import replace_global_placeholders_in_doc
 from database.models import User, Documents, DocumentTypes
 from web.documents.schemas import CreateDocument
 
@@ -35,10 +39,7 @@ async def check_document_create(
         raise DocumentCreateError('Document type not found')
 
 
-def generate_doc_non_qualify_prof_list_in_memory(
-    template_path: str, professions: list[str]
-) -> BytesIO:
-    doc = Document(template_path)
+def replace_local_placeholders_in_doc(doc, professions) -> Document:
     target_table = None
     for t_idx, t in enumerate(doc.tables):
         for row in t.rows:
@@ -78,8 +79,26 @@ def generate_doc_non_qualify_prof_list_in_memory(
             cell.text = text
 
     target_table._tbl.remove(template_row._tr)
+    return doc
+
+
+async def generate_doc_non_qualify_prof_list_in_memory(
+    template_path: str, professions: list[str]
+) -> BytesIO:
+    doc = Document(template_path)
+    doc = replace_local_placeholders_in_doc(doc, professions)
+
+    output_dir = '/tmp/ias_output'
+    os.makedirs(output_dir, exist_ok=True)
+    random_name = ''.join(random.choices(string.ascii_letters + string.digits, k=8)) + '.docx'
+    file_path = os.path.join(output_dir, random_name)
+    doc.save(file_path)
+    doc = await replace_global_placeholders_in_doc(doc)
 
     buf = BytesIO()
     doc.save(buf)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
     buf.seek(0)
     return buf

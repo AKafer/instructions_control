@@ -244,7 +244,7 @@ async def generate_non_qualify_prof_list_document(
 
     template_path = os.path.join(TEMPLATES_DIR, filename)
     try:
-        buf = generate_doc_non_qualify_prof_list_in_memory(
+        buf = await generate_doc_non_qualify_prof_list_in_memory(
             template_path=template_path,
             professions=input_data.profession_list or []
         )
