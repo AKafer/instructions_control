@@ -1,12 +1,12 @@
-import styles from './AIHelper.module.css';
+import styles from './NoInstructionProfs.module.css';
 import {useState} from 'react';
-import Button from '../../Button/Button';
-import {Textarea} from '../../textarea/Textarea';
-import Spinner from '../../Spinner/Spinner';
-import useApi from '../../../hooks/useApi.hook';
 import cn from 'classnames';
+import useApi from '../../../../hooks/useApi.hook';
+import {Textarea} from '../../../textarea/Textarea';
+import Spinner from '../../../Spinner/Spinner';
+import Button from '../../../Button/Button';
 
-export function AIHelper() {
+export function NoInstructionProfs() {
 	const api = useApi();
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(undefined);

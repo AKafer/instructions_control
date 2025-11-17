@@ -2,7 +2,6 @@ from externals.http.yandex_llm.promts import (
     NON_QUALIFY_PROF_LIST_PROMPT_TEMPLATE,
 )
 
-
 from externals.http.yandex_llm.yandex_llm_base import YandexLLMClient
 
 

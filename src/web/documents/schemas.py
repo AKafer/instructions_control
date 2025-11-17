@@ -61,3 +61,27 @@ class ProfessionListInput(BaseModel):
 
 class DownloadProfessionListInput(BaseModel):
     profession_list: list | None = None
+
+
+class InsGenerateInput(BaseModel):
+    profession: str
+    description: str | None = None
+    sizo: list[str] | None = None
+
+
+class Section(BaseModel):
+    title: str
+    text: str
+
+
+class DocSections(BaseModel):
+    general: Section | None = None
+    before: Section | None = None
+    during: Section | None = None
+    accidents: Section | None = None
+    after: Section | None = None
+
+
+class InsGenerateSectionsInput(BaseModel):
+    profession: str
+    sections: DocSections

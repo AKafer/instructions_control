@@ -90,11 +90,3 @@ async def delete_item(
     for key, value in global_placeholders.items():
         i += 1
         sorted_global_placeholders[str(i)] = value
-
-    placeholders['global_placeholders'] = sorted_global_placeholders
-    config.placeholders = placeholders
-    await db_session.commit()
-    return JSONResponse(
-        content={'message': 'Item deleted successfully'},
-        status_code=status.HTTP_204_NO_CONTENT,
-    )

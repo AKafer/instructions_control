@@ -39,7 +39,7 @@ async def check_document_create(
         raise DocumentCreateError('Document type not found')
 
 
-def replace_local_placeholders_in_doc(doc, professions) -> Document:
+def replace_non_qualify_list_placeholders_in_doc(doc, professions) -> Document:
     target_table = None
     for t_idx, t in enumerate(doc.tables):
         for row in t.rows:
@@ -82,23 +82,43 @@ def replace_local_placeholders_in_doc(doc, professions) -> Document:
     return doc
 
 
-async def generate_doc_non_qualify_prof_list_in_memory(
-    template_path: str, professions: list[str]
+def replace_ins_generate_in_doc(doc, sections, profession) -> Document:
+    name_mapping = {
+        'general': 'Часть 1',
+        'before': 'Часть 2',
+        'during': 'Часть 3',
+        'accidents': 'Часть 4',
+        'after': 'Часть 5',
+    }
+    for paragraph in doc.paragraphs:
+        if "{{профессия}}" in paragraph.text:
+            paragraph.text = paragraph.text.replace("{{профессия}}", profession)
+
+        for key, part_name in name_mapping.items():
+            if "{{" + part_name + "}}" in paragraph.text:
+                section_text = sections.get(key)
+                if section_text:
+                    paragraph.text = paragraph.text.replace("{{" + part_name + "}}", section_text.get("text", ""))
+                else:
+                    paragraph.text = paragraph.text.replace("{{" + part_name + "}}", "")
+
+    return doc
+
+
+async def generate_document_in_memory(
+    template_path: str,
+    callback: replace_ins_generate_in_doc,
+    **kwargs
 ) -> BytesIO:
     doc = Document(template_path)
-    doc = replace_local_placeholders_in_doc(doc, professions)
-
-    output_dir = '/tmp/ias_output'
-    os.makedirs(output_dir, exist_ok=True)
-    random_name = ''.join(random.choices(string.ascii_letters + string.digits, k=8)) + '.docx'
-    file_path = os.path.join(output_dir, random_name)
-    doc.save(file_path)
+    callback_map = {
+        'replace_ins_generate_in_doc': replace_ins_generate_in_doc,
+        'replace_non_qualify_list_placeholders_in_doc': replace_non_qualify_list_placeholders_in_doc,
+    }
+    local_placeholders_replace = callback_map.get(callback)
+    doc = local_placeholders_replace(doc, **kwargs)
     doc = await replace_global_placeholders_in_doc(doc)
-
     buf = BytesIO()
     doc.save(buf)
-    if os.path.exists(file_path):
-        os.remove(file_path)
-
     buf.seek(0)
     return buf

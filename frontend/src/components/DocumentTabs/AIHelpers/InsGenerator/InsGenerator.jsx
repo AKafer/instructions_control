@@ -1,0 +1,197 @@
+import styles from './InsGenerator.module.css';
+import {useState} from 'react';
+import cn from 'classnames';
+import useApi from '../../../../hooks/useApi.hook';
+import {Textarea} from '../../../textarea/Textarea';
+import Spinner from '../../../Spinner/Spinner';
+import Button from '../../../Button/Button';
+import Input from '../../../Input/Input';
+import {CustomSelect} from '../../../Select/Select';
+
+
+export function InsGenerator() {
+	const api = useApi();
+
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState(undefined);
+
+	const [profession, setProfession] = useState('');
+	const [description, setDescription] = useState('');
+	const [materials, setMaterials] = useState('');
+
+	const [sections, setSections] = useState({});
+	const [selectedSection, setSelectedSection] = useState(null);
+	const [textareaValue, setTextareaValue] = useState('');
+
+	const handleGenerate = async () => {
+		setError(undefined);
+		setLoading(true);
+
+		try {
+			const sizoList = materials.split(',').map(s => s.trim()).filter(Boolean);
+
+			const {data} = await api.post('/documents/ins_generate', {
+				profession,
+				description,
+				sizo: sizoList
+			});
+
+			setSections(data);
+
+			const firstKey = Object.keys(data)[0];
+			if (firstKey) {
+				setSelectedSection({value: firstKey, label: data[firstKey].title});
+				setTextareaValue(data[firstKey].text);
+			}
+		} catch (e) {
+			const msg = e?.response?.data?.detail || e?.message || 'Ошибка при запросе к серверу';
+			setError(msg);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleSectionChange = (newSection) => {
+		if (selectedSection) {
+			setSections(prev => ({
+				...prev,
+				[selectedSection.value]: {
+					...prev[selectedSection.value],
+					text: textareaValue
+				}
+			}));
+		}
+
+		setSelectedSection(newSection);
+		setTextareaValue(sections[newSection.value]?.text || '');
+	};
+
+	const handleTextareaChange = (value) => {
+		setTextareaValue(value);
+		if (selectedSection?.value) {
+			setSections(prev => ({
+				...prev,
+				[selectedSection.value]: {
+					...prev[selectedSection.value],
+					text: value
+				}
+			}));
+		}
+	};
+
+	const handleDownload = async () => {
+		setError(undefined);
+		setLoading(true);
+
+		try {
+			const payloadSections = {};
+			for (const key in sections) {
+				payloadSections[key] = {
+					title: sections[key].title,
+					text: sections[key].text
+				};
+			}
+
+			const response = await api.post(
+				'/documents/ins_generate/download',
+				{
+					profession,
+					sections: payloadSections
+				},
+				{responseType: 'blob'}
+			);
+
+			const blob = new Blob([response.data], {
+				type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+			});
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = 'InsGenerated.docx';
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			window.URL.revokeObjectURL(url);
+		} catch (e) {
+			const msg = e?.response?.data?.detail || e?.message || 'Ошибка при запросе к серверу';
+			setError(msg);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const sectionOptions = Object.keys(sections).map(key => ({
+		value: key,
+		label: sections[key].title
+	}));
+
+	return (
+		<>
+			<h1 className={styles.title}>Генератор инструкций</h1>
+
+			<div className={styles.formWrapper}>
+				<div className={styles.inputs}>
+					<Input
+						placeholder="Профессия"
+						value={profession}
+						onChange={(e) => setProfession(e.target.value)}
+					/>
+					<Input
+						placeholder="Описание"
+						value={description}
+						onChange={(e) => setDescription(e.target.value)}
+					/>
+					<Input
+						placeholder="Материалы (через запятую)"
+						value={materials}
+						onChange={(e) => setMaterials(e.target.value)}
+					/>
+				</div>
+
+				<div className={styles.output}>
+					<CustomSelect
+						className={styles.my_wider_select}
+						options={sectionOptions}
+						value={selectedSection}
+						placeholder="Выберите секцию"
+						onChange={handleSectionChange}
+						width="100%"
+					/>
+					<div className={styles.textareaContainer}>
+						<Textarea
+							text={textareaValue}
+							setText={handleTextareaChange}
+							placeholder="Текст инструкции будет здесь"
+							disabled={false}
+							className={styles.textarea}
+						/>
+						{loading && (
+							<div className={styles.spinnerOverlay}>
+								<Spinner showSeconds={true} />
+							</div>
+						)}
+					</div>
+				</div>
+			</div>
+
+			<div className={styles.buttonsContainer}>
+				<div className={styles.button}>
+					<Button onClick={handleGenerate} disabled={loading}>
+						{loading ? 'Запрос в обработке...' : 'Сформировать'}
+					</Button>
+				</div>
+				<div className={styles.button}>
+					<Button
+						onClick={handleDownload}
+						disabled={!profession || !Object.keys(sections).length}
+						className={cn({ [styles.disabled]: !profession || !Object.keys(sections).length })}
+					>
+						Выгрузить в файл
+					</Button>
+				</div>
+			</div>
+
+			{error && <div className={styles.error}>{error}</div>}
+		</>
+	);
+}

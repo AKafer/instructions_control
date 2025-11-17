@@ -10,6 +10,18 @@
     padding: 20px;
 }
 
+.input:hover {
+  border-color: var(--color_primary_default);
+}
+
+.input:focus,
+.input:focus-visible {
+  outline: none;
+  border-width: 2px;
+  border-style: solid;
+  border-color: var(--color_primary_default);
+}
+
 .input::placeholder {
     color: var(--color_text_default_trans);
     font-size: 17px;
