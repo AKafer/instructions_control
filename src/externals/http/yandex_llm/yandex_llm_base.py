@@ -22,6 +22,7 @@ class YandexLLMClient(BaseApiClient):
     LLM_COMPLETION_TEMPERATURE: float = COMPLETION_TEMPERATURE
     LLM_COMPLETION_MAX_TOKENS: int = COMPLETION_MAX_TOKENS
     LLM_DEFAULT_SEARCH_INDEX: str | None = None
+    MAX_TEXT_LEN: int = 300
 
     def build_prompt(self, content, *args, **kwargs) -> str:
         return ''
@@ -60,7 +61,9 @@ class YandexLLMClient(BaseApiClient):
     async def get_llm_answer(self, content):
         headers = self.get_headers()
         data = self.get_data(content)
-        llm_response = await self.post(self.llm_uri, json=data, headers=headers)
+        llm_response = await self.post(
+            self.llm_uri, json=data, headers=headers
+        )
         return self.parse_response(llm_response)
 
     def extract_json_from_text(self, text: str):
@@ -70,7 +73,7 @@ class YandexLLMClient(BaseApiClient):
         i, j = s.find('{'), s.rfind('}')
         if i == -1 or j == -1 or i >= j:
             raise ValueError('No JSON object found in LLM response text')
-        return json.loads(s[i:j + 1])
+        return json.loads(s[i : j + 1])
 
     def parse_response(self, response):
         if response.status != 200:
@@ -79,14 +82,21 @@ class YandexLLMClient(BaseApiClient):
                 f' {response.status}: {response.parsed_response}'
             )
         try:
-            text = response.parsed_response["result"]["alternatives"][0]["message"]["text"]
+            text = response.parsed_response['result']['alternatives'][0][
+                'message'
+            ]['text']
         except (TypeError, KeyError, IndexError):
             raise LLMResonseError(
                 f'Bad LLM response structure {response.parsed_response}'
             )
+
+        text_str = str(text)
+        if len(text_str) > self.MAX_TEXT_LEN:
+            text_str = text_str[: self.MAX_TEXT_LEN] + '...'
+
         try:
             return self.extract_json_from_text(text)
         except Exception as e:
             raise LLMResonseError(
-                f'Failed to parse JSON: {e}'
+                f'Failed to parse JSON: {e}, response text: {text_str}'
             )
