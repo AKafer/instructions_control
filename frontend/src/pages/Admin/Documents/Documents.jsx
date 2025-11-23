@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import styles from './Documents.module.css';
 import {AIHelpers} from '../../../components/DocumentTabs/AIHelpers/AIHelpers';
-import {DocumentsTab2} from '../../../components/DocumentTabs/Personals/DocumentsTab2';
+import {Personals} from '../../../components/DocumentTabs/Personals/Personals';
 import {DocumentsTab3} from '../../../components/DocumentTabs/Organizations/DocumentsTab3';
 import {Templates} from '../../../components/DocumentTabs/Temlates/Templates';
 
@@ -11,7 +11,7 @@ export function Documents() {
 
 	const tabs = [
 		{ id: 'tab1', label: 'AI помощник', component: <AIHelpers /> },
-		{ id: 'tab2', label: 'Персональные', component: <DocumentsTab2 /> },
+		{ id: 'tab2', label: 'Персональные', component: <Personals /> },
 		{ id: 'tab3', label: 'Для организации', component: <DocumentsTab3 /> },
 		{ id: 'tab4', label: 'Шаблоны', component: <Templates /> }
 

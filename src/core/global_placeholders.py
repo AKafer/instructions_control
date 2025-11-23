@@ -14,6 +14,33 @@ PLACEHOLDERS = {
     "{{фио подписанта}}": "Иванов Иван Иванович",
 }
 
+
+def doc_contains_placeholder(doc, placeholder) -> bool:
+    for p in doc.paragraphs:
+        if placeholder in p.text:
+            return True
+
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for p in cell.paragraphs:
+                    if placeholder in p.text:
+                        return True
+
+    for section in doc.sections:
+        for header_footer in [section.header, section.footer]:
+            for p in header_footer.paragraphs:
+                if placeholder in p.text:
+                    return True
+            for table in header_footer.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        for p in cell.paragraphs:
+                            if placeholder in p.text:
+                                return True
+
+    return False
+
 async def get_placeholders() -> dict[str, str]:
     async with Session() as session:
         query = select(Config).where(Config.id == 1)
@@ -44,7 +71,7 @@ def replace_in_tables(doc, placeholders: dict[str, str]):
     return doc
 
 
-def replace_in_headers_footers(doc,placeholders: dict[str, str]):
+def replace_in_headers_footers(doc, placeholders: dict[str, str]):
     for section in doc.sections:
         for header in [section.header, section.footer]:
             for p in header.paragraphs:
@@ -66,4 +93,15 @@ async def replace_global_placeholders_in_doc(doc):
     doc = replace_in_paragraphs(doc, placeholders)
     doc = replace_in_tables(doc,placeholders)
     doc = replace_in_headers_footers(doc, placeholders)
+    return doc
+
+
+async def fill_template_placeholders(doc, placeholders):
+    '''placeholders: list of Placeholder models
+    {'key': str, 'value': str}
+    '''
+    placeholders_dict = {ph.key: ph.value for ph in placeholders}
+    doc = replace_in_paragraphs(doc, placeholders_dict)
+    doc = replace_in_tables(doc, placeholders_dict)
+    doc = replace_in_headers_footers(doc, placeholders_dict)
     return doc

@@ -45,8 +45,8 @@ async def get_all_instructions(
     db_session: AsyncSession = Depends(get_db_session),
 ):
     query = select(Instructions).order_by(Instructions.id.desc())
-    inss = await db_session.execute(query)
-    ins = inss.scalars().all()
+    result = await db_session.execute(query)
+    ins = result.scalars().all()
     for instruction in ins:
         if instruction.filename is not None:
             instruction.link = get_full_link(request, instruction.filename)

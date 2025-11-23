@@ -8,7 +8,6 @@
   color: var(--color_text_default_trans);
 }
 
-
 .container {
   display: flex;
   flex-direction: row;
@@ -32,11 +31,25 @@
   align-self: center;
 }
 
+.tableGroup {
+  margin-bottom: 20px;
+}
+
+.groupTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 8px 0;
+  text-align: left;
+  padding-left: 8px;
+  color: var(--color_text_default);
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 8px;
   background: var(--color_background_default);
+  table-layout: fixed;
 }
 
 .table thead th {
@@ -46,6 +59,11 @@
   font-weight: 600;
   color: var(--color_text_default);
 }
+
+.table thead th:nth-child(1),
+.table tbody td:nth-child(1) { width: 6%; }
+.table thead th:nth-child(2),
+.table tbody td:nth-child(2) { width: 48%; }
 
 .table tbody td {
   padding: 10px 12px;
@@ -63,3 +81,16 @@
   color: var(--color_destructive_default);
 }
 
+.iconButton {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  margin-top: 12px;
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+}

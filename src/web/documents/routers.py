@@ -4,11 +4,12 @@ import sqlalchemy
 from fastapi import APIRouter, Depends
 from sqlalchemy import select, Delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 from starlette import status
 from starlette.responses import Response, JSONResponse, StreamingResponse
 
 from constants import FileTemplatesNamingEnum
-from database.models import Documents, Professions
+from database.models import Documents, Professions, User
 from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
@@ -23,14 +24,14 @@ from web.documents.schemas import (
     UpdateDocument,
     DeleteDocuments,
     ProfessionListInput,
-    DownloadProfessionListInput, InsGenerateInput, InsGenerateSectionsInput
+    DownloadProfessionListInput, InsGenerateInput, InsGenerateSectionsInput, PersonalInput
 )
 
 from web.documents.services import (
     check_document_create,
     update_document_db,
     DocumentCreateError,
-    generate_document_in_memory
+    generate_document_in_memory, generate_zip_personals_in_memory
 )
 from web.users.users import current_superuser
 
@@ -247,7 +248,8 @@ async def generate_non_qualify_prof_list_document(
         buf = await generate_document_in_memory(
             template_path=template_path,
             callback='replace_non_qualify_list_placeholders_in_doc',
-            professions=input_data.profession_list or []
+            professions=input_data.profession_list or [],
+            placeholder='{{профессии освобожденные от первичного инструктажа}}'
         )
     except DocumentCreateError as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -337,3 +339,91 @@ async def ins_generate_document(
     }
 
     return StreamingResponse(buf, media_type=media_type, headers=headers)
+
+
+
+@router.post(
+    '/personal_generate',
+    status_code=status.HTTP_200_OK,
+    response_model=None,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def personal_generate(
+    input_data: PersonalInput,
+    db_session: AsyncSession = Depends(get_db_session)
+):
+    try:
+        template = FileTemplatesNamingEnum(input_data.template)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Invalid template value: {input_data.template}'
+        )
+    if not template.is_in_group('personal'):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Template {input_data.template} is not a personal template'
+        )
+
+    filename = None
+    for file in os.listdir(TEMPLATES_DIR):
+        if file.startswith(
+                template.value
+        ):
+            filename = file
+            break
+
+    if filename is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Template file for non-qualify profession list not found.'
+        )
+    template_path = os.path.join(TEMPLATES_DIR, filename)
+
+    query = (
+        select(User)
+        .where(User.id.in_(input_data.users_uuid_list))
+        .where(User.is_superuser == False)
+        .options(
+            joinedload(User.instructions),
+            joinedload(User.division),
+            joinedload(User.profession),
+            joinedload(User.materials),
+        )
+    )
+    result = await db_session.execute(query)
+    users_list = result.unique().scalars().all()
+    if not users_list:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='No users found for the provided UUIDs.'
+        )
+
+    try:
+        buf = await generate_zip_personals_in_memory(
+            template_path=template_path,
+            users_data=users_list,
+            placeholders=input_data.placeholders,
+        )
+    except DocumentCreateError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Unexpected error: {e}')
+
+    download_filename = f'{template.value}.zip'
+    media_type = 'application/zip'
+    headers = {
+        'Content-Disposition': f'attachment; filename="{download_filename}"'
+    }
+
+    return StreamingResponse(buf, media_type=media_type, headers=headers)
+
+
+
+
+
+

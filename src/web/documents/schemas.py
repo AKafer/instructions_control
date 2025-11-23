@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, date
+from datetime import date
 
 from pydantic import BaseModel, Extra
 
@@ -85,3 +85,14 @@ class DocSections(BaseModel):
 class InsGenerateSectionsInput(BaseModel):
     profession: str
     sections: DocSections
+
+
+class Placeholder(BaseModel):
+    key: str
+    value: str
+
+
+class PersonalInput(BaseModel):
+    template: str
+    users_uuid_list: list[str]
+    placeholders: list[Placeholder]
