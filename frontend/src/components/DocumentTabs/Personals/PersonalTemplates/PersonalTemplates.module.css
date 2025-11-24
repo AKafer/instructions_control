@@ -1,0 +1,54 @@
+.templatesBox {
+	background: var(--color_background_default);
+	border: 1px solid var(--color_element_border);
+	border-radius: 8px;
+	padding: 16px;
+	width: 30%;
+	min-width: 280px;
+	box-shadow: 0 1px 2px rgba(var(--color_text_default_rgb), 0.05);
+}
+
+.kvContainer {
+	margin-top: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.kvTitle {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.controlsRow {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	margin-top: 8px;
+}
+
+.addBtn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	background: var(--color_surface_default);
+	border: 1px solid var(--color_element_border);
+	border-radius: 8px;
+	cursor: pointer;
+	font-weight: 500;
+	color: var(--color_text_default);
+	transition: background 0.2s, border 0.2s;
+}
+
+.addBtn:hover {
+	background: rgba(var(--color_primary_default_rgb), 0.1);
+	border-color: var(--color_primary_default);
+}
+
+.addBtn img {
+	width: 16px;
+	height: 16px;
+	display: block;
+}

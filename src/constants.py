@@ -117,6 +117,7 @@ personal_placeholders = [
     {'key': '{{фамилия работника}}', 'value': 'last_name'},
     {'key': '{{имя работника}}', 'value': 'name'},
     {'key': '{{отчество работника}}', 'value': 'father_name'},
+    {'key': '{{фио подписанта}}', 'value': 'full_name'},
     {'key': '{{табельный номер}}', 'value': 'number'},
     {'key': '{{профессия работника}}', 'value': 'profession.title'},
     {'key': '{{дата рождения работника}}', 'value': 'date_of_birth'},

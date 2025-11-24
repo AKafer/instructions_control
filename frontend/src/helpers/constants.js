@@ -37,3 +37,91 @@ export const typeSizes = [
 	{ value: 'gloves_size', label: 'Перчатки' },
 	{ value: 'mitten_size', label: 'Варежки' }
 ];
+
+export const TEMPLATES_GROUPED = [
+	{
+		group: 'АИ Помощник',
+		templates: [
+			{ name: 'Перечень профессий освобожденных от первичного инструктажа', template: 'non_qualify_prof_list' },
+			{ name: 'ИОТ Бланк', template: 'iot_blank' },
+			{ name: 'Перечень СИЗ требующих обучения', template: 'requiring_training_siz_list' },
+			{ name: 'Перечень стажирующихся работников', template: 'trainee_workers_list' },
+			{ name: 'Программа вводного инструктажа', template: 'introductory_briefing_program' }
+		]
+	},
+	{
+		group: 'Персональные',
+		templates: [
+			{
+				name: 'Акт регистрации вводного инструктажа',
+				template: 'act_reg_intro',
+				placeholders: [ '{{дата документа}}']
+			},
+			{
+				name: 'Акт регистрации вводного по ГО',
+				template: 'act_reg_civil_def',
+				placeholders: [ '{{дата документа}}']
+			},
+			{
+				name: 'Акт регистрации первичного инструктажа',
+				template: 'act_reg_primary',
+				placeholders: [ '{{дата документа}}']
+			},
+			{
+				name: 'Журнал вводного и первичного по ПБ',
+				template: 'journal_intro_primary',
+				placeholders: ['{{дата документа}}']
+			},
+			{
+				name: 'Лист ознакомления с ЛНА работником',
+				template: 'lnna_ack',
+				placeholders: [ '{{дата ознакомления с лна}}' ]
+			},
+			{
+				name: 'ЛК СИЗ',
+				template: 'lk_siz',
+				placeholders: []
+			},
+			{
+				name: 'Приказ о стажировке',
+				template: 'order_internship',
+				placeholders: [
+					'{{дата начала стажировки}}',
+					'{{дата окончания стажировки}}'
+				]
+			},
+			{
+				name: 'Стажировочный лист',
+				template: 'internship_sheet',
+				placeholders: [
+					'{{дата начала стажировки}}',
+					'{{дата окончания стажировки}}'
+				]
+			}
+		]
+	},
+	{
+		group: 'Для организации',
+		templates: [
+			{ name: 'Журнал вводного и первичного по ПБ', template: 'journal_intro_primary' },
+			{ name: 'Журнал Реестр учета микроповреждений', template: 'journal_microdamage' },
+			{ name: 'Журнал учета несчастных случаев', template: 'journal_accidents' },
+			{ name: 'ИОТ-ОППП-01 Первая помощь', template: 'iot_first_aid' },
+			{ name: 'ИОТ-СИЗ-04 СИЗ', template: 'iot_siz' },
+			{ name: 'Перечень инструкций', template: 'list_instructions' },
+			{ name: 'Положение об обеспечении СИЗ', template: 'policy_siz' },
+			{ name: 'Положение о несчастных случаях', template: 'policy_accidents' },
+			{ name: 'Положение о порядке обучения ОТ', template: 'policy_training' },
+			{ name: 'Положение о СУОТ', template: 'policy_suot' },
+			{ name: 'Приказ об утверждении ЛНА по ОТ', template: 'order_approve_lna' },
+			{ name: 'Приказ о сан постах', template: 'order_san_posts' },
+			{ name: 'Приказ о старте новой СУОТ', template: 'order_start_suot' },
+			{ name: 'Приказ ответственный за ОТ', template: 'order_responsible_ot' },
+			{ name: 'Программа обучения по использованию СИЗ', template: 'program_siz_usage' },
+			{ name: 'Программа обучения по общим вопросам СУОТ', template: 'program_general_suot' },
+			{ name: 'Программа обучения по оказанию первой помощи', template: 'program_first_aid' },
+			{ name: 'Программа обучения при воздействии вредных и опасных факторов', template: 'program_hazard_factors' },
+			{ name: 'Программа стажировки на рабочем месте', template: 'program_workplace_internship' }
+		]
+	}
+];

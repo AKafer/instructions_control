@@ -1,0 +1,20 @@
+.selectBox {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 6px;
+  width: 300px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.option input {
+  margin-right: 6px;
+}

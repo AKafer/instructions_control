@@ -3,60 +3,11 @@ import styles from './Templates.module.css';
 import useApi from '../../../hooks/useApi.hook';
 import TemplateItem from '../components/TemplateItem/TemplateItem';
 import ConfigItem from '../components/ConfigItem/ConfigItem';
-
-const TEMPLATES_GROUPED = [
-	{
-		group: 'АИ Помощник',
-		templates: [
-			{ name: 'Перечень профессий освобожденных от первичного инструктажа', template: 'non_qualify_prof_list' },
-			{ name: 'ИОТ Бланк', template: 'iot_blank' },
-			{ name: 'Перечень СИЗ требующих обучения', template: 'requiring_training_siz_list' },
-			{ name: 'Перечень стажирующихся работников', template: 'trainee_workers_list' },
-			{ name: 'Программа вводного инструктажа', template: 'introductory_briefing_program' }
-		]
-	},
-	{
-		group: 'Персональные',
-		templates: [
-			{ name: 'Акт регистрации вводного инструктажа', template: 'act_reg_intro' },
-			{ name: 'Акт регистрации вводного по ГО', template: 'act_reg_civil_def' },
-			{ name: 'Акт регистрации первичного инструктажа', template: 'act_reg_primary' },
-			{ name: 'Журнал вводного и первичного по ПБ', template: 'journal_intro_primary' },
-			{ name: 'Лист ознакомления с ЛНА работником', template: 'lnna_ack' },
-			{ name: 'ЛК СИЗ', template: 'lk_siz' },
-			{ name: 'Приказ о стажировке', template: 'order_internship' },
-			{ name: 'Стажировочный лист', template: 'internship_sheet' }
-		]
-	},
-	{
-		group: 'Для организации',
-		templates: [
-			{ name: 'Журнал вводного и первичного по ПБ', template: 'journal_intro_primary' },
-			{ name: 'Журнал Реестр учета микроповреждений', template: 'journal_microdamage' },
-			{ name: 'Журнал учета несчастных случаев', template: 'journal_accidents' },
-			{ name: 'ИОТ-ОППП-01 Первая помощь', template: 'iot_first_aid' },
-			{ name: 'ИОТ-СИЗ-04 СИЗ', template: 'iot_siz' },
-			{ name: 'Перечень инструкций', template: 'list_instructions' },
-			{ name: 'Положение об обеспечении СИЗ', template: 'policy_siz' },
-			{ name: 'Положение о несчастных случаях', template: 'policy_accidents' },
-			{ name: 'Положение о порядке обучения ОТ', template: 'policy_training' },
-			{ name: 'Положение о СУОТ', template: 'policy_suot' },
-			{ name: 'Приказ об утверждении ЛНА по ОТ', template: 'order_approve_lna' },
-			{ name: 'Приказ о сан постах', template: 'order_san_posts' },
-			{ name: 'Приказ о старте новой СУОТ', template: 'order_start_suot' },
-			{ name: 'Приказ ответственный за ОТ', template: 'order_responsible_ot' },
-			{ name: 'Программа обучения по использованию СИЗ', template: 'program_siz_usage' },
-			{ name: 'Программа обучения по общим вопросам СУОТ', template: 'program_general_suot' },
-			{ name: 'Программа обучения по оказанию первой помощи', template: 'program_first_aid' },
-			{ name: 'Программа обучения при воздействии вредных и опасных факторов', template: 'program_hazard_factors' },
-			{ name: 'Программа стажировки на рабочем месте', template: 'program_workplace_internship' }
-		]
-	}
-];
+import {TEMPLATES_GROUPED} from '../../../helpers/constants';
 
 export function Templates() {
 	const api = useApi();
-	const [files, setFiles] = useState([]); // ответ от бэка — массив объектов {id, file_name, link}
+	const [files, setFiles] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(undefined);
 	const [configItems, setConfigItems] = useState([]);
@@ -117,7 +68,7 @@ export function Templates() {
 						<div key={group.group} className={styles.tableGroup}>
 							<div className={styles.groupTitle}>{group.group}</div>
 
-							<table className={styles.table}>
+							<table className={`${styles.table} ${styles.templatesTable}`}>
 								<thead>
 									<tr>
 										<th>#</th>

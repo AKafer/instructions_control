@@ -1,0 +1,48 @@
+.kvRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.kvKey,
+.kvValue {
+  flex: 1;
+  min-width: 140px;
+  border: 1px solid var(--color_element_border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: var(--font_default);
+  font-size: 14px;
+  color: var(--color_text_default);
+  background: var(--color_background_default);
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.kvKey:focus,
+.kvValue:focus {
+  outline: none;
+  border-color: var(--color_primary_default);
+  box-shadow: 0 0 0 2px rgba(var(--color_primary_default_rgb), 0.3);
+}
+
+.kvKey::placeholder,
+.kvValue::placeholder {
+  color: var(--color_text_default_trans);
+}
+
+.removeBtn {
+  border: none;
+  background: transparent;
+  color: var(--color_text_default);
+  font-size: 18px;
+  line-height: 1;
+  padding: 6px 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.removeBtn:hover {
+  background: rgba(var(--color_primary_default_rgb), 0.1);
+  color: var(--color_primary_default);
+}
