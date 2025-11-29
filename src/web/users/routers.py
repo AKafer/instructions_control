@@ -62,6 +62,25 @@ async def get_all_users(
     users = await db_session.execute(query)
     return users.scalars().unique().all()
 
+
+@router.get(
+    '/user_uuids',
+    response_model=list[str],
+    dependencies=[Depends(current_superuser)],
+)
+async def get_user_ids(
+    user_filter: UsersFilter = Depends(UsersFilter),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+
+    query = select(User.id)
+    query = user_filter.filter(query)
+    query = query.distinct()
+    result = await db_session.execute(query)
+    uuids = result.scalars().all()
+    return [str(u) for u in uuids]
+
+
 @router.get(
     '/paginated',
     response_model=Page[UserListRead],

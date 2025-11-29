@@ -30,6 +30,28 @@
 	gap: 6px;
 }
 
+.labelCount {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* чекбокс слева, текст справа */
+  width: 100%;                    /* растягиваем контейнер на всю ширину */
+  margin-right: 10px;             /* при необходимости */
+}
+
+.selectAllCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.selectAllCheckbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
 .filterButton img {
 	width: 20px;
 	height: 20px;

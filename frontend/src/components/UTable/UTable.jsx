@@ -57,7 +57,7 @@ const UniversalTable = ({
 					columns={columns}
 					dataSource={formattedData}
 					loading={loading}
-					rowKey="id"
+					rowKey={record => record.id}
 					onChange={handleTableChange}
 					pagination={
 						usePagination
