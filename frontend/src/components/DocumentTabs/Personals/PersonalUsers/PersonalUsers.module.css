@@ -16,7 +16,6 @@
 .filtersTable {
 	display: flex;
 	gap: 40px;
-	align-items: center;
 	margin-bottom: 8px;
 }
 
@@ -87,10 +86,9 @@
 .managePanel {
 	display: flex;
 	flex-direction: column;
-	justify-content: space-between;
 	align-items: center;
 	gap: 40px;
-	margin-top: 8px;
+	margin-top: 50px;
 	margin-left: 40px;
 }
 
