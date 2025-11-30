@@ -27,5 +27,6 @@ class Professions(BaseModel):
         cascade="all, delete, delete-orphan",
         single_parent=True,
         back_populates="profession",
+        uselist=False
     )
 

@@ -2,6 +2,7 @@ import sqlalchemy
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from starlette import status
 from starlette.responses import Response
 
@@ -14,7 +15,7 @@ from web.journals.services import remove_lines_to_journals_for_delete_prof
 from web.professions.schemas import (
     Profession,
     ProfessionCreateInput,
-    ProfessionUpdateInput,
+    ProfessionUpdateInput, ProfessionDetail,
 )
 from web.professions.services import update_profession
 from web.users.users import current_superuser
@@ -35,7 +36,7 @@ async def get_all_profs(db_session: AsyncSession = Depends(get_db_session)):
 
 @router.get(
     '/{profession_id:int}',
-    response_model=Profession,
+    response_model=ProfessionDetail,
     responses={
         status.HTTP_400_BAD_REQUEST: {
             'model': ResponseErrorBody,
@@ -46,16 +47,30 @@ async def get_all_profs(db_session: AsyncSession = Depends(get_db_session)):
     },
 )
 async def get_prof_by_id(
-    profession_id: int, db_session: AsyncSession = Depends(get_db_session)
+    profession_id: int,
+    db_session: AsyncSession = Depends(get_db_session)
 ):
-    query = select(Professions).filter(Professions.id == profession_id)
+    query = (
+        select(Professions)
+        .options(
+            selectinload(Professions.instructions),
+            selectinload(Professions.norm),
+        )
+        .filter(Professions.id == profession_id)
+    )
     profession = await db_session.scalar(query)
     if profession is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f'Profession with id {profession_id} not found',
         )
-    return profession
+    return ProfessionDetail(
+        id=profession.id,
+        title=profession.title,
+        description=profession.description,
+        instructions=profession.instructions,
+        norm=profession.norm if profession.norm else None
+    )
 
 
 @router.post(

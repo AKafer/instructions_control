@@ -272,3 +272,11 @@ class UserListRead(schemas.BaseUser[uuid.UUID]):
     changed_profession: datetime | None
     additional_features: AdditionalFeatures
     materials: list[Material] | None
+
+
+class UserListReadLight(schemas.BaseUser[uuid.UUID]):
+    name: str
+    last_name: str
+    father_name: str | None
+    profession_id: int | None
+    division_id: int | None

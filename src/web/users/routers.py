@@ -5,7 +5,7 @@ from fastapi import (
     HTTPException,
     Request,
     Response,
-    status,
+    status, Query,
 )
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
@@ -27,7 +27,7 @@ from web.users.schemas import (
     UserListRead,
     AddMaterials,
     Material,
-    DeleteMaterials,
+    DeleteMaterials, UserListReadLight,
 )
 from web.users.services import (
     peak_personal_journal,
@@ -99,6 +99,26 @@ async def get_paginated_users(
         )
     )
     query = user_filter.filter(query)
+    return await paginate(db_session, query)
+
+
+@router.get(
+    '/paginated_light',
+    response_model=Page[UserListReadLight],
+    dependencies=[Depends(current_superuser)],
+)
+async def get_paginated_users_light(
+    user_filter: UsersFilter = Depends(UsersFilter),
+    db_session: AsyncSession = Depends(get_db_session),
+    sort: str | None = Query(None, ),
+):
+    query = (
+        select(User)
+        .where(User.is_superuser == False)
+    )
+    query = user_filter.filter(query)
+    if sort == 'true':
+        query = query.order_by(User.last_name.asc())
     return await paginate(db_session, query)
 
 

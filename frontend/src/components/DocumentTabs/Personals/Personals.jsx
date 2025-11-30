@@ -73,9 +73,6 @@ export function Personals() {
 					{error} <span className={styles.errorClose}>✖</span>
 				</div>
 			)}
-			<div className={styles.bottomRow}>
-				<Button onClick={handleGenerate}>Сформировать</Button>
-			</div>
 			<div className={styles.topRow}>
 				<PersonalTemplates
 					selectedTemplate={selectedTemplate}
@@ -86,6 +83,9 @@ export function Personals() {
 				<PersonalUsers
 					selectedUsers={selectedUsers}
 					setSelectedUsers={setSelectedUsers}
+					onGenerate={handleGenerate}
+					loading={loading}
+					selectedTemplate={selectedTemplate}
 				/>
 			</div>
 			{loading && (

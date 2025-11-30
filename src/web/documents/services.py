@@ -1,10 +1,10 @@
+import logging
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, date
 from io import BytesIO
 from typing import Any, Sequence, List
 from zipfile import ZipFile, ZIP_DEFLATED
 
-from docx.table import Table
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from docx import Document
@@ -14,6 +14,9 @@ from core.global_placeholders import replace_global_placeholders_in_doc, fill_te
     replace_in_paragraphs, replace_in_tables, replace_in_headers_footers, doc_contains_placeholder
 from database.models import User, Documents, DocumentTypes
 from web.documents.schemas import CreateDocument, Placeholder
+
+
+logger = logging.getLogger("control")
 
 
 class DocumentCreateError(Exception):
@@ -142,11 +145,15 @@ def get_nested_value(obj: Any, path: str) -> Any:
         for part in parts:
             if current is None:
                 return ''
-            current = getattr(current, part, None)
-            if isinstance(current, datetime):
-                current = current.date()
+            if isinstance(current, dict):
+                current = current.get(part, None)
+            else:
+                current = getattr(current, part, None)
+        if isinstance(current, (datetime, date)):
+            return current.strftime('%d.%m.%Y')
         return current if current is not None else ''
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error getting nested value for path '{path}': {e}")
         return ''
 
 
@@ -156,7 +163,7 @@ async def fill_user_data_in_doc(doc: Document, user: Any) -> Document:
         key = item['key']
         path = item['value']
         value = get_nested_value(user, path)
-        placeholders_dict[key] = str(value) if value is not None else ''
+        placeholders_dict[key] = str(value) if value is not None else '-'
 
     replace_in_paragraphs(doc, placeholders_dict)
     replace_in_tables(doc, placeholders_dict)
@@ -176,10 +183,11 @@ async def fill_user_tables_ins_in_doc(doc: Document, user: User) -> Document:
     return doc
 
 
-async def fill_user_tables_siz_in_doc(doc: Document, user) -> Document:
-    materials = getattr(user, "materials", [])
-    if not materials:
-        return doc
+async def fill_user_tables_norm_siz_in_doc(doc: Document, user) -> Document:
+    norm = user.profession.norm
+    material_norm_types = []
+    if norm:
+        material_norm_types = norm.material_norm_types or []
 
     target_table = None
     for t in doc.tables:
@@ -209,21 +217,86 @@ async def fill_user_tables_siz_in_doc(doc: Document, user) -> Document:
     while len(target_table.rows) > template_index + 1:
         target_table._tbl.remove(target_table.rows[-1]._tr)
 
-    for counter, mat in enumerate(materials, 1):
+    if material_norm_types:
+        for counter, mat in enumerate(material_norm_types, 1):
+            new_tr = deepcopy(template_row._tr)
+            target_table._tbl.append(new_tr)
+            row = target_table.rows[-1]
+
+            for cell in row.cells:
+                text = cell.text
+                text = text.replace("{{номер пп}}", str(counter))
+                text = text.replace("{{пункт 767}}", str(mat.npa_link))
+                text = text.replace("{{Наименование СИЗ}}", mat.material_type.title)
+                text = text.replace("{{кол СИЗ}}", str(mat.quantity))
+                text = text.replace("{{шт-пар}}", mat.material_type.unit_of_measurement)
+                cell.text = text
+    else:
         new_tr = deepcopy(template_row._tr)
         target_table._tbl.append(new_tr)
         row = target_table.rows[-1]
-
         for cell in row.cells:
-            text = cell.text
-            text = text.replace("{{номер пп}}", str(counter))
-            text = text.replace("{{Наименование СИЗ}}", mat.material_type.title)
-            text = text.replace("{{кол СИЗ}}", str(mat.quantity))
-            text = text.replace("{{шт-пар}}", mat.material_type.unit_of_measurement)
-            cell.text = text
+            cell.text = "-"
 
     target_table._tbl.remove(template_row._tr)
     return doc
+
+
+async def fill_user_tables_fact_siz_in_doc(doc: Document, user) -> Document:
+    materials = user.materials or []
+
+    target_table = None
+    for t in doc.tables:
+        for row in t.rows:
+            row_text = "\n".join([c.text for c in row.cells])
+            if "{{номер пп}}" in row_text and "{{Наименование СИЗ}}" in row_text:
+                target_table = t
+                break
+        if target_table:
+            break
+
+    if not target_table:
+        raise DocumentCreateError("Not found target table for fact SIZ in the document.")
+
+    template_row = None
+    template_index = None
+    for i, row in enumerate(target_table.rows):
+        text = "\n".join([cell.text for cell in row.cells])
+        if "{{номер пп}}" in text and "{{Наименование СИЗ}}" in text:
+            template_row = row
+            template_index = i
+            break
+
+    if not template_row:
+        raise DocumentCreateError("Not found template row in the fact SIZ table.")
+
+    while len(target_table.rows) > template_index + 1:
+        target_table._tbl.remove(target_table.rows[-1]._tr)
+
+    if materials:
+        for counter, mat in enumerate(materials, 1):
+            new_tr = deepcopy(template_row._tr)
+            target_table._tbl.append(new_tr)
+            row = target_table.rows[-1]
+
+            for cell in row.cells:
+                text = cell.text
+                text = text.replace("{{номер пп}}", str(counter))
+                text = text.replace("{{Наименование СИЗ}}", mat.material_type.title)
+                text = text.replace("{{кол СИЗ}}", str(mat.quantity))
+                text = text.replace("{{шт-пар}}", mat.material_type.unit_of_measurement)
+                text = text.replace("{{дата выдачи СИЗ}}", mat.start_date.strftime("%d.%m.%Y") if mat.start_date else "-")
+                cell.text = text
+    else:
+        new_tr = deepcopy(template_row._tr)
+        target_table._tbl.append(new_tr)
+        row = target_table.rows[-1]
+        for cell in row.cells:
+            cell.text = "-"
+
+    target_table._tbl.remove(template_row._tr)
+    return doc
+
 
 
 async def generate_zip_personals_in_memory(
@@ -243,7 +316,8 @@ async def generate_zip_personals_in_memory(
             ):
                 doc = await fill_user_tables_ins_in_doc(doc, user)
             if doc_contains_placeholder(doc, '{{Наименование СИЗ}}'):
-                doc = await fill_user_tables_siz_in_doc(doc, user)
+                doc = await fill_user_tables_norm_siz_in_doc(doc, user)
+                doc = await fill_user_tables_fact_siz_in_doc(doc, user)
             doc = await replace_global_placeholders_in_doc(doc)
 
             doc_buffer = BytesIO()

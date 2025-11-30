@@ -5,10 +5,12 @@ import {CustomSelect} from '../../../Select/Select';
 import KeyValueItem from '../../components/KeyValueItem/KeyValueItem';
 
 function makeRow(key = '{{}}') {
+	const today = new Date();
+	const formattedDate = `${String(today.getDate()).padStart(2,'0')}.${String(today.getMonth()+1).padStart(2,'0')}.${today.getFullYear()}`;
 	return {
  		id: `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
  		key,
-		value: ''
+		value: key.toLowerCase().includes('дата') ? formattedDate : ''
 	};
 }
 
@@ -33,11 +35,36 @@ export default function PersonalTemplates({ selectedTemplate, setSelectedTemplat
 
 		const found = personalGroup.templates.find((t) => t.template === value);
 		setSelectedTemplate(value);
-		setPlaceholders((found?.placeholders || []).map((p) => makeRow(p)));
+		setPlaceholders(
+			(found?.placeholders || []).map((p) => {
+				const row = makeRow(p);
+				if (row.key.toLowerCase().includes('дата')) {
+					const today = new Date();
+					row.value = `${String(today.getDate()).padStart(2,'0')}.${String(today.getMonth()+1).padStart(2,'0')}.${today.getFullYear()}`;
+				}
+				return row;
+			})
+		);
 	};
 
-	const handleAddRow = () => setPlaceholders((prev) => [...prev, makeRow('')]);
-	const handleEditRow = (id, patch) => setPlaceholders((prev) => prev.map((r) => r.id === id ? { ...r, ...patch } : r));
+	const handleAddRow = () => {
+		setPlaceholders((prev) => {
+			const newRow = makeRow('');
+			if (newRow.key.toLowerCase().includes('дата')) {
+				const today = new Date();
+				newRow.value = `${String(today.getDate()).padStart(2,'0')}-${String(today.getMonth()+1).padStart(2,'0')}-${today.getFullYear()}`;
+			}
+			return [...prev, newRow];
+		});
+	};
+	
+	const handleEditRow = (id, patch) =>
+		setPlaceholders((prev) =>
+			prev.map((r) => {
+				if (r.id !== id) return r;
+				return { ...r, ...patch };
+			})
+		);
 	const handleRemoveRow = (id) => setPlaceholders((prev) => prev.filter((r) => r.id !== id));
 
 	return (

@@ -13,6 +13,7 @@ export const getAllUsersUrl = '/users';
 export const registerUrl = '/auth/register';
 export const loginUrl = '/auth/jwt/login';
 export const getAllUsersPaginatedUrl = '/users/paginated';
+export const getAllUsersPaginatedLightUrl = '/users/paginated_light';
 export const getAllMaterialTypesUrl = '/material_types/';
 export const getCalculateNeedUrl = '/material_types/calculate_need_all';
 export const getAllNormsUrl = '/norms/';
@@ -86,6 +87,7 @@ export const TEMPLATES_GROUPED = [
 				name: 'Приказ о стажировке',
 				template: 'order_internship',
 				placeholders: [
+					'{{дата документа}}',
 					'{{дата начала стажировки}}',
 					'{{дата окончания стажировки}}'
 				]

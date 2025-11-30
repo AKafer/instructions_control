@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.sql import Select
 from sqlalchemy.orm import Query as OrmQuery
 
-from database.models import User, Activities, ActivityRegistry
+from database.models import User, ActivityRegistry
 
 
 class UsersFilter(Filter):

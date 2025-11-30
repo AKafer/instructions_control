@@ -2,14 +2,22 @@ import React, { useState, useEffect } from 'react';
 import styles from './PersonalUsers.module.css';
 import UniversalTable from '../../../UTable/UTable';
 import useFillSelect from '../../../../hooks/useFillSelect.hook';
-import { getAllDivisionsUrl, getAllProfessionsUrl, getAllUsersPaginatedUrl } from '../../../../helpers/constants';
+import {
+	getAllDivisionsUrl,
+	getAllProfessionsUrl,
+	getAllUsersPaginatedLightUrl,
+	getAllUsersPaginatedUrl
+} from '../../../../helpers/constants';
 import { SelectMultiCheckboxSimple } from '../../../SelectMultiCheckboxSimple/SelectMultiCheckboxSimple';
 import Button from '../../../Button/Button';
 import {serializeFilters} from '../../../../helpers/SerializerFilters';
 import useApi from '../../../../hooks/useApi.hook';
+import cn from 'classnames';
 
 
-export default function PersonalUsers({ selectedUsers, setSelectedUsers }) {
+export default function PersonalUsers({
+	selectedUsers, setSelectedUsers, onGenerate, loading, selectedTemplate
+}) {
 	const api = useApi();
 
 	const [selectedProfOption, setSelectedProfOption] = useState([]);
@@ -36,6 +44,15 @@ export default function PersonalUsers({ selectedUsers, setSelectedUsers }) {
 		endpoint: getAllDivisionsUrl,
 		labelField: 'title'
 	});
+
+	useEffect(() => {
+		const fetchIds = async () => {
+			const ids = await fetchAllUserIds({});
+			setAllUserIds(ids);
+		};
+
+		fetchIds();
+	}, []);
 
 	async function fetchAllUserIds(filters) {
 		try {
@@ -75,11 +92,15 @@ export default function PersonalUsers({ selectedUsers, setSelectedUsers }) {
 		setAllUserIds(ids);
 	};
 
-	const clearFilters = () => {
+	const clearFilters = async () => {
 		setSelectedProfOption([]);
 		setSelectedDivOption([]);
 		setFilters({});
 		setSelectedUsers([]);
+
+		const ids = await fetchAllUserIds({});
+		setAllUserIds(ids);
+
 	};
 
 	const columns = [
@@ -116,8 +137,8 @@ export default function PersonalUsers({ selectedUsers, setSelectedUsers }) {
 	];
 
 	const endpointWithQuery = Object.keys(filters || {}).length
-		? `${getAllUsersPaginatedUrl}?${serializeFilters(filters)}`
-		: getAllUsersPaginatedUrl;
+		? `${getAllUsersPaginatedLightUrl}?${serializeFilters(filters)}&sort=true`
+		: `${getAllUsersPaginatedLightUrl}?sort=true`;
 
 
 	const normalize = id => (id === undefined || id === null) ? id : String(id);
@@ -189,27 +210,54 @@ export default function PersonalUsers({ selectedUsers, setSelectedUsers }) {
 		}
 	};
 
+	const isDisabled = !selectedTemplate || (Array.isArray(selectedUsers) ? selectedUsers.length === 0 : !selectedUsers);
+
 	return (
 		<div className={styles.usersBox}>
 			<div className={styles.filtersTable}>
-				<label>Профессии</label>
-				<SelectMultiCheckboxSimple
-					options={optionsProf}
-					value={selectedProfOption}
-					onChange={setSelectedProfOption}
-					placeholder="Фильтр по профессии"
-				/>
-				<label>Подразделения</label>
-				<SelectMultiCheckboxSimple
-					options={optionsDiv}
-					value={selectedDivOption}
-					onChange={setSelectedDivOption}
-					placeholder="Фильтр по подразделению"
-				/>
-				<Button className={styles.filterButton} onClick={applyFilters}>Применить фильтры</Button>
-				<button className={styles.filterButton} onClick={clearFilters}>
-					<img src="/icons/drop-filters-icon.svg" alt="drop-filters" />
-				</button>
+				<div className={styles.selectBox}>
+					<label
+						className={`${styles.labelSelect} ${selectedProfOption.length ? styles.labelActive : ''}`}
+					>
+    				Профессии:
+					</label>
+					<SelectMultiCheckboxSimple
+						options={optionsProf}
+						value={selectedProfOption}
+						onChange={setSelectedProfOption}
+						placeholder="Фильтр по профессии"
+					/>
+				</div>
+				<div className={styles.selectBox}>
+					<label
+						className={`${styles.labelSelect} ${selectedDivOption.length ? styles.labelActive : ''}`}
+					>
+    				Подразделения:
+					</label>
+					<SelectMultiCheckboxSimple
+						options={optionsDiv}
+						value={selectedDivOption}
+						onChange={setSelectedDivOption}
+						placeholder="Фильтр по подразделению"
+					/>
+				</div>
+				<div className={styles.managePanel}>
+					<div className={styles.filtersIconsBox}>
+						<button onClick={applyFilters} title="Применить фильтры">
+							<img src="/icons/apply-filters-icon.svg" alt="apply-filters" />
+						</button>
+						<button onClick={clearFilters} title="Сбросить фильтры">
+							<img src="/icons/drop-filters-icon.svg" alt="drop-filters" />
+						</button>
+					</div>
+
+					<div className={cn(
+						styles.bottomRow,
+						{ [styles.disabled]: isDisabled }
+					)}>
+						<Button onClick={onGenerate}>Сформировать</Button>
+					</div>
+				</div>
 			</div>
 
 			<div className={styles.labelCount}>
@@ -225,7 +273,7 @@ export default function PersonalUsers({ selectedUsers, setSelectedUsers }) {
 				</label>
 
 				<span>
-    Всего: {allUserIds.length} Выбрано: {getSelectedNormalized().length}
+    				Всего: {allUserIds.length} Выбрано: {getSelectedNormalized().length}
 				</span>
 			</div>
 			<UniversalTable

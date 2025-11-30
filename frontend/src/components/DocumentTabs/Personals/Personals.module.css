@@ -13,12 +13,6 @@
 	align-items: flex-start;
 }
 
-.bottomRow {
-	display: flex;
-	justify-content: flex-start;
-	margin-top: 2px;
-}
-
 .error {
   background-color: var(--color_destructive_default);
   color: var(--color_primary_contrast_default);

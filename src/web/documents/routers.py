@@ -5,12 +5,12 @@ import sqlalchemy
 from fastapi import APIRouter, Depends
 from sqlalchemy import select, Delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from starlette import status
 from starlette.responses import Response, JSONResponse, StreamingResponse
 
 from constants import FileTemplatesNamingEnum
-from database.models import Documents, Professions, User
+from database.models import Documents, Professions, User, Norms, NormMaterials
 from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
@@ -385,17 +385,27 @@ async def personal_generate(
         )
     template_path = os.path.join(TEMPLATES_DIR, filename)
 
-    query = (
-        select(User)
-        .where(User.id.in_(input_data.users_uuid_list))
-        .where(User.is_superuser == False)
-        .options(
-            joinedload(User.instructions),
-            joinedload(User.division),
-            joinedload(User.profession),
-            joinedload(User.materials),
+    options_list = [
+        joinedload(User.instructions),
+        joinedload(User.division),
+        joinedload(User.materials),
+    ]
+
+    if template == FileTemplatesNamingEnum.LK_SIZ:
+        options_list.append(
+            selectinload(User.profession)
+            .selectinload(Professions.norm)
+            .selectinload(Norms.material_norm_types)
+            .selectinload(NormMaterials.material_type)
         )
-    )
+    else:
+        options_list.append(joinedload(User.profession))
+
+    query = select(User).where(
+        User.id.in_(input_data.users_uuid_list),
+        User.is_superuser == False
+    ).options(*options_list)
+
     result = await db_session.execute(query)
     users_list = result.unique().scalars().all()
     if not users_list:
