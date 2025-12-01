@@ -81,7 +81,7 @@ export const TEMPLATES_GROUPED = [
 			{
 				name: 'ЛК СИЗ',
 				template: 'lk_siz',
-				placeholders: []
+				placeholders: ['{{дата выдачи СИЗ}}']
 			},
 			{
 				name: 'Приказ о стажировке',

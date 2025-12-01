@@ -16,7 +16,15 @@ from database.models import User, Documents, DocumentTypes
 from web.documents.schemas import CreateDocument, Placeholder
 
 
-logger = logging.getLogger("control")
+logger = logging.getLogger('control')
+
+POINT_NUMBER = '{{номер пп}}'
+INSTRUCTION_NAME = '{{наименование инструкции работника}}'
+NPA_SIZ = '{{пункт 767}}'
+QUANTITY_SIZ = '{{кол СИЗ}}'
+NAME_SIZ = '{{Наименование СИЗ}}'
+START_DATE_SIZ = '{{дата выдачи СИЗ}}'
+UNIT_OF_MEASUREMENT_SIZ = '{{шт-пар}}'
 
 
 class DocumentCreateError(Exception):
@@ -54,8 +62,8 @@ def replace_list_placeholders_in_doc(
     target_table = None
     for t in doc.tables:
         for row in t.rows:
-            row_text = "\n".join([c.text for c in row.cells])
-            if '{{номер пп}}' in row_text and placeholder in row_text:
+            row_text = '\n'.join([c.text for c in row.cells])
+            if POINT_NUMBER in row_text and placeholder in row_text:
                 target_table = t
                 break
         if target_table:
@@ -69,8 +77,8 @@ def replace_list_placeholders_in_doc(
     template_row = None
     template_index = None
     for i, row in enumerate(target_table.rows):
-        text = "\n".join([cell.text for cell in row.cells])
-        if '{{номер пп}}' in text and placeholder in text:
+        text = '\n'.join([cell.text for cell in row.cells])
+        if POINT_NUMBER in text and placeholder in text:
             template_row = row
             template_index = i
             break
@@ -87,7 +95,7 @@ def replace_list_placeholders_in_doc(
         row = target_table.rows[-1]
         for cell in row.cells:
             text = cell.text
-            text = text.replace('{{номер пп}}', str(counter))
+            text = text.replace(POINT_NUMBER, str(counter))
             text = text.replace(placeholder, item_value)
             cell.text = text
 
@@ -104,16 +112,16 @@ def replace_ins_generate_in_doc(doc, sections, profession) -> Document:
         'after': 'Часть 5',
     }
     for paragraph in doc.paragraphs:
-        if "{{профессия}}" in paragraph.text:
-            paragraph.text = paragraph.text.replace("{{профессия}}", profession)
+        if '{{профессия}}' in paragraph.text:
+            paragraph.text = paragraph.text.replace('{{профессия}}', profession)
 
         for key, part_name in name_mapping.items():
-            if "{{" + part_name + "}}" in paragraph.text:
+            if '{{' + part_name + '}}' in paragraph.text:
                 section_text = sections.get(key)
                 if section_text:
-                    paragraph.text = paragraph.text.replace("{{" + part_name + "}}", section_text.get("text", ""))
+                    paragraph.text = paragraph.text.replace('{{' + part_name + '}}', section_text.get('text', ''))
                 else:
-                    paragraph.text = paragraph.text.replace("{{" + part_name + "}}", "")
+                    paragraph.text = paragraph.text.replace('{{' + part_name + '}}', '')
 
     return doc
 
@@ -153,7 +161,7 @@ def get_nested_value(obj: Any, path: str) -> Any:
             return current.strftime('%d.%m.%Y')
         return current if current is not None else ''
     except Exception as e:
-        logger.error(f"Error getting nested value for path '{path}': {e}")
+        logger.error(f'Error getting nested value for path "{path}": {e}')
         return ''
 
 
@@ -177,13 +185,15 @@ async def fill_user_tables_ins_in_doc(doc: Document, user: User) -> Document:
     doc = replace_list_placeholders_in_doc(
         doc,
         items=ins_titles,
-        placeholder='{{наименование инструкции работника}}'
+        placeholder=INSTRUCTION_NAME
     )
 
     return doc
 
 
-async def fill_user_tables_norm_siz_in_doc(doc: Document, user) -> Document:
+async def fill_siz_table(
+    doc: Document, user, mode: str = 'norm', special_placeholders = None
+) -> Document:
     norm = user.profession.norm
     material_norm_types = []
     if norm:
@@ -192,111 +202,95 @@ async def fill_user_tables_norm_siz_in_doc(doc: Document, user) -> Document:
     target_table = None
     for t in doc.tables:
         for row in t.rows:
-            row_text = "\n".join([c.text for c in row.cells])
-            if "{{номер пп}}" in row_text and "{{Наименование СИЗ}}" in row_text:
+            row_text = '\n'.join(c.text for c in row.cells)
+            if POINT_NUMBER in row_text and NAME_SIZ in row_text:
                 target_table = t
                 break
         if target_table:
             break
 
     if not target_table:
-        raise DocumentCreateError("Not found target table for SIZ in the document.")
+        raise DocumentCreateError('Not found target table for SIZ in the document.' if mode == 'norm'
+                                  else 'Not found target table for fact SIZ in the document.')
 
     template_row = None
     template_index = None
     for i, row in enumerate(target_table.rows):
-        text = "\n".join([cell.text for cell in row.cells])
-        if "{{номер пп}}" in text and "{{Наименование СИЗ}}" in text:
+        text = '\n'.join(cell.text for cell in row.cells)
+        if POINT_NUMBER in text and NAME_SIZ in text:
             template_row = row
             template_index = i
             break
 
     if not template_row:
-        raise DocumentCreateError("Not found template row in the SIZ table.")
+        raise DocumentCreateError('Not found template row in the SIZ table.' if mode == 'norm'
+                                  else 'Not found template row in the fact SIZ table.')
 
     while len(target_table.rows) > template_index + 1:
         target_table._tbl.remove(target_table.rows[-1]._tr)
 
     if material_norm_types:
-        for counter, mat in enumerate(material_norm_types, 1):
+        for counter, mat in enumerate(material_norm_types, start=1):
             new_tr = deepcopy(template_row._tr)
             target_table._tbl.append(new_tr)
             row = target_table.rows[-1]
 
+            material_type = getattr(mat, 'material_type', None)
+            date_str = '-'
+            if special_placeholders:
+                for ph in special_placeholders:
+                    if ph.key == START_DATE_SIZ:
+                        date_str = ph.value
+                        break
+
+            if mode == 'norm':
+                repl = {
+                    POINT_NUMBER: str(counter),
+                    NPA_SIZ: str(getattr(mat, 'npa_link', '-')),
+                    NAME_SIZ: getattr(material_type, 'title', '-'),
+                    QUANTITY_SIZ: str(getattr(mat, 'quantity', '-')),
+                    UNIT_OF_MEASUREMENT_SIZ: getattr(material_type, 'unit_of_measurement', '-'),
+                }
+            else:
+                repl = {
+                    POINT_NUMBER: str(counter),
+                    NAME_SIZ: getattr(material_type, 'title', '-'),
+                    QUANTITY_SIZ: str(getattr(mat, 'quantity', '-')),
+                    UNIT_OF_MEASUREMENT_SIZ: getattr(material_type, 'unit_of_measurement', '-'),
+                    START_DATE_SIZ: date_str,
+                }
+
             for cell in row.cells:
                 text = cell.text
-                text = text.replace("{{номер пп}}", str(counter))
-                text = text.replace("{{пункт 767}}", str(mat.npa_link))
-                text = text.replace("{{Наименование СИЗ}}", mat.material_type.title)
-                text = text.replace("{{кол СИЗ}}", str(mat.quantity))
-                text = text.replace("{{шт-пар}}", mat.material_type.unit_of_measurement)
+                for pattern, value in repl.items():
+                    text = text.replace(pattern, value)
                 cell.text = text
     else:
         new_tr = deepcopy(template_row._tr)
         target_table._tbl.append(new_tr)
         row = target_table.rows[-1]
         for cell in row.cells:
-            cell.text = "-"
+            cell.text = '-'
 
     target_table._tbl.remove(template_row._tr)
     return doc
 
 
-async def fill_user_tables_fact_siz_in_doc(doc: Document, user) -> Document:
-    materials = user.materials or []
+async def fill_user_tables_norm_siz_in_doc(doc: Document, user) -> Document:
+    return await fill_siz_table(doc, user, mode='norm')
 
-    target_table = None
-    for t in doc.tables:
-        for row in t.rows:
-            row_text = "\n".join([c.text for c in row.cells])
-            if "{{номер пп}}" in row_text and "{{Наименование СИЗ}}" in row_text:
-                target_table = t
-                break
-        if target_table:
-            break
 
-    if not target_table:
-        raise DocumentCreateError("Not found target table for fact SIZ in the document.")
+async def fill_user_tables_fact_siz_in_doc(doc: Document, user, special_placeholders) -> Document:
+    return await fill_siz_table(
+        doc, user, mode='fact', special_placeholders=special_placeholders
+    )
 
-    template_row = None
-    template_index = None
-    for i, row in enumerate(target_table.rows):
-        text = "\n".join([cell.text for cell in row.cells])
-        if "{{номер пп}}" in text and "{{Наименование СИЗ}}" in text:
-            template_row = row
-            template_index = i
-            break
 
-    if not template_row:
-        raise DocumentCreateError("Not found template row in the fact SIZ table.")
-
-    while len(target_table.rows) > template_index + 1:
-        target_table._tbl.remove(target_table.rows[-1]._tr)
-
-    if materials:
-        for counter, mat in enumerate(materials, 1):
-            new_tr = deepcopy(template_row._tr)
-            target_table._tbl.append(new_tr)
-            row = target_table.rows[-1]
-
-            for cell in row.cells:
-                text = cell.text
-                text = text.replace("{{номер пп}}", str(counter))
-                text = text.replace("{{Наименование СИЗ}}", mat.material_type.title)
-                text = text.replace("{{кол СИЗ}}", str(mat.quantity))
-                text = text.replace("{{шт-пар}}", mat.material_type.unit_of_measurement)
-                text = text.replace("{{дата выдачи СИЗ}}", mat.start_date.strftime("%d.%m.%Y") if mat.start_date else "-")
-                cell.text = text
-    else:
-        new_tr = deepcopy(template_row._tr)
-        target_table._tbl.append(new_tr)
-        row = target_table.rows[-1]
-        for cell in row.cells:
-            cell.text = "-"
-
-    target_table._tbl.remove(template_row._tr)
-    return doc
-
+def get_special_placeholders(placeholders: list[Placeholder]) -> tuple[list[Placeholder], list[Placeholder]]:
+    special_keys = [START_DATE_SIZ,]
+    special_placeholders = [ph for ph in placeholders if ph.key in special_keys]
+    regular_placeholders = [ph for ph in placeholders if ph.key not in special_keys]
+    return special_placeholders, regular_placeholders
 
 
 async def generate_zip_personals_in_memory(
@@ -305,19 +299,19 @@ async def generate_zip_personals_in_memory(
     placeholders: list[Placeholder],
 ) -> BytesIO:
     zip_buffer = BytesIO()
-
+    special_placeholders, placeholders = get_special_placeholders(placeholders)
     with ZipFile(zip_buffer, mode='w', compression=ZIP_DEFLATED) as zip_file:
         for user in users_data:
             doc = Document(template_path)
             doc = await fill_template_placeholders(doc, placeholders)
             doc = await fill_user_data_in_doc(doc, user)
             if doc_contains_placeholder(
-                    doc, '{{наименование инструкции работника}}'
+                    doc, INSTRUCTION_NAME
             ):
                 doc = await fill_user_tables_ins_in_doc(doc, user)
-            if doc_contains_placeholder(doc, '{{Наименование СИЗ}}'):
+            if doc_contains_placeholder(doc, NAME_SIZ):
                 doc = await fill_user_tables_norm_siz_in_doc(doc, user)
-                doc = await fill_user_tables_fact_siz_in_doc(doc, user)
+                doc = await fill_user_tables_fact_siz_in_doc(doc, user, special_placeholders)
             doc = await replace_global_placeholders_in_doc(doc)
 
             doc_buffer = BytesIO()
@@ -325,7 +319,7 @@ async def generate_zip_personals_in_memory(
             doc_buffer.seek(0)
 
             user_file_name = f'{user.last_name} {user.name}'
-            filename_in_zip = f"{user_file_name }.docx"
+            filename_in_zip = f'{user_file_name }.docx'
             zip_file.writestr(filename_in_zip, doc_buffer.read())
 
     zip_buffer.seek(0)

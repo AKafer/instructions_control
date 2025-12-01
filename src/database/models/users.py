@@ -105,6 +105,20 @@ class User(SQLAlchemyBaseUserTableUUID, BaseModel):
         single_parent=True,
     )
 
+    @property
+    def last_name_with_initials(self) -> str:
+        last = (self.last_name or '').strip()
+        name = (self.name or '').strip()
+        father = (self.father_name or '').strip()
+
+        if not last and not name:
+            return ''
+
+        name_initial = f'{name[0].upper()}.' if name else ''
+        father_initial = f'{father[0].upper()}.' if father else ''
+
+        return f'{last} {name_initial}{father_initial}'.strip()
+
 
 async def get_user_db(session: AsyncSession = Depends(get_db_session)):
     yield SQLAlchemyUserDatabase(session, User)
