@@ -1,5 +1,4 @@
 import os
-from asyncio import sleep
 
 import sqlalchemy
 from fastapi import APIRouter, Depends
@@ -25,7 +24,10 @@ from web.documents.schemas import (
     UpdateDocument,
     DeleteDocuments,
     ProfessionListInput,
-    DownloadProfessionListInput, InsGenerateInput, InsGenerateSectionsInput, PersonalInput
+    DownloadProfessionListInput,
+    InsGenerateInput,
+    InsGenerateSectionsInput,
+    PersonalInput
 )
 
 from web.documents.services import (

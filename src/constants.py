@@ -37,6 +37,8 @@ class FileTemplatesNamingEnum(str, Enum):
     LK_SIZ = 'lk_siz'
     ORDER_INTERNSHIP = 'order_internship'
     INTERNSHIP_SHEET = 'internship_sheet'
+    REF_MEDICAL_EXAM = 'ref_medical_exam'
+    KNOWLEDGE_TESTING_PROTOCOL = 'knowledge_testing_protocol'
 
     # Organization
     JOURNAL_MICRODAMAGE = 'journal_microdamage'
@@ -77,6 +79,8 @@ class FileTemplatesNamingEnum(str, Enum):
                 'lk_siz',
                 'order_internship',
                 'internship_sheet',
+                'ref_medical_exam',
+                'knowledge_testing_protocol'
             ],
             'organization': [
                 'journal_microdamage',
