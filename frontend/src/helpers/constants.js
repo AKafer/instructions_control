@@ -112,9 +112,7 @@ export const TEMPLATES_GROUPED = [
 				name: 'Протокол проверки знаний',
 				template: 'knowledge_testing_protocol',
 				placeholders: [
-					'{{председатель комиссии}}',
-					'{{первый член комиссии}}',
-					'{{второй член комиссии}}'
+					'{{дата документа}}',
 				]
 			}
 		]
