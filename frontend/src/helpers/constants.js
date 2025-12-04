@@ -112,7 +112,7 @@ export const TEMPLATES_GROUPED = [
 				name: 'Протокол проверки знаний',
 				template: 'knowledge_testing_protocol',
 				placeholders: [
-					'{{дата документа}}',
+					'{{дата документа}}'
 				]
 			}
 		]
