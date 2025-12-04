@@ -41,7 +41,7 @@ export const typeSizes = [
 
 export const TEMPLATES_GROUPED = [
 	{
-		group: 'АИ Помощник',
+		group: 'aiHelper',
 		templates: [
 			{ name: 'Перечень профессий освобожденных от первичного инструктажа', template: 'non_qualify_prof_list' },
 			{ name: 'ИОТ Бланк', template: 'iot_blank' },
@@ -51,7 +51,7 @@ export const TEMPLATES_GROUPED = [
 		]
 	},
 	{
-		group: 'Персональные',
+		group: 'personals',
 		templates: [
 			{
 				name: 'Акт регистрации вводного инструктажа',
@@ -118,7 +118,7 @@ export const TEMPLATES_GROUPED = [
 		]
 	},
 	{
-		group: 'Для организации',
+		group: 'organizations',
 		templates: [
 			{ name: 'Журнал вводного и первичного по ПБ', template: 'journal_intro_primary' },
 			{ name: 'Журнал Реестр учета микроповреждений', template: 'journal_microdamage' },

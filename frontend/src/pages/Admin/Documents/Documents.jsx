@@ -2,8 +2,8 @@ import { useState } from 'react';
 import styles from './Documents.module.css';
 import {AIHelpers} from '../../../components/DocumentTabs/AIHelpers/AIHelpers';
 import {Personals} from '../../../components/DocumentTabs/Personals/Personals';
-import {DocumentsTab3} from '../../../components/DocumentTabs/Organizations/DocumentsTab3';
 import {Templates} from '../../../components/DocumentTabs/Temlates/Templates';
+import {Organizations} from '../../../components/DocumentTabs/Organizations/Organizations';
 
 
 export function Documents() {
@@ -12,7 +12,7 @@ export function Documents() {
 	const tabs = [
 		{ id: 'tab1', label: 'AI помощник', component: <AIHelpers /> },
 		{ id: 'tab2', label: 'Персональные', component: <Personals /> },
-		{ id: 'tab3', label: 'Для организации', component: <DocumentsTab3 /> },
+		{ id: 'tab3', label: 'Для организации', component: <Organizations /> },
 		{ id: 'tab4', label: 'Шаблоны', component: <Templates /> }
 
 	];

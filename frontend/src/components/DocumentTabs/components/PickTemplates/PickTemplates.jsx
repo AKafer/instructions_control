@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import styles from './PersonalTemplates.module.css';
+import styles from './PickTemplates.module.css';
 import {TEMPLATES_GROUPED} from '../../../../helpers/constants';
 import {CustomSelect} from '../../../Select/Select';
-import KeyValueItem from '../../components/KeyValueItem/KeyValueItem';
+import KeyValueItem from '../KeyValueItem/KeyValueItem';
 
 function makeRow(key = '{{}}') {
 	const today = new Date();
@@ -14,9 +14,9 @@ function makeRow(key = '{{}}') {
 	};
 }
 
-export default function PersonalTemplates({ selectedTemplate, setSelectedTemplate, placeholders, setPlaceholders }) {
+export default function PickTemplates({ groupName, selectedTemplate, setSelectedTemplate, placeholders, setPlaceholders }) {
 	const personalGroup = useMemo(
-		() => TEMPLATES_GROUPED.find((g) => g.group === 'Персональные'),
+		() => TEMPLATES_GROUPED.find((g) => g.group === groupName),
 		[]
 	);
 

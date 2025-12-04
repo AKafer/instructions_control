@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import styles from './Personals.module.css';
-import PickTemplates from '../components/PickTemplates/PickTemplates';
-import PersonalUsers from './PersonalUsers/PersonalUsers';
+import styles from './Organizations.module.css';
 import useApi from '../../../hooks/useApi.hook';
 import Spinner from '../../Spinner/Spinner';
+import PickTemplates from '../components/PickTemplates/PickTemplates';
+import PersonalUsers from '../Personals/PersonalUsers/PersonalUsers';
+import OrganizationManage from './OrganizationManage/OrganizationManage';
 
-export function Personals() {
+export function Organizations() {
 	const api = useApi();
 	const [selectedTemplate, setSelectedTemplate] = useState('');
 	const [placeholders, setPlaceholders] = useState([]);
@@ -23,7 +24,7 @@ export function Personals() {
 		setError(undefined);
 		setLoading(true);
 		try {
-			const response = await api.post('/documents/personal_generate', {
+			const response = await api.post('/documents/orgnization_generate', {
 				template: selectedTemplate,
 				users_uuid_list: selectedUsers,
 				placeholders: plh
@@ -74,20 +75,19 @@ export function Personals() {
 			)}
 			<div className={styles.topRow}>
 				<PickTemplates
-					groupName="personals"
+					groupName="organizations"
 					selectedTemplate={selectedTemplate}
 					setSelectedTemplate={setSelectedTemplate}
 					placeholders={placeholders}
 					setPlaceholders={setPlaceholders}
 				/>
-				<PersonalUsers
-					selectedUsers={selectedUsers}
-					setSelectedUsers={setSelectedUsers}
+				<OrganizationManage
 					onGenerate={handleGenerate}
 					loading={loading}
 					selectedTemplate={selectedTemplate}
 				/>
 			</div>
+
 			{loading && (
 				<div className={styles.spinnerOverlay}>
 					<Spinner showSeconds={true} />
