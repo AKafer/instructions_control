@@ -120,7 +120,6 @@ export const TEMPLATES_GROUPED = [
 	{
 		group: 'organizations',
 		templates: [
-			{ name: 'Журнал вводного и первичного по ПБ', template: 'journal_intro_primary' },
 			{ name: 'Журнал Реестр учета микроповреждений', template: 'journal_microdamage' },
 			{ name: 'Журнал учета несчастных случаев', template: 'journal_accidents' },
 			{ name: 'ИОТ-ОППП-01 Первая помощь', template: 'iot_first_aid' },
@@ -132,8 +131,22 @@ export const TEMPLATES_GROUPED = [
 			{ name: 'Положение о СУОТ', template: 'policy_suot' },
 			{ name: 'Приказ об утверждении ЛНА по ОТ', template: 'order_approve_lna' },
 			{ name: 'Приказ о сан постах', template: 'order_san_posts' },
-			{ name: 'Приказ о старте новой СУОТ', template: 'order_start_suot' },
-			{ name: 'Приказ ответственный за ОТ', template: 'order_responsible_ot' },
+			{
+				name: 'Приказ о старте новой СУОТ',
+				template: 'order_start_suot',
+				placeholders: [
+					'{{дата приказа о модернизации}}',
+					'{{номер приказа о модернизации}}'
+				]
+			},
+			{
+				name: 'Приказ ответственный за ОТ',
+				template: 'order_responsible_ot',
+				placeholders: [
+					'{{дата приказа о назначении}}',
+					'{{номер приказа о назначении}}'
+				]
+			},
 			{ name: 'Программа обучения по использованию СИЗ', template: 'program_siz_usage' },
 			{ name: 'Программа обучения по общим вопросам СУОТ', template: 'program_general_suot' },
 			{ name: 'Программа обучения по оказанию первой помощи', template: 'program_first_aid' },

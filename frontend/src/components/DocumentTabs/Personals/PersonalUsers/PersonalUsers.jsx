@@ -60,7 +60,6 @@ export default function PersonalUsers({
 			const { data } = await api.get(`/users/user_uuids?${query}`);
 			return Array.isArray(data) ? data : data?.results || [];
 		} catch (e) {
-			console.error('Ошибка при получении всех ID пользователей', e);
 			return [];
 		}
 	}
@@ -145,33 +144,27 @@ export default function PersonalUsers({
 	const getSelectedNormalized = () => Array.isArray(selectedUsers) ? selectedUsers.map(normalize) : [];
 
 	const addIds = (ids) => {
-		console.log('[addIds] incoming ids:', ids);
 		setSelectedUsers(prev => {
 			const prevArr = Array.isArray(prev) ? prev.map(normalize) : [];
-			console.log('[addIds] before prev normalized:', prevArr);
 			const set = new Set(prevArr);
 			ids.forEach(id => {
 				const n = normalize(id);
 				if (n !== undefined && n !== null) set.add(n);
 			});
 			const result = Array.from(set);
-			console.log('[addIds] result selectedUsers:', result);
 			return result;
 		});
 	};
 
 	const removeIds = (ids) => {
-		console.log('[removeIds] incoming ids:', ids);
 		setSelectedUsers(prev => {
 			const prevArr = Array.isArray(prev) ? prev.map(normalize) : [];
-			console.log('[removeIds] before prev normalized:', prevArr);
 			const set = new Set(prevArr);
 			ids.forEach(id => {
 				const n = normalize(id);
 				set.delete(n);
 			});
 			const result = Array.from(set);
-			console.log('[removeIds] result selectedUsers:', result);
 			return result;
 		});
 	};
@@ -181,7 +174,6 @@ export default function PersonalUsers({
 
 		onSelect: (record, selected) => {
 			const id = record.id ?? record.key;
-			console.log('[onSelect] record.id:', id, 'selected:', selected);
 			if (selected) addIds([id]);
 			else removeIds([id]);
 		},
@@ -189,19 +181,15 @@ export default function PersonalUsers({
 		onSelectAll: (selected, selectedRows, changeRows) => {
 			const rows = (changeRows && changeRows.length) ? changeRows : (selectedRows || []);
 			const ids = rows.map(r => r.id ?? r.key);
-			console.log('[onSelectAll] selected:', selected, 'ids:', ids);
 			if (selected) addIds(ids);
 			else removeIds(ids);
 		}
 	};
 
 	const toggleSelectAllMatching = () => {
-		console.log('[toggleSelectAllMatching] allUserIds:', allUserIds, 'selectedUsers:', selectedUsers);
 		const normalizedAll = Array.isArray(allUserIds) ? allUserIds.map(normalize) : [];
 		const normalizedSelected = getSelectedNormalized();
 		const allSelected = normalizedAll.length > 0 && normalizedAll.every(id => normalizedSelected.includes(id));
-
-		console.log('[toggleSelectAllMatching] normalizedAll:', normalizedAll, 'normalizedSelected:', normalizedSelected, 'allSelected:', allSelected);
 
 		if (allSelected) {
 			removeIds(allUserIds);

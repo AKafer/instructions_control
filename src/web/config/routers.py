@@ -90,3 +90,7 @@ async def delete_item(
     for key, value in global_placeholders.items():
         i += 1
         sorted_global_placeholders[str(i)] = value
+
+    config.placeholders['global_placeholders'] = sorted_global_placeholders
+    config.placeholders = placeholders
+    await db_session.commit()

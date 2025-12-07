@@ -1,5 +1,4 @@
 import logging
-from copy import deepcopy
 from datetime import datetime, date
 from io import BytesIO
 from typing import Any, Sequence, List
@@ -9,26 +8,33 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from docx import Document
 
-from constants import personal_placeholders
-from core.global_placeholders import replace_global_placeholders_in_doc, fill_template_placeholders, \
-    replace_in_paragraphs, replace_in_tables, replace_in_headers_footers, doc_contains_placeholder
-from database.models import User, Documents, DocumentTypes
+from constants import personal_placeholders, FileTemplatesNamingEnum
+from core.global_placeholders import (
+    replace_global_placeholders_in_doc,
+    fill_template_placeholders,
+    replace_in_paragraphs,
+    replace_in_tables,
+    replace_in_headers_footers,
+    DocumentCreateError,
+    POINT_NUMBER,
+    INSTRUCTION_USER_NAME,
+    NAME_SIZ,
+    START_DATE_SIZ,
+    NPA_SIZ,
+    QUANTITY_SIZ,
+    UNIT_OF_MEASUREMENT_SIZ,
+    INSTRUCTION_NAME,
+    INSTRUCTION_NUMBER,
+    fill_table_with_items,
+    PROFESSION,
+    NON_QUALIFY_PROF,
+)
+from database.models import User, Documents, DocumentTypes, Instructions
+from database.orm import Session
 from web.documents.schemas import CreateDocument, Placeholder
 
 
 logger = logging.getLogger('control')
-
-POINT_NUMBER = '{{номер пп}}'
-INSTRUCTION_NAME = '{{наименование инструкции работника}}'
-NPA_SIZ = '{{пункт 767}}'
-QUANTITY_SIZ = '{{кол СИЗ}}'
-NAME_SIZ = '{{Наименование СИЗ}}'
-START_DATE_SIZ = '{{дата выдачи СИЗ}}'
-UNIT_OF_MEASUREMENT_SIZ = '{{шт-пар}}'
-
-
-class DocumentCreateError(Exception):
-    pass
 
 
 async def update_document_db(
@@ -40,7 +46,7 @@ async def update_document_db(
 
 
 async def check_document_create(
-        db_session: AsyncSession, document_input: CreateDocument
+    db_session: AsyncSession, document_input: CreateDocument
 ) -> None:
     query = select(User).filter(User.id == document_input.user_id)
     user = await db_session.scalar(query)
@@ -57,49 +63,15 @@ async def check_document_create(
 def replace_list_placeholders_in_doc(
     doc: Document,
     items: List[str],
-    placeholder: str
 ) -> Document:
-    target_table = None
-    for t in doc.tables:
-        for row in t.rows:
-            row_text = '\n'.join([c.text for c in row.cells])
-            if POINT_NUMBER in row_text and placeholder in row_text:
-                target_table = t
-                break
-        if target_table:
-            break
+    new_items = []
+    for item in items:
+        new_items.append({NON_QUALIFY_PROF: item})
+    placeholders = [NON_QUALIFY_PROF]
+    doc = fill_table_with_items(
+        doc, items=new_items, required_placeholders=placeholders
+    )
 
-    if not target_table:
-        raise DocumentCreateError(
-            f'Not found target table containing "{{номер пп}}" and "{placeholder}"'
-        )
-
-    template_row = None
-    template_index = None
-    for i, row in enumerate(target_table.rows):
-        text = '\n'.join([cell.text for cell in row.cells])
-        if POINT_NUMBER in text and placeholder in text:
-            template_row = row
-            template_index = i
-            break
-
-    if not template_row:
-        raise DocumentCreateError('Template row not found in the table.')
-
-    while len(target_table.rows) > template_index + 1:
-        target_table._tbl.remove(target_table.rows[-1]._tr)
-
-    for counter, item_value in enumerate(items, 1):
-        new_tr = deepcopy(template_row._tr)
-        target_table._tbl.append(new_tr)
-        row = target_table.rows[-1]
-        for cell in row.cells:
-            text = cell.text
-            text = text.replace(POINT_NUMBER, str(counter))
-            text = text.replace(placeholder, item_value)
-            cell.text = text
-
-    target_table._tbl.remove(template_row._tr)
     return doc
 
 
@@ -112,25 +84,26 @@ def replace_ins_generate_in_doc(doc, sections, profession) -> Document:
         'after': 'Часть 5',
     }
     for paragraph in doc.paragraphs:
-        if '{{профессия}}' in paragraph.text:
-            paragraph.text = paragraph.text.replace('{{профессия}}', profession)
+        if PROFESSION in paragraph.text:
+            paragraph.text = paragraph.text.replace(PROFESSION, profession)
 
         for key, part_name in name_mapping.items():
             if '{{' + part_name + '}}' in paragraph.text:
                 section_text = sections.get(key)
                 if section_text:
-                    paragraph.text = paragraph.text.replace('{{' + part_name + '}}', section_text.get('text', ''))
+                    paragraph.text = paragraph.text.replace(
+                        '{{' + part_name + '}}', section_text.get('text', '')
+                    )
                 else:
-                    paragraph.text = paragraph.text.replace('{{' + part_name + '}}', '')
+                    paragraph.text = paragraph.text.replace(
+                        '{{' + part_name + '}}', ''
+                    )
 
     return doc
 
 
 async def generate_document_in_memory(
-    template_path: str,
-    callback: replace_ins_generate_in_doc,
-    **kwargs
-
+    template_path: str, callback: replace_ins_generate_in_doc, **kwargs
 ) -> BytesIO:
     doc = Document(template_path)
     callback_map = {
@@ -181,137 +154,136 @@ async def fill_user_data_in_doc(doc: Document, user: Any) -> Document:
 
 
 async def fill_user_tables_ins_in_doc(doc: Document, user: User) -> Document:
-    ins_titles = [ins.title for ins in user.instructions]
-    doc = replace_list_placeholders_in_doc(
+    ins_titles = [
+        {INSTRUCTION_USER_NAME: ins.title} for ins in user.instructions
+    ]
+    doc = fill_table_with_items(
         doc,
         items=ins_titles,
-        placeholder=INSTRUCTION_NAME
+        required_placeholders=[POINT_NUMBER, INSTRUCTION_USER_NAME],
     )
 
     return doc
 
 
-async def fill_siz_table(
-    doc: Document, user, mode: str = 'norm', special_placeholders = None
-) -> Document:
-    norm = user.profession.norm
-    material_norm_types = []
-    if norm:
-        material_norm_types = norm.material_norm_types or []
+async def insert_instruction_list_in_doc(doc: Document) -> Document:
+    async with Session() as session:
+        result = await session.execute(select(Instructions))
+        instructions = result.scalars().all()
 
-    target_table = None
-    for t in doc.tables:
-        for row in t.rows:
-            row_text = '\n'.join(c.text for c in row.cells)
-            if POINT_NUMBER in row_text and NAME_SIZ in row_text:
-                target_table = t
-                break
-        if target_table:
-            break
+    items = [
+        {INSTRUCTION_NAME: instr.title, INSTRUCTION_NUMBER: instr.number}
+        for instr in instructions
+    ]
 
-    if not target_table:
-        raise DocumentCreateError('Not found target table for SIZ in the document.' if mode == 'norm'
-                                  else 'Not found target table for fact SIZ in the document.')
-
-    template_row = None
-    template_index = None
-    for i, row in enumerate(target_table.rows):
-        text = '\n'.join(cell.text for cell in row.cells)
-        if POINT_NUMBER in text and NAME_SIZ in text:
-            template_row = row
-            template_index = i
-            break
-
-    if not template_row:
-        raise DocumentCreateError('Not found template row in the SIZ table.' if mode == 'norm'
-                                  else 'Not found template row in the fact SIZ table.')
-
-    while len(target_table.rows) > template_index + 1:
-        target_table._tbl.remove(target_table.rows[-1]._tr)
-
-    if material_norm_types:
-        for counter, mat in enumerate(material_norm_types, start=1):
-            new_tr = deepcopy(template_row._tr)
-            target_table._tbl.append(new_tr)
-            row = target_table.rows[-1]
-
-            material_type = getattr(mat, 'material_type', None)
-            date_str = '-'
-            if special_placeholders:
-                for ph in special_placeholders:
-                    if ph.key == START_DATE_SIZ:
-                        date_str = ph.value
-                        break
-
-            if mode == 'norm':
-                repl = {
-                    POINT_NUMBER: str(counter),
-                    NPA_SIZ: str(getattr(mat, 'npa_link', '-')),
-                    NAME_SIZ: getattr(material_type, 'title', '-'),
-                    QUANTITY_SIZ: str(getattr(mat, 'quantity', '-')),
-                    UNIT_OF_MEASUREMENT_SIZ: getattr(material_type, 'unit_of_measurement', '-'),
-                }
-            else:
-                repl = {
-                    POINT_NUMBER: str(counter),
-                    NAME_SIZ: getattr(material_type, 'title', '-'),
-                    QUANTITY_SIZ: str(getattr(mat, 'quantity', '-')),
-                    UNIT_OF_MEASUREMENT_SIZ: getattr(material_type, 'unit_of_measurement', '-'),
-                    START_DATE_SIZ: date_str,
-                }
-
-            for cell in row.cells:
-                text = cell.text
-                for pattern, value in repl.items():
-                    text = text.replace(pattern, value)
-                cell.text = text
-    else:
-        new_tr = deepcopy(template_row._tr)
-        target_table._tbl.append(new_tr)
-        row = target_table.rows[-1]
-        for cell in row.cells:
-            cell.text = '-'
-
-    target_table._tbl.remove(template_row._tr)
-    return doc
+    return fill_table_with_items(
+        doc,
+        items=items,
+        required_placeholders=[POINT_NUMBER, INSTRUCTION_NAME],
+    )
 
 
 async def fill_user_tables_norm_siz_in_doc(doc: Document, user) -> Document:
-    return await fill_siz_table(doc, user, mode='norm')
+    material_norm_types = (
+        user.profession.norm.material_norm_types or []
+        if user.profession.norm
+        else []
+    )
 
+    items = []
+    for counter, mat in enumerate(material_norm_types, start=1):
+        material_type = mat.material_type
+        items.append(
+            {
+                NAME_SIZ: str(material_type.title),
+                NPA_SIZ: str(mat.npa_link),
+                QUANTITY_SIZ: str(
+                    int(mat.quantity) if mat.quantity is not None else '-'
+                ),
+                UNIT_OF_MEASUREMENT_SIZ: getattr(
+                    material_type.unit_of_measurement, 'value', ''
+                )
+                if mat.quantity
+                else '',
+            }
+        )
 
-async def fill_user_tables_fact_siz_in_doc(doc: Document, user, special_placeholders) -> Document:
-    return await fill_siz_table(
-        doc, user, mode='fact', special_placeholders=special_placeholders
+    if not items:
+        items.append(
+            {
+                NAME_SIZ: '-',
+                NPA_SIZ: '-',
+                QUANTITY_SIZ: '-',
+                UNIT_OF_MEASUREMENT_SIZ: '',
+            }
+        )
+
+    return fill_table_with_items(
+        doc, items=items, required_placeholders=[POINT_NUMBER, NAME_SIZ]
     )
 
 
-def get_special_placeholders(placeholders: list[Placeholder]) -> tuple[list[Placeholder], list[Placeholder]]:
-    special_keys = [START_DATE_SIZ,]
-    special_placeholders = [ph for ph in placeholders if ph.key in special_keys]
-    regular_placeholders = [ph for ph in placeholders if ph.key not in special_keys]
-    return special_placeholders, regular_placeholders
+async def fill_user_tables_fact_siz_in_doc(doc: Document, user) -> Document:
+    material_norm_types = (
+        user.profession.norm.material_norm_types or []
+        if user.profession.norm
+        else []
+    )
+
+    items = []
+    for counter, mat in enumerate(material_norm_types, start=1):
+        material_type = getattr(mat, 'material_type', None)
+        items.append(
+            {
+                NAME_SIZ: material_type.title,
+                QUANTITY_SIZ: str(
+                    int(mat.quantity) if mat.quantity is not None else '-'
+                ),
+                UNIT_OF_MEASUREMENT_SIZ: getattr(
+                    material_type.unit_of_measurement, 'value'
+                )
+                if mat.quantity
+                else '',
+                START_DATE_SIZ: START_DATE_SIZ,
+            }
+        )
+
+    if not items:
+        items.append(
+            {
+                NAME_SIZ: '-',
+                QUANTITY_SIZ: '-',
+                UNIT_OF_MEASUREMENT_SIZ: '-',
+                START_DATE_SIZ: '-',
+            }
+        )
+
+    return fill_table_with_items(
+        doc, items=items, required_placeholders=[POINT_NUMBER, NAME_SIZ]
+    )
 
 
 async def generate_zip_personals_in_memory(
+    template: str,
     template_path: str,
     users_data: Sequence[User],
     placeholders: list[Placeholder],
 ) -> BytesIO:
     zip_buffer = BytesIO()
-    special_placeholders, placeholders = get_special_placeholders(placeholders)
+
     with ZipFile(zip_buffer, mode='w', compression=ZIP_DEFLATED) as zip_file:
         for user in users_data:
             doc = Document(template_path)
-            doc = await fill_template_placeholders(doc, placeholders)
-            doc = await fill_user_data_in_doc(doc, user)
-            if doc_contains_placeholder(
-                    doc, INSTRUCTION_NAME
-            ):
+
+            if template == FileTemplatesNamingEnum.LNNA_ACK:
                 doc = await fill_user_tables_ins_in_doc(doc, user)
-            if doc_contains_placeholder(doc, NAME_SIZ):
+
+            if template == FileTemplatesNamingEnum.LK_SIZ:
                 doc = await fill_user_tables_norm_siz_in_doc(doc, user)
-                doc = await fill_user_tables_fact_siz_in_doc(doc, user, special_placeholders)
+                doc = await fill_user_tables_fact_siz_in_doc(doc, user)
+
+            doc = await fill_user_data_in_doc(doc, user)
+            doc = await fill_template_placeholders(doc, placeholders)
             doc = await replace_global_placeholders_in_doc(doc)
 
             doc_buffer = BytesIO()
@@ -324,3 +296,26 @@ async def generate_zip_personals_in_memory(
 
     zip_buffer.seek(0)
     return zip_buffer
+
+
+async def generate_doc_organization_in_memory(
+    template: str,
+    template_path: str,
+    placeholders: list[Placeholder],
+) -> BytesIO:
+    doc = Document(template_path)
+
+    if template in [
+        FileTemplatesNamingEnum.LIST_INSTRUCTIONS,
+        FileTemplatesNamingEnum.ORDER_APPROVE_LNA,
+    ]:
+        doc = await insert_instruction_list_in_doc(doc)
+
+    doc = await fill_template_placeholders(doc, placeholders)
+    doc = await replace_global_placeholders_in_doc(doc)
+
+    output_buffer = BytesIO()
+    doc.save(output_buffer)
+    output_buffer.seek(0)
+    return output_buffer
+

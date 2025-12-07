@@ -4,6 +4,7 @@ import PickTemplates from '../components/PickTemplates/PickTemplates';
 import PersonalUsers from './PersonalUsers/PersonalUsers';
 import useApi from '../../../hooks/useApi.hook';
 import Spinner from '../../Spinner/Spinner';
+import {getFilenameFromContentDisposition} from '../../../helpers/GetFilename';
 
 export function Personals() {
 	const api = useApi();
@@ -34,7 +35,8 @@ export function Personals() {
 			const url = window.URL.createObjectURL(response.data);
 			const link = document.createElement('a');
 			link.href = url;
-			link.download = 'personal_docs.zip';
+
+			link.download = getFilenameFromContentDisposition(response.headers?.['content-disposition']);
 			link.click();
 			window.URL.revokeObjectURL(url);
 

@@ -26,4 +26,11 @@
 	margin-top: 2px;
 }
 
+.disabled {
+  opacity: .4;
+  pointer-events: none;
+  cursor: default;
+  filter: grayscale(100%);
+}
+
 

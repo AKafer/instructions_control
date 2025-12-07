@@ -3,8 +3,8 @@ import styles from './Organizations.module.css';
 import useApi from '../../../hooks/useApi.hook';
 import Spinner from '../../Spinner/Spinner';
 import PickTemplates from '../components/PickTemplates/PickTemplates';
-import PersonalUsers from '../Personals/PersonalUsers/PersonalUsers';
 import OrganizationManage from './OrganizationManage/OrganizationManage';
+import {getFilenameFromContentDisposition} from '../../../helpers/GetFilename';
 
 export function Organizations() {
 	const api = useApi();
@@ -15,27 +15,34 @@ export function Organizations() {
 	const [loading, setLoading] = useState(false);
 
 	const handleGenerate = async () => {
-
+		console.log('handleGenerate called');
 		const plh = placeholders
 			.filter((p) => p.key?.trim() && p.value?.trim())
 			.map((p) => ({ key: p.key, value: p.value }));
 
-		if (!selectedTemplate || selectedUsers.length === 0) return;
+		console.log('plh:', plh);
+		if (!selectedTemplate) {
+			console.log('No template selected, aborting.');
+			return;
+		}
+
 		setError(undefined);
 		setLoading(true);
+		console.log('Sending request to generate document...');
 		try {
-			const response = await api.post('/documents/orgnization_generate', {
+			const response = await api.post('/documents/organization_generate', {
 				template: selectedTemplate,
 				users_uuid_list: selectedUsers,
 				placeholders: plh
 			}, {
 				responseType: 'blob'
 			});
+			console.log('Response received:', response);
 
 			const url = window.URL.createObjectURL(response.data);
 			const link = document.createElement('a');
 			link.href = url;
-			link.download = 'personal_docs.zip';
+			link.download = getFilenameFromContentDisposition(response.headers?.['content-disposition']);
 			link.click();
 			window.URL.revokeObjectURL(url);
 

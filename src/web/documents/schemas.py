@@ -96,3 +96,8 @@ class PersonalInput(BaseModel):
     template: str
     users_uuid_list: list[str]
     placeholders: list[Placeholder]
+
+
+class OrganizationInput(BaseModel):
+    template: str
+    placeholders: list[Placeholder]

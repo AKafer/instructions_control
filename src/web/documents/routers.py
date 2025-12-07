@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 import sqlalchemy
 from fastapi import APIRouter, Depends
@@ -14,8 +15,12 @@ from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
 from externals.http.yandex_llm.yandex_llm_base import LLMResonseError
-from externals.http.yandex_llm.yandex_llm_ins_generato import InsGeneratorClient
-from externals.http.yandex_llm.yandex_llm_non_qualify_prof_list import NonQualifyProfListClient
+from externals.http.yandex_llm.yandex_llm_ins_generato import (
+    InsGeneratorClient,
+)
+from externals.http.yandex_llm.yandex_llm_non_qualify_prof_list import (
+    NonQualifyProfListClient,
+)
 from main_schemas import ResponseErrorBody
 from settings import TEMPLATES_DIR
 from web.documents.schemas import (
@@ -27,14 +32,17 @@ from web.documents.schemas import (
     DownloadProfessionListInput,
     InsGenerateInput,
     InsGenerateSectionsInput,
-    PersonalInput
+    PersonalInput,
+    OrganizationInput,
 )
 
 from web.documents.services import (
     check_document_create,
     update_document_db,
     DocumentCreateError,
-    generate_document_in_memory, generate_zip_personals_in_memory
+    generate_document_in_memory,
+    generate_zip_personals_in_memory,
+    generate_doc_organization_in_memory,
 )
 from web.users.users import current_superuser
 
@@ -97,8 +105,7 @@ async def create_document(
         await check_document_create(db_session, document_input)
     except DocumentCreateError as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
         )
     try:
         db_document = Documents(**document_input.dict())
@@ -144,7 +151,7 @@ async def update_document(
     except sqlalchemy.exc.IntegrityError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Unexpected error while update Document: {e}'
+            detail=f'Unexpected error while update Document: {e}',
         )
 
 
@@ -187,7 +194,7 @@ async def delete_documents(
 )
 async def get_non_qualify_prof_list(
     input_data: ProfessionListInput,
-    db_session: AsyncSession = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session),
 ):
     client = NonQualifyProfListClient()
     if input_data.all_db_professions:
@@ -198,12 +205,12 @@ async def get_non_qualify_prof_list(
         if not input_data.profession_list:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail='profession_list must be provided if all_db_professions is False'
+                detail='profession_list must be provided if all_db_professions is False',
             )
         profession_list = input_data.profession_list
 
     profession_list_str = ', '.join(profession_list)
-    content =  (
+    content = (
         f'Список профессий: {profession_list_str}\n\n'
         f'Выбери только те профессии, которые могут быть'
         f' освобождены от первичного инструктажа.'
@@ -213,10 +220,7 @@ async def get_non_qualify_prof_list(
         resp['initial_profession_list'] = profession_list
         return JSONResponse(content=resp)
     except LLMResonseError as e:
-        raise HTTPException(
-            status_code=502,
-            detail=f'LLM service error: {e}'
-        )
+        raise HTTPException(status_code=502, detail=f'LLM service error: {e}')
 
 
 @router.post(
@@ -243,23 +247,24 @@ async def generate_non_qualify_prof_list_document(
     if filename is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Template file for non-qualify profession list not found.'
+            detail='Template file for non-qualify profession list not found.',
         )
 
     template_path = os.path.join(TEMPLATES_DIR, filename)
     try:
         buf = await generate_document_in_memory(
             template_path=template_path,
-            callback='replace_non_qualify_list_placeholders_in_doc',
-            professions=input_data.profession_list or [],
-            placeholder='{{профессии освобожденные от первичного инструктажа}}'
+            callback='replace_list_placeholders_in_doc',
+            items=input_data.profession_list or [],
         )
     except DocumentCreateError as e:
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Unexpected error: {e}')
 
-    download_filename = f'{FileTemplatesNamingEnum.NON_QUALIFY_PROF_LIST.value}.docx'
+    download_filename = (
+        f'{FileTemplatesNamingEnum.NON_QUALIFY_PROF_LIST.value}.docx'
+    )
     media_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     headers = {
         'Content-Disposition': f'attachment; filename="{download_filename}"'
@@ -280,19 +285,16 @@ async def generate_non_qualify_prof_list_document(
 )
 async def ins_generate(input_data: InsGenerateInput):
     client = InsGeneratorClient()
-    content =  {
+    content = {
         'profession': input_data.profession,
         'description': input_data.description,
-        'sizo': ', '.join(input_data.sizo) if input_data.sizo else ''
+        'sizo': ', '.join(input_data.sizo) if input_data.sizo else '',
     }
     try:
         resp = await client.get_llm_answer(content)
         return JSONResponse(content=resp)
     except LLMResonseError as e:
-        raise HTTPException(
-            status_code=502,
-            detail=f'LLM service error: {e}'
-        )
+        raise HTTPException(status_code=502, detail=f'LLM service error: {e}')
 
 
 @router.post(
@@ -310,16 +312,14 @@ async def ins_generate_document(
 ):
     filename = None
     for file in os.listdir(TEMPLATES_DIR):
-        if file.startswith(
-            FileTemplatesNamingEnum.IOT_BLANK.value
-        ):
+        if file.startswith(FileTemplatesNamingEnum.IOT_BLANK.value):
             filename = file
             break
 
     if filename is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Template file for non-qualify profession list not found.'
+            detail='Template file for non-qualify profession list not found.',
         )
 
     template_path = os.path.join(TEMPLATES_DIR, filename)
@@ -328,7 +328,7 @@ async def ins_generate_document(
             template_path=template_path,
             callback='replace_ins_generate_in_doc',
             sections=input_data.sections.dict(),
-            profession=input_data.profession
+            profession=input_data.profession,
         )
     except DocumentCreateError as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -344,7 +344,6 @@ async def ins_generate_document(
     return StreamingResponse(buf, media_type=media_type, headers=headers)
 
 
-
 @router.post(
     '/personal_generate',
     status_code=status.HTTP_200_OK,
@@ -357,33 +356,31 @@ async def ins_generate_document(
 )
 async def personal_generate(
     input_data: PersonalInput,
-    db_session: AsyncSession = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session),
 ):
     try:
         template = FileTemplatesNamingEnum(input_data.template)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Invalid template value: {input_data.template}'
+            detail=f'Invalid template value: {input_data.template}',
         )
     if not template.is_in_group('personal'):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Template {input_data.template} is not a personal template'
+            detail=f'Template {input_data.template} is not a personal template',
         )
 
     filename = None
     for file in os.listdir(TEMPLATES_DIR):
-        if file.startswith(
-                template.value
-        ):
+        if file.startswith(template.value):
             filename = file
             break
 
     if filename is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Template file for non-qualify profession list not found.'
+            detail=f'Template file for template {input_data.template} not found.',
         )
     template_path = os.path.join(TEMPLATES_DIR, filename)
 
@@ -403,21 +400,25 @@ async def personal_generate(
     else:
         options_list.append(joinedload(User.profession))
 
-    query = select(User).where(
-        User.id.in_(input_data.users_uuid_list),
-        User.is_superuser == False
-    ).options(*options_list)
+    query = (
+        select(User)
+        .where(
+            User.id.in_(input_data.users_uuid_list), User.is_superuser == False
+        )
+        .options(*options_list)
+    )
 
     result = await db_session.execute(query)
     users_list = result.unique().scalars().all()
     if not users_list:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='No users found for the provided UUIDs.'
+            detail='No users found for the provided UUIDs.',
         )
 
     try:
         buf = await generate_zip_personals_in_memory(
+            template=template,
             template_path=template_path,
             users_data=users_list,
             placeholders=input_data.placeholders,
@@ -427,16 +428,69 @@ async def personal_generate(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Unexpected error: {e}')
 
-    download_filename = f'{template.value}.zip'
+    now = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    download_filename = f'{now}-{template.value}.zip'
     media_type = 'application/zip'
     headers = {
-        'Content-Disposition': f'attachment; filename="{download_filename}"'
+        'Content-Disposition': f'attachment; filename="{download_filename}"',
+        'Access-Control-Expose-Headers': 'Content-Disposition',
     }
-
     return StreamingResponse(buf, media_type=media_type, headers=headers)
 
 
+@router.post(
+    '/organization_generate',
+    status_code=status.HTTP_200_OK,
+    response_model=None,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def organization_generate(input_data: OrganizationInput):
+    try:
+        template = FileTemplatesNamingEnum(input_data.template)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Invalid template value: {input_data.template}',
+        )
+    if not template.is_in_group('organization'):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Template {input_data.template} is not a organization template',
+        )
 
+    filename = None
+    for file in os.listdir(TEMPLATES_DIR):
+        if file.startswith(template.value):
+            filename = file
+            break
 
+    if filename is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Template file for template {input_data.template} not found.',
+        )
+    template_path = os.path.join(TEMPLATES_DIR, filename)
 
+    try:
+        buf = await generate_doc_organization_in_memory(
+            template=template,
+            template_path=template_path,
+            placeholders=input_data.placeholders,
+        )
+    except DocumentCreateError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Unexpected error: {e}')
 
+    now = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    download_filename = f'{now}-{template.value}.docx'
+    media_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    headers = {
+        'Content-Disposition': f'attachment; filename="{download_filename}"',
+        'Access-Control-Expose-Headers': 'Content-Disposition',
+    }
+    return StreamingResponse(buf, media_type=media_type, headers=headers)
