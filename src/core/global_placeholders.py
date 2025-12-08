@@ -63,39 +63,99 @@ async def get_placeholders() -> dict[str, str]:
         return placeholders_dict
 
 
-def replace_in_paragraphs(doc, placeholders: dict[str, str]):
+def replace_in_paragraph_runs(
+    paragraph, placeholder: str, replacement: str
+) -> bool:
+    if not placeholder:
+        return False
+
+    runs = paragraph.runs
+    if not runs:
+        return False
+
+    full_text = ''.join(r.text for r in runs)
+    idx = full_text.find(placeholder)
+    if idx == -1:
+        return False
+
+    start_pos = idx
+    end_pos = idx + len(placeholder)
+
+    accum = 0
+    start_run_idx = None
+    end_run_idx = None
+    start_offset = None
+    end_offset = None
+
+    for i, r in enumerate(runs):
+        run_len = len(r.text)
+        if start_run_idx is None and accum + run_len > start_pos:
+            start_run_idx = i
+            start_offset = start_pos - accum
+        if end_run_idx is None and accum + run_len >= end_pos:
+            end_run_idx = i
+            end_offset = end_pos - accum
+            break
+        accum += run_len
+
+    if start_run_idx is None or end_run_idx is None:
+        return False
+
+    if start_run_idx == end_run_idx:
+        run = runs[start_run_idx]
+        run.text = (
+            run.text[:start_offset] + replacement + run.text[end_offset:]
+        )
+        return True
+
+    first_run = runs[start_run_idx]
+    before = first_run.text[:start_offset]
+    last_run = runs[end_run_idx]
+    after = last_run.text[end_offset:]
+
+    first_run.text = before + replacement + after
+
+    for j in range(start_run_idx + 1, end_run_idx + 1):
+        runs[j].text = ''
+
+    return True
+
+
+def replace_in_paragraphs(
+    doc: Document, placeholders: Dict[str, str]
+) -> Document:
     for p in doc.paragraphs:
         for ph, val in placeholders.items():
-            if ph in p.text:
-                p.text = p.text.replace(ph, val)
+            replace_in_paragraph_runs(p, ph, val)
     return doc
 
 
-def replace_in_tables(doc, placeholders: dict[str, str]):
+def replace_placeholders_in_cell(cell, placeholders: Dict[str, str]):
+    for p in cell.paragraphs:
+        for ph, val in placeholders.items():
+            replace_in_paragraph_runs(p, ph, val)
+
+
+def replace_in_tables(doc: Document, placeholders: Dict[str, str]) -> Document:
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
-                for p in cell.paragraphs:
-                    for ph, val in placeholders.items():
-                        if ph in p.text:
-                            p.text = p.text.replace(ph, val)
+                replace_placeholders_in_cell(cell, placeholders)
     return doc
 
 
-def replace_in_headers_footers(doc, placeholders: dict[str, str]):
+def replace_in_headers_footers(
+    doc: Document, placeholders: Dict[str, str]
+) -> Document:
     for section in doc.sections:
-        for header in [section.header, section.footer]:
-            for p in header.paragraphs:
+        for header_footer in (section.header, section.footer):
+            for p in header_footer.paragraphs:
                 for ph, val in placeholders.items():
-                    if ph in p.text:
-                        p.text = p.text.replace(ph, val)
-            for table in header.tables:
+                    replace_in_paragraph_runs(p, ph, val)
+            for table in header_footer.tables:
                 for row in table.rows:
                     for cell in row.cells:
-                        for p in cell.paragraphs:
-                            for ph, val in placeholders.items():
-                                if ph in p.text:
-                                    p.text = p.text.replace(ph, val)
+                        replace_placeholders_in_cell(cell, placeholders)
     return doc
 
 
@@ -159,11 +219,10 @@ def fill_table_with_items(
         row = target_table.rows[-1]
 
         for cell in row.cells:
-            text = cell.text
-            text = text.replace(POINT_NUMBER, str(counter))
-            for ph, val in item_values.items():
-                text = text.replace(ph, str(val))
-            cell.text = text
+            for p in cell.paragraphs:
+                replace_in_paragraph_runs(p, POINT_NUMBER, str(counter))
+                for ph, val in item_values.items():
+                    replace_in_paragraph_runs(p, ph, str(val))
 
     target_table._tbl.remove(template_row._tr)
     return doc

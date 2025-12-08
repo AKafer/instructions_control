@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, date
 from io import BytesIO
-from typing import Any, Sequence, List
+from typing import Any, Sequence, List, Dict
 from zipfile import ZipFile, ZIP_DEFLATED
 
 from sqlalchemy import select
@@ -75,7 +75,9 @@ def replace_list_placeholders_in_doc(
     return doc
 
 
-def replace_ins_generate_in_doc(doc, sections, profession) -> Document:
+def replace_ins_generate_in_doc(
+    doc: Document, sections: Dict[str, dict], profession: str
+) -> Document:
     name_mapping = {
         'general': 'Часть 1',
         'before': 'Часть 2',
@@ -83,21 +85,17 @@ def replace_ins_generate_in_doc(doc, sections, profession) -> Document:
         'accidents': 'Часть 4',
         'after': 'Часть 5',
     }
-    for paragraph in doc.paragraphs:
-        if PROFESSION in paragraph.text:
-            paragraph.text = paragraph.text.replace(PROFESSION, profession)
+    replacements: Dict[str, str] = {}
+    replacements[PROFESSION] = profession
 
-        for key, part_name in name_mapping.items():
-            if '{{' + part_name + '}}' in paragraph.text:
-                section_text = sections.get(key)
-                if section_text:
-                    paragraph.text = paragraph.text.replace(
-                        '{{' + part_name + '}}', section_text.get('text', '')
-                    )
-                else:
-                    paragraph.text = paragraph.text.replace(
-                        '{{' + part_name + '}}', ''
-                    )
+    for key, part_name in name_mapping.items():
+        placeholder = '{{' + part_name + '}}'
+        section = sections.get(key)
+        replacements[placeholder] = section.get('text', '') if section else ''
+
+    doc = replace_in_paragraphs(doc, replacements)
+    doc = replace_in_tables(doc, replacements)
+    doc = replace_in_headers_footers(doc, replacements)
 
     return doc
 

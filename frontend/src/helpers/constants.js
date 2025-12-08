@@ -133,19 +133,11 @@ export const TEMPLATES_GROUPED = [
 			{ name: 'Приказ о сан постах', template: 'order_san_posts' },
 			{
 				name: 'Приказ о старте новой СУОТ',
-				template: 'order_start_suot',
-				placeholders: [
-					'{{дата приказа о модернизации}}',
-					'{{номер приказа о модернизации}}'
-				]
+				template: 'order_start_suot'
 			},
 			{
 				name: 'Приказ ответственный за ОТ',
-				template: 'order_responsible_ot',
-				placeholders: [
-					'{{дата приказа о назначении}}',
-					'{{номер приказа о назначении}}'
-				]
+				template: 'order_responsible_ot'
 			},
 			{ name: 'Программа обучения по использованию СИЗ', template: 'program_siz_usage' },
 			{ name: 'Программа обучения по общим вопросам СУОТ', template: 'program_general_suot' },
