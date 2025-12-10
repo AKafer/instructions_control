@@ -143,7 +143,8 @@ export const TEMPLATES_GROUPED = [
 			{ name: 'Программа обучения по общим вопросам СУОТ', template: 'program_general_suot' },
 			{ name: 'Программа обучения по оказанию первой помощи', template: 'program_first_aid' },
 			{ name: 'Программа обучения при воздействии вредных и опасных факторов', template: 'program_hazard_factors' },
-			{ name: 'Программа стажировки на рабочем месте', template: 'program_workplace_internship' }
+			{ name: 'Программа стажировки на рабочем месте', template: 'program_workplace_internship' },
+			{ name: 'Нормы выдачи СИЗ', template: 'norm_issuance_siz' }
 		]
 	}
 ];

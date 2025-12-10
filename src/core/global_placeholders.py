@@ -226,3 +226,99 @@ def fill_table_with_items(
 
     target_table._tbl.remove(template_row._tr)
     return doc
+
+
+def _find_target_table(doc):
+    for t in doc.tables:
+        for row in t.rows:
+            row_text = '\n'.join(c.text for c in row.cells)
+            if PROFESSION in row_text:
+                return t
+    raise DocumentCreateError(f"Not found target table containing placeholder {PROFESSION}")
+
+def _get_template_block(table):
+    template_start = None
+    for i, row in enumerate(table.rows):
+        text = '\n'.join(c.text for c in row.cells)
+        if PROFESSION in text:
+            template_start = i
+            break
+    if template_start is None:
+        raise DocumentCreateError("Template start row not found")
+    template_rows = []
+    total_rows = len(table.rows)
+    for i in range(template_start, total_rows):
+        row = table.rows[i]
+        row_text = '\n'.join(c.text for c in row.cells)
+        if i == template_start:
+            template_rows.append(row)
+        else:
+            if NAME_SIZ in row_text:
+                template_rows.append(row)
+            else:
+                break
+    if not template_rows:
+        raise DocumentCreateError("Template rows not found")
+    return template_start, template_rows
+
+def _clear_after_block(table, start, block_len):
+    while len(table.rows) > start + block_len:
+        table._tbl.remove(table.rows[-1]._tr)
+
+def _append_copied_row(table, template_row, replacements):
+    new_tr = deepcopy(template_row._tr)
+    table._tbl.append(new_tr)
+    row = table.rows[-1]
+    for cell in row.cells:
+        for p in cell.paragraphs:
+            for ph, val in replacements.items():
+                replace_in_paragraph_runs(p, ph, val)
+    return row
+
+def fill_complex_ppe_table(doc, items):
+    target_table = _find_target_table(doc)
+    template_start, template_rows = _get_template_block(target_table)
+    template_block_len = len(template_rows)
+    _clear_after_block(target_table, template_start, template_block_len)
+    profession_counter = 0
+    for prof in items:
+        profession_counter += 1
+        prof_name = prof.get(PROFESSION, "") or ""
+        punkt_val = prof.get(NPA_SIZ, "") or ""
+        prof_items = prof.get("items", []) or []
+        if not prof_items:
+            replacements = {
+                POINT_NUMBER: str(profession_counter),
+                PROFESSION: str(prof_name),
+                NPA_SIZ: str(punkt_val),
+                NAME_SIZ: "",
+                QUANTITY_SIZ: "",
+                UNIT_OF_MEASUREMENT_SIZ: "",
+            }
+            _append_copied_row(target_table, template_rows[0], replacements)
+            continue
+        for idx, it in enumerate(prof_items):
+            if idx == 0:
+                template_row_to_copy = template_rows[0]
+            else:
+                if template_block_len > 1:
+                    pos = 1 + min(idx - 1, template_block_len - 2)
+                    template_row_to_copy = template_rows[pos]
+                else:
+                    template_row_to_copy = template_rows[0]
+            replacements = {
+                POINT_NUMBER: str(profession_counter) if idx == 0 else "",
+                PROFESSION: str(prof_name) if idx == 0 else "",
+                NPA_SIZ: str(punkt_val),
+                NAME_SIZ: str(it.get(NAME_SIZ, "")),
+                QUANTITY_SIZ: str(it.get(QUANTITY_SIZ, "")),
+                UNIT_OF_MEASUREMENT_SIZ: str(it.get(UNIT_OF_MEASUREMENT_SIZ, "")),
+            }
+            _append_copied_row(target_table, template_row_to_copy, replacements)
+    for tr in template_rows:
+        try:
+            target_table._tbl.remove(tr._tr)
+        except Exception:
+            pass
+    return doc
+

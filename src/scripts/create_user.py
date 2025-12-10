@@ -13,7 +13,7 @@ from web.users.schemas import UserCreate
 from web.users.users import get_user_manager
 
 logging_config.dictConfig(settings.LOGGING)
-logger = logging.getLogger("control")
+logger = logging.getLogger('control')
 
 
 get_async_session_context = contextlib.asynccontextmanager(get_db_session)
@@ -46,10 +46,10 @@ async def create_user(
                 user.is_superuser = True
                 await session.commit()
                 await session.refresh(user)
-                logger.info(f"User created {user}")
+                logger.info(f'User created {user}')
                 return user
     except UserAlreadyExists:
-        logger.error(f"User {email} already exists")
+        logger.error(f'User {email} already exists')
 
 
 async def main():
@@ -70,5 +70,5 @@ async def main():
         )
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     asyncio.run(main())

@@ -59,6 +59,7 @@ class FileTemplatesNamingEnum(str, Enum):
     PROGRAM_FIRST_AID = 'program_first_aid'
     PROGRAM_HAZARD_FACTORS = 'program_hazard_factors'
     PROGRAM_WORKPLACE_INTERNSHIP = 'program_workplace_internship'
+    NORM_ISSUANCE_SIZ = 'norm_issuance_siz'
 
     @classmethod
     def groups(cls) -> Dict[str, List[str]]:
@@ -101,6 +102,7 @@ class FileTemplatesNamingEnum(str, Enum):
                 'program_first_aid',
                 'program_hazard_factors',
                 'program_workplace_internship',
+                'norm_issuance_siz',
             ],
         }
 

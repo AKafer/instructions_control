@@ -7,6 +7,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from docx import Document
+from sqlalchemy.orm import selectinload
 
 from constants import personal_placeholders, FileTemplatesNamingEnum
 from core.global_placeholders import (
@@ -27,9 +28,9 @@ from core.global_placeholders import (
     INSTRUCTION_NUMBER,
     fill_table_with_items,
     PROFESSION,
-    NON_QUALIFY_PROF,
+    NON_QUALIFY_PROF, fill_complex_ppe_table,
 )
-from database.models import User, Documents, DocumentTypes, Instructions
+from database.models import User, Documents, DocumentTypes, Instructions, Professions, Norms, NormMaterials
 from database.orm import Session
 from web.documents.schemas import CreateDocument, Placeholder
 
@@ -261,6 +262,49 @@ async def fill_user_tables_fact_siz_in_doc(doc: Document, user) -> Document:
     )
 
 
+async def fill_norm_issuance_siz(doc: Document) -> Document:
+    async with Session() as session:
+        query = (
+            select(Professions)
+            .options(
+                selectinload(Professions.norm)
+                .selectinload(Norms.material_norm_types)
+                .selectinload(NormMaterials.material_type)
+            )
+        )
+        result = await session.execute(query)
+        professions = result.scalars().all()
+        profs = []
+        for profession in professions:
+            prof = {PROFESSION: profession.title}
+            items = []
+            if not  profession.norm:
+                profs.append(prof)
+                continue
+
+            for mat in profession.norm.material_norm_types:
+                material_type = mat.material_type
+                items.append(
+                    {
+                        NAME_SIZ: str(material_type.title),
+                        QUANTITY_SIZ: str(
+                            int(mat.quantity) if mat.quantity is not None else '-'
+                        ),
+                        UNIT_OF_MEASUREMENT_SIZ: getattr(
+                            material_type.unit_of_measurement, 'value', ''
+                        )
+                        if mat.quantity
+                        else '',
+                    }
+                )
+                prof[NPA_SIZ] = str(mat.npa_link)
+            prof['items'] = items
+            profs.append(prof)
+
+        doc = fill_complex_ppe_table(doc, profs)
+        return doc
+
+
 async def generate_zip_personals_in_memory(
     template: str,
     template_path: str,
@@ -308,6 +352,9 @@ async def generate_doc_organization_in_memory(
         FileTemplatesNamingEnum.ORDER_APPROVE_LNA,
     ]:
         doc = await insert_instruction_list_in_doc(doc)
+
+    if template == FileTemplatesNamingEnum.NORM_ISSUANCE_SIZ:
+        doc = await fill_norm_issuance_siz(doc)
 
     doc = await fill_template_placeholders(doc, placeholders)
     doc = await replace_global_placeholders_in_doc(doc)
