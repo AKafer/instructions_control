@@ -9,11 +9,14 @@ import Input from '../../../Input/Input';
 import {CustomSelect} from '../../../Select/Select';
 
 
-export function InsGenerator() {
+export function InsGenerator({optionsProf, professionDict}) {
 	const api = useApi();
 
 	const [loading, setLoading] = useState(false);
+	const [smallLoading, setSmallLoading] = useState(false);
 	const [error, setError] = useState(undefined);
+
+	const [selectedProfOption, setSelectedProfOption] = useState(null);
 
 	const [profession, setProfession] = useState('');
 	const [description, setDescription] = useState('');
@@ -125,27 +128,72 @@ export function InsGenerator() {
 		label: sections[key].title
 	}));
 
+	const handleProfessionChange = async (option) => {
+		setSelectedProfOption(option);
+		setMaterials('');
+		setSmallLoading(true);
+
+		if (!option) {
+			setProfession('');
+			return;
+		}
+
+		const prof = professionDict[option.value];
+		setProfession(prof?.title || '');
+		console.log(professionDict);
+
+
+		try {
+			const { data } = await api.get(`/professions/${option.value}`);
+
+			const materialTitles =
+			data?.norm?.material_norm_types
+				?.map(item => item.material_type?.title)
+				.filter(Boolean) || [];
+
+			setMaterials(materialTitles.join(', '));
+		} catch (e) {
+			console.error(e);
+			setMaterials('');
+		} finally {
+			setSmallLoading(false);
+		}
+	};
+
 	return (
 		<>
 			<h1 className={styles.title}>Генератор инструкций</h1>
 
 			<div className={styles.formWrapper}>
 				<div className={styles.inputs}>
-					<Input
+					<CustomSelect
+						className={styles.my_wider_select}
+						value={selectedProfOption}
+						options={optionsProf}
 						placeholder="Профессия"
-						value={profession}
-						onChange={(e) => setProfession(e.target.value)}
-					/>
+						onChange={handleProfessionChange}
+						width="100%"
+					>
+					</CustomSelect>
 					<Input
 						placeholder="Описание"
 						value={description}
 						onChange={(e) => setDescription(e.target.value)}
 					/>
-					<Input
-						placeholder="Материалы (через запятую)"
-						value={materials}
-						onChange={(e) => setMaterials(e.target.value)}
-					/>
+					<div className={styles.textareaContainer}>
+						<Textarea
+							placeholder="Материалы (через запятую)"
+							value={materials}
+							disabled={true}
+							onChange={(e) => setMaterials(e.target.value)}
+							className={styles.textarea_siz}
+						/>
+						{smallLoading && (
+							<div className={styles.spinnerOverlay}>
+								<Spinner showSeconds={true} />
+							</div>
+						)}
+					</div>
 				</div>
 
 				<div className={styles.output}>
@@ -163,7 +211,7 @@ export function InsGenerator() {
 							setText={handleTextareaChange}
 							placeholder="Текст инструкции будет здесь"
 							disabled={false}
-							className={styles.textarea}
+							className={styles.textarea_ins}
 						/>
 						{loading && (
 							<div className={styles.spinnerOverlay}>
