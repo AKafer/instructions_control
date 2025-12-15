@@ -28,9 +28,17 @@ from core.global_placeholders import (
     INSTRUCTION_NUMBER,
     fill_table_with_items,
     PROFESSION,
-    NON_QUALIFY_PROF, fill_complex_ppe_table,
+    fill_complex_ppe_table,
 )
-from database.models import User, Documents, DocumentTypes, Instructions, Professions, Norms, NormMaterials
+from database.models import (
+    User,
+    Documents,
+    DocumentTypes,
+    Instructions,
+    Professions,
+    Norms,
+    NormMaterials,
+)
 from database.orm import Session
 from web.documents.schemas import CreateDocument, Placeholder
 
@@ -61,14 +69,15 @@ async def check_document_create(
         raise DocumentCreateError('Document type not found')
 
 
-def replace_list_placeholders_in_doc(
+def replace_simple_list_placeholders_in_doc(
     doc: Document,
     items: List[str],
+    placeholder: str = None,
 ) -> Document:
     new_items = []
     for item in items:
-        new_items.append({NON_QUALIFY_PROF: item})
-    placeholders = [NON_QUALIFY_PROF]
+        new_items.append({placeholder: item})
+    placeholders = [placeholder]
     doc = fill_table_with_items(
         doc, items=new_items, required_placeholders=placeholders
     )
@@ -107,7 +116,7 @@ async def generate_document_in_memory(
     doc = Document(template_path)
     callback_map = {
         'replace_ins_generate_in_doc': replace_ins_generate_in_doc,
-        'replace_list_placeholders_in_doc': replace_list_placeholders_in_doc,
+        'replace_list_placeholders_in_doc': replace_simple_list_placeholders_in_doc,
     }
     local_placeholders_replace = callback_map.get(callback)
     doc = local_placeholders_replace(doc, **kwargs)
@@ -264,13 +273,10 @@ async def fill_user_tables_fact_siz_in_doc(doc: Document, user) -> Document:
 
 async def fill_norm_issuance_siz(doc: Document) -> Document:
     async with Session() as session:
-        query = (
-            select(Professions)
-            .options(
-                selectinload(Professions.norm)
-                .selectinload(Norms.material_norm_types)
-                .selectinload(NormMaterials.material_type)
-            )
+        query = select(Professions).options(
+            selectinload(Professions.norm)
+            .selectinload(Norms.material_norm_types)
+            .selectinload(NormMaterials.material_type)
         )
         result = await session.execute(query)
         professions = result.scalars().all()
@@ -278,7 +284,7 @@ async def fill_norm_issuance_siz(doc: Document) -> Document:
         for profession in professions:
             prof = {PROFESSION: profession.title}
             items = []
-            if not  profession.norm:
+            if not profession.norm:
                 profs.append(prof)
                 continue
 
@@ -288,7 +294,9 @@ async def fill_norm_issuance_siz(doc: Document) -> Document:
                     {
                         NAME_SIZ: str(material_type.title),
                         QUANTITY_SIZ: str(
-                            int(mat.quantity) if mat.quantity is not None else '-'
+                            int(mat.quantity)
+                            if mat.quantity is not None
+                            else '-'
                         ),
                         UNIT_OF_MEASUREMENT_SIZ: getattr(
                             material_type.unit_of_measurement, 'value', ''
@@ -363,4 +371,3 @@ async def generate_doc_organization_in_memory(
     doc.save(output_buffer)
     output_buffer.seek(0)
     return output_buffer
-

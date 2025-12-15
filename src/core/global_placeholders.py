@@ -18,6 +18,7 @@ NAME_SIZ = '{{Наименование СИЗ}}'
 START_DATE_SIZ = '{{дата выдачи СИЗ}}'
 UNIT_OF_MEASUREMENT_SIZ = '{{шт-пар}}'
 NON_QUALIFY_PROF = '{{профессии освобожденные от первичного инструктажа}}'
+REQUIRING_TRAINING_SIZ = '{{СИЗ требующие обучения}}'
 
 
 class DocumentCreateError(Exception):
@@ -234,7 +235,10 @@ def _find_target_table(doc):
             row_text = '\n'.join(c.text for c in row.cells)
             if PROFESSION in row_text:
                 return t
-    raise DocumentCreateError(f"Not found target table containing placeholder {PROFESSION}")
+    raise DocumentCreateError(
+        f'Not found target table containing placeholder {PROFESSION}'
+    )
+
 
 def _get_template_block(table):
     template_start = None
@@ -244,7 +248,7 @@ def _get_template_block(table):
             template_start = i
             break
     if template_start is None:
-        raise DocumentCreateError("Template start row not found")
+        raise DocumentCreateError('Template start row not found')
     template_rows = []
     total_rows = len(table.rows)
     for i in range(template_start, total_rows):
@@ -258,12 +262,14 @@ def _get_template_block(table):
             else:
                 break
     if not template_rows:
-        raise DocumentCreateError("Template rows not found")
+        raise DocumentCreateError('Template rows not found')
     return template_start, template_rows
+
 
 def _clear_after_block(table, start, block_len):
     while len(table.rows) > start + block_len:
         table._tbl.remove(table.rows[-1]._tr)
+
 
 def _append_copied_row(table, template_row, replacements):
     new_tr = deepcopy(template_row._tr)
@@ -275,6 +281,7 @@ def _append_copied_row(table, template_row, replacements):
                 replace_in_paragraph_runs(p, ph, val)
     return row
 
+
 def fill_complex_ppe_table(doc, items):
     target_table = _find_target_table(doc)
     template_start, template_rows = _get_template_block(target_table)
@@ -283,17 +290,17 @@ def fill_complex_ppe_table(doc, items):
     profession_counter = 0
     for prof in items:
         profession_counter += 1
-        prof_name = prof.get(PROFESSION, "") or ""
-        punkt_val = prof.get(NPA_SIZ, "") or ""
-        prof_items = prof.get("items", []) or []
+        prof_name = prof.get(PROFESSION, '') or ''
+        punkt_val = prof.get(NPA_SIZ, '') or ''
+        prof_items = prof.get('items', []) or []
         if not prof_items:
             replacements = {
                 POINT_NUMBER: str(profession_counter),
                 PROFESSION: str(prof_name),
                 NPA_SIZ: str(punkt_val),
-                NAME_SIZ: "",
-                QUANTITY_SIZ: "",
-                UNIT_OF_MEASUREMENT_SIZ: "",
+                NAME_SIZ: '',
+                QUANTITY_SIZ: '',
+                UNIT_OF_MEASUREMENT_SIZ: '',
             }
             _append_copied_row(target_table, template_rows[0], replacements)
             continue
@@ -307,18 +314,21 @@ def fill_complex_ppe_table(doc, items):
                 else:
                     template_row_to_copy = template_rows[0]
             replacements = {
-                POINT_NUMBER: str(profession_counter) if idx == 0 else "",
-                PROFESSION: str(prof_name) if idx == 0 else "",
+                POINT_NUMBER: str(profession_counter) if idx == 0 else '',
+                PROFESSION: str(prof_name) if idx == 0 else '',
                 NPA_SIZ: str(punkt_val),
-                NAME_SIZ: str(it.get(NAME_SIZ, "")),
-                QUANTITY_SIZ: str(it.get(QUANTITY_SIZ, "")),
-                UNIT_OF_MEASUREMENT_SIZ: str(it.get(UNIT_OF_MEASUREMENT_SIZ, "")),
+                NAME_SIZ: str(it.get(NAME_SIZ, '')),
+                QUANTITY_SIZ: str(it.get(QUANTITY_SIZ, '')),
+                UNIT_OF_MEASUREMENT_SIZ: str(
+                    it.get(UNIT_OF_MEASUREMENT_SIZ, '')
+                ),
             }
-            _append_copied_row(target_table, template_row_to_copy, replacements)
+            _append_copied_row(
+                target_table, template_row_to_copy, replacements
+            )
     for tr in template_rows:
         try:
             target_table._tbl.remove(tr._tr)
         except Exception:
             pass
     return doc
-

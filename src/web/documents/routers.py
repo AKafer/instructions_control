@@ -10,7 +10,15 @@ from starlette import status
 from starlette.responses import Response, JSONResponse, StreamingResponse
 
 from constants import FileTemplatesNamingEnum
-from database.models import Documents, Professions, User, Norms, NormMaterials
+from core.global_placeholders import NON_QUALIFY_PROF, REQUIRING_TRAINING_SIZ
+from database.models import (
+    Documents,
+    Professions,
+    User,
+    Norms,
+    NormMaterials,
+    MaterialTypes,
+)
 from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
@@ -20,6 +28,9 @@ from externals.http.yandex_llm.yandex_llm_ins_generato import (
 )
 from externals.http.yandex_llm.yandex_llm_non_qualify_prof_list import (
     NonQualifyProfListClient,
+)
+from externals.http.yandex_llm.yandex_llm_requiring_training_siz_list import (
+    RequiringTrainingSIZListClient,
 )
 from main_schemas import ResponseErrorBody
 from settings import TEMPLATES_DIR
@@ -34,6 +45,8 @@ from web.documents.schemas import (
     InsGenerateSectionsInput,
     PersonalInput,
     OrganizationInput,
+    SIZListInput,
+    DownloadSizListInput,
 )
 
 from web.documents.services import (
@@ -197,7 +210,7 @@ async def get_non_qualify_prof_list(
     db_session: AsyncSession = Depends(get_db_session),
 ):
     client = NonQualifyProfListClient()
-    if input_data.all_db_professions:
+    if input_data.all_db_items:
         query = select(Professions.title)
         result = await db_session.execute(query)
         profession_list = result.scalars().all()
@@ -255,7 +268,8 @@ async def generate_non_qualify_prof_list_document(
         buf = await generate_document_in_memory(
             template_path=template_path,
             callback='replace_list_placeholders_in_doc',
-            items=input_data.profession_list or [],
+            items=input_data.items_list or [],
+            placeholder=NON_QUALIFY_PROF,
         )
     except DocumentCreateError as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -264,6 +278,99 @@ async def generate_non_qualify_prof_list_document(
 
     download_filename = (
         f'{FileTemplatesNamingEnum.NON_QUALIFY_PROF_LIST.value}.docx'
+    )
+    media_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    headers = {
+        'Content-Disposition': f'attachment; filename="{download_filename}"'
+    }
+
+    return StreamingResponse(buf, media_type=media_type, headers=headers)
+
+
+@router.post(
+    '/requiring_training_siz_list',
+    status_code=status.HTTP_200_OK,
+    response_model=None,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def get_requiring_training_siz_list(
+    input_data: SIZListInput,
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    client = RequiringTrainingSIZListClient()
+    if input_data.all_db_items:
+        query = select(MaterialTypes.title)
+        result = await db_session.execute(query)
+        siz_list = result.scalars().all()
+    else:
+        if not input_data.siz_list:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='siz_list must be provided if all_db_siz is False',
+            )
+        siz_list = input_data.siz_list
+
+    siz_list_str = ', '.join(siz_list)
+    content = (
+        f'Вот перечень средств индивидуальной защиты:\n'
+        f'{siz_list_str}\n\n'
+        f'Выбери только те СИЗ, применение которых требует практических навыков. '
+        f'Не включай простые элементы (например, сигнальные жилеты, белье, очки без особой настройки).'
+    )
+    try:
+        resp = await client.get_llm_answer(content)
+        resp['initial_siz_list'] = siz_list
+        return JSONResponse(content=resp)
+    except LLMResonseError as e:
+        raise HTTPException(status_code=502, detail=f'LLM service error: {e}')
+
+
+@router.post(
+    '/requiring_training_siz_list/download',
+    status_code=status.HTTP_200_OK,
+    response_model=None,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'model': ResponseErrorBody,
+        },
+    },
+)
+async def generate_requiring_training_siz_list_document(
+    input_data: DownloadSizListInput,
+):
+    filename = None
+    for file in os.listdir(TEMPLATES_DIR):
+        if file.startswith(
+            FileTemplatesNamingEnum.REQUIRING_TRAINING_SIZ_LIST.value
+        ):
+            filename = file
+            break
+
+    if filename is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Template file for requiring_training_siz_list not found.',
+        )
+
+    template_path = os.path.join(TEMPLATES_DIR, filename)
+    try:
+        buf = await generate_document_in_memory(
+            template_path=template_path,
+            callback='replace_list_placeholders_in_doc',
+            items=input_data.items_list or [],
+            placeholder=REQUIRING_TRAINING_SIZ,
+        )
+    except DocumentCreateError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Unexpected error: {e}')
+
+    download_filename = (
+        f'{FileTemplatesNamingEnum.REQUIRING_TRAINING_SIZ_LIST.value}.docx'
     )
     media_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     headers = {

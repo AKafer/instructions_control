@@ -56,11 +56,11 @@ class DeleteDocuments(BaseModel):
 
 class ProfessionListInput(BaseModel):
     profession_list: list | None = None
-    all_db_professions: bool | None = False
+    all_db_items: bool | None = False
 
 
 class DownloadProfessionListInput(BaseModel):
-    profession_list: list | None = None
+    items_list: list | None = None
 
 
 class InsGenerateInput(BaseModel):
@@ -85,6 +85,15 @@ class DocSections(BaseModel):
 class InsGenerateSectionsInput(BaseModel):
     profession: str
     sections: DocSections
+
+
+class SIZListInput(BaseModel):
+    siz_list: list | None = None
+    all_db_items: bool | None = False
+
+
+class DownloadSizListInput(BaseModel):
+    items_list: list | None = None
 
 
 class Placeholder(BaseModel):

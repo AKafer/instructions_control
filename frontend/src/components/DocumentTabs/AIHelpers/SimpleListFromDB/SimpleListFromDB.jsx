@@ -1,4 +1,4 @@
-import styles from './NoInstructionProfs.module.css';
+import styles from './SimpleListFromDB.module.css';
 import {useState} from 'react';
 import cn from 'classnames';
 import useApi from '../../../../hooks/useApi.hook';
@@ -6,7 +6,9 @@ import {Textarea} from '../../../textarea/Textarea';
 import Spinner from '../../../Spinner/Spinner';
 import Button from '../../../Button/Button';
 
-export function NoInstructionProfs() {
+export function SimpleListFromDB({
+	Title, getListUrl, downloadUrl
+}) {
 	const api = useApi();
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(undefined);
@@ -18,14 +20,14 @@ export function NoInstructionProfs() {
 
 		try {
 			const { data } = await api.post(
-				'/documents/non_qualify_prof_list',
-				{ all_db_professions: true }
+				getListUrl,
+				{ all_db_items: true }
 			);
 
 			if (data?.exempt) {
 				setResultRequest(data.exempt.join('\n'));
 			} else {
-				setError('Не удалось получить список профессий.');
+				setError('Не удалось получить список позиций.');
 			}
 		} catch (e) {
 			const msg = e?.response?.data?.detail || e?.message || 'Ошибка при запросе к серверу';
@@ -41,11 +43,11 @@ export function NoInstructionProfs() {
 		setLoading(true);
 
 		try {
-			const profession_list = resultRequest.split('\n').map(s => s.trim()).filter(Boolean);
+			const items_list = resultRequest.split('\n').map(s => s.trim()).filter(Boolean);
 
 			const response = await api.post(
-				'/documents/non_qualify_prof_list/download',
-				{ profession_list },
+				downloadUrl,
+				{ items_list: items_list },
 				{ responseType: 'blob' }
 			);
 
@@ -55,7 +57,7 @@ export function NoInstructionProfs() {
 			const url = window.URL.createObjectURL(blob);
 			const link = document.createElement('a');
 			link.href = url;
-			link.download = 'Non_qualify_prof_list.docx';
+			link.download = 'ListTemplateDocument.docx';
 			document.body.appendChild(link);
 			link.click();
 			link.remove();
@@ -70,7 +72,7 @@ export function NoInstructionProfs() {
 
 	return (
 		<>
-			<h1 className={styles['title']}>Профессии освобождаемые от инструктажа</h1>
+			<h1 className={styles['title']}>{Title}</h1>
 			<div className={styles['span']}>
 				<div className={styles['textarea-container']}>
 					<Textarea
