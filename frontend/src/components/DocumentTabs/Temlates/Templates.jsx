@@ -62,7 +62,7 @@ export function Templates() {
 
 			<div className={styles.container}>
 				<div className={styles.tableBox}>
-					<h2 className={styles.title}>Шаблоны</h2>
+					<h2 className={styles.title}>Файлы шаблонов</h2>
 
 					{TEMPLATES_GROUPED.map((group) => (
 						<div key={group.group} className={styles.tableGroup}>
@@ -103,7 +103,7 @@ export function Templates() {
 				</div>
 
 				<div className={styles.tableBox}>
-					<h2 className={styles.title}>Конфиг</h2>
+					<h2 className={styles.title}>Глобальные плейсхолдеры</h2>
 					<table className={styles.table}>
 						<thead>
 							<tr>
