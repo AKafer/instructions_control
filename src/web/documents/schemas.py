@@ -54,12 +54,12 @@ class DeleteDocuments(BaseModel):
     document_ids: list[int]
 
 
-class ProfessionListInput(BaseModel):
-    profession_list: list | None = None
+class ItemListInput(BaseModel):
+    items_list: list | None = None
     all_db_items: bool | None = False
 
 
-class DownloadProfessionListInput(BaseModel):
+class DownloadItemListInput(BaseModel):
     items_list: list | None = None
 
 

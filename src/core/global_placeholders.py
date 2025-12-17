@@ -19,6 +19,7 @@ START_DATE_SIZ = '{{дата выдачи СИЗ}}'
 UNIT_OF_MEASUREMENT_SIZ = '{{шт-пар}}'
 NON_QUALIFY_PROF = '{{профессии освобожденные от первичного инструктажа}}'
 REQUIRING_TRAINING_SIZ = '{{СИЗ требующие обучения}}'
+TRAINEE_WORKERS = '{{профессии кому нужна стажировка}}'
 
 
 class DocumentCreateError(Exception):

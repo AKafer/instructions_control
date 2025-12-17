@@ -10,7 +10,7 @@ from starlette import status
 from starlette.responses import Response, JSONResponse, StreamingResponse
 
 from constants import FileTemplatesNamingEnum
-from core.global_placeholders import NON_QUALIFY_PROF, REQUIRING_TRAINING_SIZ
+from core.global_placeholders import NON_QUALIFY_PROF, REQUIRING_TRAINING_SIZ, TRAINEE_WORKERS
 from database.models import (
     Documents,
     Professions,
@@ -32,6 +32,7 @@ from externals.http.yandex_llm.yandex_llm_non_qualify_prof_list import (
 from externals.http.yandex_llm.yandex_llm_requiring_training_siz_list import (
     RequiringTrainingSIZListClient,
 )
+from externals.http.yandex_llm.yandex_llm_trainee_workers_list import TraineeWorkersListClient
 from main_schemas import ResponseErrorBody
 from settings import TEMPLATES_DIR
 from web.documents.schemas import (
@@ -39,14 +40,13 @@ from web.documents.schemas import (
     CreateDocument,
     UpdateDocument,
     DeleteDocuments,
-    ProfessionListInput,
-    DownloadProfessionListInput,
     InsGenerateInput,
     InsGenerateSectionsInput,
     PersonalInput,
     OrganizationInput,
-    SIZListInput,
     DownloadSizListInput,
+    ItemListInput,
+    DownloadItemListInput,
 )
 
 from web.documents.services import (
@@ -64,6 +64,43 @@ router = APIRouter(
     tags=['documents'],
     dependencies=[Depends(current_superuser)],
 )
+
+
+MODEL_MAPPING = {
+    'profession': Professions,
+    'siz': MaterialTypes,
+}
+
+
+TEMPLATE_MAPPING = {
+    'non_qualify_prof_list': {
+        'client': NonQualifyProfListClient(),
+        'placeholder': NON_QUALIFY_PROF,
+        'content': (
+            'Список профессий: {items_list_str}\n\n'
+            'Выбери только те профессии, которые могут быть '
+            'освобождены от первичного инструктажа.'
+        ),
+    },
+    'trainee_workers_list': {
+        'client': TraineeWorkersListClient(),
+        'placeholder': TRAINEE_WORKERS,
+        'content': (
+            'Список профессий: {items_list_str}\n\n'
+            'Выбери только те профессии, для которых '
+            'обязательно прохождение стажировки на рабочем месте.'
+        ),
+    },
+    'requiring_training_siz_list': {
+        'client': RequiringTrainingSIZListClient(),
+        'placeholder': REQUIRING_TRAINING_SIZ,
+        'content': (
+            'Список средств индивидуальной защиты: {items_list_str}\n\n'
+            'Выбери только те СИЗ, применение которых требует практических навыков. '
+            'Не включай простые элементы (например, сигнальные жилеты, белье, очки без особой настройки).'
+        ),
+    },
+}
 
 
 @router.get('/', response_model=list[Document])
@@ -196,7 +233,7 @@ async def delete_documents(
 
 
 @router.post(
-    '/non_qualify_prof_list',
+    '/get_items/{item_name}/{template_name}',
     status_code=status.HTTP_200_OK,
     response_model=None,
     responses={
@@ -205,39 +242,52 @@ async def delete_documents(
         },
     },
 )
-async def get_non_qualify_prof_list(
-    input_data: ProfessionListInput,
+async def get_items_list(
+    item_name: str,
+    template_name: str,
+    input_data: ItemListInput,
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    client = NonQualifyProfListClient()
+    if item_name not in MODEL_MAPPING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Invalid item name: {item_name}',
+        )
+
+    if template_name not in TEMPLATE_MAPPING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Invalid template name: {template_name}',
+        )
+
     if input_data.all_db_items:
-        query = select(Professions.title)
+        model = MODEL_MAPPING[item_name]
+        query = select(model.title)
         result = await db_session.execute(query)
-        profession_list = result.scalars().all()
+        items_list = result.scalars().all()
     else:
-        if not input_data.profession_list:
+        if not input_data.items_list:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='profession_list must be provided if all_db_professions is False',
             )
-        profession_list = input_data.profession_list
+        items_list = input_data.items_list
 
-    profession_list_str = ', '.join(profession_list)
-    content = (
-        f'Список профессий: {profession_list_str}\n\n'
-        f'Выбери только те профессии, которые могут быть'
-        f' освобождены от первичного инструктажа.'
+    items_list_str = ', '.join(items_list)
+    content = TEMPLATE_MAPPING[template_name]['content'].format(
+        items_list_str=items_list_str
     )
+    client = TEMPLATE_MAPPING[template_name]['client']
     try:
         resp = await client.get_llm_answer(content)
-        resp['initial_profession_list'] = profession_list
+        resp['initial_items'] = items_list
         return JSONResponse(content=resp)
     except LLMResonseError as e:
         raise HTTPException(status_code=502, detail=f'LLM service error: {e}')
 
 
 @router.post(
-    '/non_qualify_prof_list/download',
+    '/download_items/{template_name}',
     status_code=status.HTTP_200_OK,
     response_model=None,
     responses={
@@ -246,21 +296,26 @@ async def get_non_qualify_prof_list(
         },
     },
 )
-async def generate_non_qualify_prof_list_document(
-    input_data: DownloadProfessionListInput,
+async def generate_items_list_document(
+    template_name: str,
+    input_data: DownloadItemListInput,
 ):
-    filename = None
-    for file in os.listdir(TEMPLATES_DIR):
-        if file.startswith(
-            FileTemplatesNamingEnum.NON_QUALIFY_PROF_LIST.value
-        ):
-            filename = file
-            break
+    try:
+        prefix = FileTemplatesNamingEnum(template_name).value
+    except KeyError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Invalid template name: {template_name}',
+        )
+    filename = next(
+        (f for f in os.listdir(TEMPLATES_DIR) if f.startswith(prefix)),
+        None,
+    )
 
     if filename is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Template file for non-qualify profession list not found.',
+            detail='Template file for items list not found.',
         )
 
     template_path = os.path.join(TEMPLATES_DIR, filename)
@@ -269,109 +324,14 @@ async def generate_non_qualify_prof_list_document(
             template_path=template_path,
             callback='replace_list_placeholders_in_doc',
             items=input_data.items_list or [],
-            placeholder=NON_QUALIFY_PROF,
+            placeholder=TEMPLATE_MAPPING[template_name]['placeholder'],
         )
     except DocumentCreateError as e:
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Unexpected error: {e}')
 
-    download_filename = (
-        f'{FileTemplatesNamingEnum.NON_QUALIFY_PROF_LIST.value}.docx'
-    )
-    media_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    headers = {
-        'Content-Disposition': f'attachment; filename="{download_filename}"'
-    }
-
-    return StreamingResponse(buf, media_type=media_type, headers=headers)
-
-
-@router.post(
-    '/requiring_training_siz_list',
-    status_code=status.HTTP_200_OK,
-    response_model=None,
-    responses={
-        status.HTTP_400_BAD_REQUEST: {
-            'model': ResponseErrorBody,
-        },
-    },
-)
-async def get_requiring_training_siz_list(
-    input_data: SIZListInput,
-    db_session: AsyncSession = Depends(get_db_session),
-):
-    client = RequiringTrainingSIZListClient()
-    if input_data.all_db_items:
-        query = select(MaterialTypes.title)
-        result = await db_session.execute(query)
-        siz_list = result.scalars().all()
-    else:
-        if not input_data.siz_list:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='siz_list must be provided if all_db_siz is False',
-            )
-        siz_list = input_data.siz_list
-
-    siz_list_str = ', '.join(siz_list)
-    content = (
-        f'Вот перечень средств индивидуальной защиты:\n'
-        f'{siz_list_str}\n\n'
-        f'Выбери только те СИЗ, применение которых требует практических навыков. '
-        f'Не включай простые элементы (например, сигнальные жилеты, белье, очки без особой настройки).'
-    )
-    try:
-        resp = await client.get_llm_answer(content)
-        resp['initial_siz_list'] = siz_list
-        return JSONResponse(content=resp)
-    except LLMResonseError as e:
-        raise HTTPException(status_code=502, detail=f'LLM service error: {e}')
-
-
-@router.post(
-    '/requiring_training_siz_list/download',
-    status_code=status.HTTP_200_OK,
-    response_model=None,
-    responses={
-        status.HTTP_400_BAD_REQUEST: {
-            'model': ResponseErrorBody,
-        },
-    },
-)
-async def generate_requiring_training_siz_list_document(
-    input_data: DownloadSizListInput,
-):
-    filename = None
-    for file in os.listdir(TEMPLATES_DIR):
-        if file.startswith(
-            FileTemplatesNamingEnum.REQUIRING_TRAINING_SIZ_LIST.value
-        ):
-            filename = file
-            break
-
-    if filename is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Template file for requiring_training_siz_list not found.',
-        )
-
-    template_path = os.path.join(TEMPLATES_DIR, filename)
-    try:
-        buf = await generate_document_in_memory(
-            template_path=template_path,
-            callback='replace_list_placeholders_in_doc',
-            items=input_data.items_list or [],
-            placeholder=REQUIRING_TRAINING_SIZ,
-        )
-    except DocumentCreateError as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f'Unexpected error: {e}')
-
-    download_filename = (
-        f'{FileTemplatesNamingEnum.REQUIRING_TRAINING_SIZ_LIST.value}.docx'
-    )
+    download_filename = f'{prefix}.docx'
     media_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     headers = {
         'Content-Disposition': f'attachment; filename="{download_filename}"'

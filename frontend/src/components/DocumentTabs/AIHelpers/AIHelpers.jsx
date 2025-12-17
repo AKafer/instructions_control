@@ -2,9 +2,12 @@ import styles from './AIHelpers.module.css';
 import {SimpleListFromDB} from './SimpleListFromDB/SimpleListFromDB';
 import {InsGenerator} from './InsGenerator/InsGenerator';
 import useFillSelect from '../../../hooks/useFillSelect.hook';
-import {getAllProfessionsUrl} from '../../../helpers/constants';
+import {downloadItemsUrl, getAllProfessionsUrl, getItemsUrl, TEMPLATE} from '../../../helpers/constants';
 
 export function AIHelpers() {
+
+
+
 
 	const {
 		error: errorProf,
@@ -20,18 +23,48 @@ export function AIHelpers() {
 		<div className={styles.helpers_content}>
 			<div className={styles.wrapper}>
 				<SimpleListFromDB
-					Title={'Профессии освобождаемые от инструктажа'}
-					getListUrl={'/documents/non_qualify_prof_list'}
-					downloadUrl={'/documents/non_qualify_prof_list/download'}
+					Title="Профессии освобождаемые от инструктажа"
+					getListUrl={
+						getItemsUrl(
+							'profession',
+							TEMPLATE.NON_QUALIFY_PROF_LIST
+						)
+					}
+					downloadUrl={
+						downloadItemsUrl(TEMPLATE.NON_QUALIFY_PROF_LIST)}
 				/>
 			</div>
+
 			<div className={styles.wrapper}>
 				<SimpleListFromDB
-					Title={'Перечень СИЗ требующих обучения'}
-					getListUrl={'/documents/requiring_training_siz_list'}
-					downloadUrl={'/documents/requiring_training_siz_list/download'}
+					Title="Перечень профессий, требующих прохождения стажировки"
+					getListUrl={
+						getItemsUrl(
+							'profession',
+							TEMPLATE.TRAINEE_WORKERS_LIST
+						)
+					}
+					downloadUrl={
+						downloadItemsUrl(TEMPLATE.TRAINEE_WORKERS_LIST)
+					}
 				/>
 			</div>
+
+			<div className={styles.wrapper}>
+				<SimpleListFromDB
+					Title="Перечень СИЗ требующих обучения"
+					getListUrl={
+						getItemsUrl(
+							'siz',
+							TEMPLATE.REQUIRING_TRAINING_SIZ_LIST
+						)
+					}
+					downloadUrl={
+						downloadItemsUrl(TEMPLATE.REQUIRING_TRAINING_SIZ_LIST)
+					}
+				/>
+			</div>
+
 			<div className={styles.wrapper}>
 				<InsGenerator
 					optionsProf={optionsProf}

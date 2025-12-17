@@ -22,6 +22,24 @@ export const getAllMaterialsPaginatedUrl = '/materials/paginated';
 export const getAllTestsUrl = '/tests/tests';
 export const getAllHistoriesPaginatedUrl = '/histories/paginated?type__in=TEST_EXECUTION';
 
+export const DOCS = {
+	GET_ITEMS: '/documents/get_items',
+	DOWNLOAD_ITEMS: '/documents/download_items'
+};
+
+export const TEMPLATE = {
+	NON_QUALIFY_PROF_LIST: 'non_qualify_prof_list',
+	TRAINEE_WORKERS_LIST: 'trainee_workers_list',
+	REQUIRING_TRAINING_SIZ_LIST: 'requiring_training_siz_list'
+};
+
+export const getItemsUrl = (itemName, templateName) =>
+	`${DOCS.GET_ITEMS}/${itemName}/${templateName}`;
+
+export const downloadItemsUrl = (templateName) =>
+	`${DOCS.DOWNLOAD_ITEMS}/${templateName}`;
+
+
 export const unitsOfMeasurements = [
 	{ value: 'шт', label: 'шт' },
 	{ value: 'пар', label: 'пар' },
