@@ -1,5 +1,5 @@
 import styles from './SimpleListFromDB.module.css';
-import {useState} from 'react';
+import React, {useState} from 'react';
 import cn from 'classnames';
 import useApi from '../../../../hooks/useApi.hook';
 import {Textarea} from '../../../textarea/Textarea';
@@ -80,6 +80,11 @@ export function SimpleListFromDB({
 
 	return (
 		<>
+			{error && (
+				<div className={styles.error} onClick={() => setError(undefined)}>
+					{error} <span className={styles.errorClose}>✖</span>
+				</div>
+			)}
 			<h1 className={styles['title']}>{Title}</h1>
 			<div className={styles['span']}>
 				<div className={styles['textarea-container']}>
@@ -113,7 +118,6 @@ export function SimpleListFromDB({
 					</Button>
 				</div>
 			</div>
-			{error && <div className={styles['error']}>{error}</div>}
 		</>
 	);
 }
