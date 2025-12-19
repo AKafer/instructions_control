@@ -23,6 +23,7 @@ from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
 from externals.http.yandex_llm.yandex_llm_base import LLMResonseError
+from externals.http.yandex_llm.yandex_llm_education_workers_list import EducationWorkersListClient
 from externals.http.yandex_llm.yandex_llm_ins_generato import (
     InsGeneratorClient,
 )
@@ -89,6 +90,14 @@ TEMPLATE_MAPPING = {
             'Список профессий: {items_list_str}\n\n'
             'Выбери только те профессии, для которых '
             'обязательно прохождение стажировки на рабочем месте.'
+        ),
+    },
+    'education_workers_list': {
+        'client': EducationWorkersListClient(),
+        'placeholder': TRAINEE_WORKERS, # TODO: fix placeholder
+        'content': (
+            'Вот список профессий: {items_list_str}\n\n'
+            'Распредели программы обучения согласно правилам выше.'
         ),
     },
     'requiring_training_siz_list': {

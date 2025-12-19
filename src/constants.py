@@ -21,11 +21,13 @@ from enum import Enum
 from typing import List
 
 class FileTemplatesNamingEnum(str, Enum):
-    # AI helper
-    NON_QUALIFY_PROF_LIST = 'non_qualify_prof_list'
+    # AI helpers
     IOT_BLANK = 'iot_blank'
+    NON_QUALIFY_PROF_LIST = 'non_qualify_prof_list'
     REQUIRING_TRAINING_SIZ_LIST = 'requiring_training_siz_list'
     TRAINEE_WORKERS_LIST = 'trainee_workers_list'
+    EDUCATION_WORKERS_LIST = 'education_workers_list'
+
     INTRODUCTORY_BRIEFING_PROGRAM = 'introductory_briefing_program'
 
     # Personals

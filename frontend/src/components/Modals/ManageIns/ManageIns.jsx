@@ -534,7 +534,6 @@ export function ManageIns({
 						))}
 					</div>
 				</div>
-
 			</div>
 		</div>
 	);

@@ -7,7 +7,7 @@ import Spinner from '../../../Spinner/Spinner';
 import Button from '../../../Button/Button';
 
 export function SimpleListFromDB({
-	Title, getListUrl, downloadUrl
+	Title, getListUrl, downloadUrl, formatExempt=null
 }) {
 	const api = useApi();
 	const [loading, setLoading] = useState(false);
@@ -25,7 +25,15 @@ export function SimpleListFromDB({
 			);
 
 			if (data?.exempt) {
-				setResultRequest(data.exempt.join('\n'));
+				const exempt = data.exempt;
+
+				if (typeof formatExempt === 'function') {
+					setResultRequest(formatExempt(exempt));
+				} else if (Array.isArray(exempt) && exempt.every(v => typeof v === 'string')) {
+					setResultRequest(exempt.join('\n'));
+				} else {
+					setError('Неподдерживаемый формат данных: передайте formatExempt(exempt).');
+				}
 			} else {
 				setError('Не удалось получить список позиций.');
 			}

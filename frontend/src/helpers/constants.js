@@ -30,7 +30,8 @@ export const DOCS = {
 export const TEMPLATE = {
 	NON_QUALIFY_PROF_LIST: 'non_qualify_prof_list',
 	TRAINEE_WORKERS_LIST: 'trainee_workers_list',
-	REQUIRING_TRAINING_SIZ_LIST: 'requiring_training_siz_list'
+	REQUIRING_TRAINING_SIZ_LIST: 'requiring_training_siz_list',
+	EDUCATION_WORKERS_LIST: 'education_workers_list'
 };
 
 export const getItemsUrl = (itemName, templateName) =>

@@ -1,9 +1,6 @@
 import styles from './ManageDiv.module.css';
 import Button from '../../Button/Button';
-import {
-	getAllDivisionsUrl,
-	JWT_STORAGE_KEY
-} from '../../../helpers/constants';
+import {getAllDivisionsUrl} from '../../../helpers/constants';
 import {useEffect, useReducer, useState} from 'react';
 import {SelectForm} from '../../SelectForm/SelectForm';
 import {Tooltip} from 'react-tooltip';
@@ -105,7 +102,7 @@ export function ManageDiv({optionsDiv, setManageDivModalOpen, getDivisions, setS
 					<SelectForm
 						value={optionsDivWide.find(option => option.value === valueDiv)}
 						options={optionsDivWide}
-						name="Divession_id"
+						name="Division_id"
 						onChange={selectDiv}
 					/>
 				</span>
@@ -182,4 +179,4 @@ export function ManageDiv({optionsDiv, setManageDivModalOpen, getDivisions, setS
 			</div>
 		</div>
 	);
-};
+}

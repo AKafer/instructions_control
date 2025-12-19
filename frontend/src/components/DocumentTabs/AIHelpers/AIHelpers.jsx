@@ -19,6 +19,11 @@ export function AIHelpers() {
 		labelField: 'title'
 	});
 
+	const educationWorkerListFormatter = (exempt) =>
+		(exempt || [])
+			.map(({ profession, programs }) => `${profession}: ${(programs || []).join(', ')}`)
+			.join('\n');
+
 	return (
 		<div className={styles.helpers_content}>
 			<div className={styles.wrapper}>
@@ -32,6 +37,22 @@ export function AIHelpers() {
 					}
 					downloadUrl={
 						downloadItemsUrl(TEMPLATE.NON_QUALIFY_PROF_LIST)}
+				/>
+			</div>
+
+			<div className={styles.wrapper}>
+				<SimpleListFromDB
+					Title="Перечень профессий, требующих обучения по вопросам ОТ"
+					getListUrl={
+						getItemsUrl(
+							'profession',
+							TEMPLATE.EDUCATION_WORKERS_LIST
+						)
+					}
+					downloadUrl={
+						downloadItemsUrl(TEMPLATE.EDUCATION_WORKERS_LIST)
+					}
+					formatExempt={educationWorkerListFormatter}
 				/>
 			</div>
 
