@@ -29,6 +29,7 @@ from core.global_placeholders import (
     fill_table_with_items,
     PROFESSION,
     fill_complex_ppe_table,
+    fill_program_matrix_table,
 )
 from database.models import (
     User,
@@ -110,13 +111,20 @@ def replace_ins_generate_in_doc(
     return doc
 
 
+def replace_program_matrix_in_doc(
+    doc: Document, items: List[str], placeholder: str = None
+) -> Document:
+    return fill_program_matrix_table(doc, items)
+
+
 async def generate_document_in_memory(
     template_path: str, callback: replace_ins_generate_in_doc, **kwargs
 ) -> BytesIO:
     doc = Document(template_path)
     callback_map = {
         'replace_ins_generate_in_doc': replace_ins_generate_in_doc,
-        'replace_list_placeholders_in_doc': replace_simple_list_placeholders_in_doc,
+        'replace_simple_list_placeholders_in_doc': replace_simple_list_placeholders_in_doc,
+        'replace_program_matrix_in_doc': replace_program_matrix_in_doc,
     }
     local_placeholders_replace = callback_map.get(callback)
     doc = local_placeholders_replace(doc, **kwargs)

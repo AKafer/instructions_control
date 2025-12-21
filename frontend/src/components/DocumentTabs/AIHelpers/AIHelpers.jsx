@@ -2,12 +2,33 @@ import styles from './AIHelpers.module.css';
 import {SimpleListFromDB} from './SimpleListFromDB/SimpleListFromDB';
 import {InsGenerator} from './InsGenerator/InsGenerator';
 import useFillSelect from '../../../hooks/useFillSelect.hook';
-import {downloadItemsUrl, getAllProfessionsUrl, getItemsUrl, TEMPLATE} from '../../../helpers/constants';
+import {
+	getAllProfessionsUrl,
+	TEMPLATES_GROUPED
+} from '../../../helpers/constants';
+
 
 export function AIHelpers() {
 
+	const docsTemplatesUrls = {
+		GET_ITEMS: '/documents/get_items',
+		DOWNLOAD_ITEMS: '/documents/download_items'
+	};
 
+	const getItemsUrl = (itemName, templateName) =>
+		`${docsTemplatesUrls.GET_ITEMS}/${itemName}/${templateName}`;
 
+	const downloadItemsUrl = (templateName) =>
+		`${docsTemplatesUrls.DOWNLOAD_ITEMS}/${templateName}`;
+
+	const TEMPLATE = Object.freeze(
+		Object.fromEntries(
+			TEMPLATES_GROUPED
+				.flatMap(g => g.templates)
+				.filter(t => t.key && t.template)
+				.map(t => [t.key, t.template])
+		)
+	);
 
 	const {
 		error: errorProf,

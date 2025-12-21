@@ -1,5 +1,6 @@
+import re
 from copy import deepcopy
-from typing import List, Dict
+from typing import List, Dict, Tuple, Set
 
 from sqlalchemy import select
 
@@ -20,6 +21,10 @@ UNIT_OF_MEASUREMENT_SIZ = '{{шт-пар}}'
 NON_QUALIFY_PROF = '{{профессии освобожденные от первичного инструктажа}}'
 REQUIRING_TRAINING_SIZ = '{{СИЗ требующие обучения}}'
 TRAINEE_WORKERS = '{{профессии кому нужна стажировка}}'
+EDUCATION_WORKERS_LIST = '{{профессия}}'
+
+
+_PLACEHOLDER_RE = re.compile(r'\{\{([^{}]+)\}\}')
 
 
 class DocumentCreateError(Exception):
@@ -333,3 +338,74 @@ def fill_complex_ppe_table(doc, items):
         except Exception:
             pass
     return doc
+
+
+def _extract_placeholders_from_text(text: str) -> List[str]:
+    return [
+        f'{{{{{m.strip()}}}}}' for m in _PLACEHOLDER_RE.findall(text or '')
+    ]
+
+
+def _parse_profession_programs(raw: str) -> Tuple[str, Set[str]]:
+    if ':' not in raw:
+        return raw.strip(), set()
+
+    profession_part, programs_part = raw.split(':', 1)
+    profession = profession_part.strip()
+
+    programs = set()
+    for token in programs_part.split(','):
+        t = token.strip().upper()
+        if t:
+            programs.add(t)
+    return profession, programs
+
+
+def _find_matrix_template_row_and_program_placeholders(
+    doc: Document,
+) -> Tuple[List[str], List[str]]:
+    required = [POINT_NUMBER, EDUCATION_WORKERS_LIST]
+
+    for t in doc.tables:
+        for row in t.rows:
+            row_text = '\n'.join(c.text for c in row.cells)
+            if all(ph in row_text for ph in required):
+                all_ph = _extract_placeholders_from_text(row_text)
+                program_ph = [
+                    ph
+                    for ph in all_ph
+                    if ph not in (POINT_NUMBER, EDUCATION_WORKERS_LIST)
+                ]
+                if program_ph:
+                    return required, program_ph
+
+    raise DocumentCreateError(
+        f'Not found matrix template row containing placeholders {required}'
+    )
+
+
+def fill_program_matrix_table(
+    doc: Document, items_list: List[str]
+) -> Document:
+    (
+        required,
+        program_placeholders,
+    ) = _find_matrix_template_row_and_program_placeholders(doc)
+
+    items: List[Dict[str, str]] = []
+
+    for raw in items_list:
+        profession, programs = _parse_profession_programs(raw)
+
+        row: Dict[str, str] = {PROFESSION: profession}
+        for ph in program_placeholders:
+            prog_name = ph.strip('{}').strip().upper()
+            row[ph] = '+' if prog_name in programs else '-'
+
+        items.append(row)
+
+    return fill_table_with_items(
+        doc,
+        items=items,
+        required_placeholders=required + program_placeholders,
+    )

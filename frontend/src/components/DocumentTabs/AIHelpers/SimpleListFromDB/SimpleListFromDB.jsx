@@ -5,10 +5,12 @@ import useApi from '../../../../hooks/useApi.hook';
 import {Textarea} from '../../../textarea/Textarea';
 import Spinner from '../../../Spinner/Spinner';
 import Button from '../../../Button/Button';
+import {docsTemplatesUrls} from '../../../../helpers/constants';
 
 export function SimpleListFromDB({
 	Title, getListUrl, downloadUrl, formatExempt=null
 }) {
+
 	const api = useApi();
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(undefined);

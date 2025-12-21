@@ -22,25 +22,6 @@ export const getAllMaterialsPaginatedUrl = '/materials/paginated';
 export const getAllTestsUrl = '/tests/tests';
 export const getAllHistoriesPaginatedUrl = '/histories/paginated?type__in=TEST_EXECUTION';
 
-export const DOCS = {
-	GET_ITEMS: '/documents/get_items',
-	DOWNLOAD_ITEMS: '/documents/download_items'
-};
-
-export const TEMPLATE = {
-	NON_QUALIFY_PROF_LIST: 'non_qualify_prof_list',
-	TRAINEE_WORKERS_LIST: 'trainee_workers_list',
-	REQUIRING_TRAINING_SIZ_LIST: 'requiring_training_siz_list',
-	EDUCATION_WORKERS_LIST: 'education_workers_list'
-};
-
-export const getItemsUrl = (itemName, templateName) =>
-	`${DOCS.GET_ITEMS}/${itemName}/${templateName}`;
-
-export const downloadItemsUrl = (templateName) =>
-	`${DOCS.DOWNLOAD_ITEMS}/${templateName}`;
-
-
 export const unitsOfMeasurements = [
 	{ value: 'шт', label: 'шт' },
 	{ value: 'пар', label: 'пар' },
@@ -62,11 +43,41 @@ export const TEMPLATES_GROUPED = [
 	{
 		group: 'aiHelper',
 		templates: [
-			{ name: 'Перечень профессий освобожденных от первичного инструктажа', template: 'non_qualify_prof_list' },
-			{ name: 'ИОТ Бланк', template: 'iot_blank' },
-			{ name: 'Перечень СИЗ требующих обучения', template: 'requiring_training_siz_list' },
-			{ name: 'Перечень стажирующихся работников', template: 'trainee_workers_list' },
-			{ name: 'Программа вводного инструктажа', template: 'introductory_briefing_program' }
+			{
+				key: 'NON_QUALIFY_PROF_LIST',
+				name: 'Перечень профессий освобожденных от первичного инструктажа',
+				template: 'non_qualify_prof_list'
+			},
+			{
+				key: 'IOT_BLANK',
+				name: 'ИОТ Бланк',
+				template: 'iot_blank'
+			},
+			{
+				key: 'REQUIRING_TRAINING_SIZ_LIST',
+				name: 'Перечень СИЗ требующих обучения',
+				template: 'requiring_training_siz_list'
+			},
+			{
+				key: 'TRAINEE_WORKERS_LIST',
+				name: 'Перечень стажирующихся работников',
+				template: 'trainee_workers_list'
+			},
+			{
+				key: 'PROGRAMME_INTRODUCTORY_BRIEFING',
+				name: 'Программа вводного инструктажа',
+				template: 'introductory_briefing_program'
+			},
+			{
+				key: 'PROGRAMME_PRIMARY_BRIEFING',
+				name: 'Программа первичного инструктажа',
+				template: 'primary_briefing_program'
+			},
+			{
+				key: 'EDUCATION_WORKERS_LIST',
+				name: 'Перечень профессий, требующих обучения по вопросам ОТ',
+				template: 'education_workers_list'
+			}
 		]
 	},
 	{
@@ -139,17 +150,50 @@ export const TEMPLATES_GROUPED = [
 	{
 		group: 'organizations',
 		templates: [
-			{ name: 'Журнал Реестр учета микроповреждений', template: 'journal_microdamage' },
-			{ name: 'Журнал учета несчастных случаев', template: 'journal_accidents' },
-			{ name: 'ИОТ-ОППП-01 Первая помощь', template: 'iot_first_aid' },
-			{ name: 'ИОТ-СИЗ-04 СИЗ', template: 'iot_siz' },
-			{ name: 'Перечень инструкций', template: 'list_instructions' },
-			{ name: 'Положение об обеспечении СИЗ', template: 'policy_siz' },
-			{ name: 'Положение о несчастных случаях', template: 'policy_accidents' },
-			{ name: 'Положение о порядке обучения ОТ', template: 'policy_training' },
-			{ name: 'Положение о СУОТ', template: 'policy_suot' },
-			{ name: 'Приказ об утверждении ЛНА по ОТ', template: 'order_approve_lna' },
-			{ name: 'Приказ о сан постах', template: 'order_san_posts' },
+			{
+				name: 'Журнал Реестр учета микроповреждений',
+				template: 'journal_microdamage'
+			},
+			{
+				name: 'Журнал учета несчастных случаев',
+				template: 'journal_accidents'
+			},
+			{
+				name: 'ИОТ-ОППП-01 Первая помощь',
+				template: 'iot_first_aid'
+			},
+			{
+				name: 'ИОТ-СИЗ-04 СИЗ',
+				template: 'iot_siz'
+			},
+			{
+				name: 'Перечень инструкций',
+				template: 'list_instructions'
+			},
+			{
+				name: 'Положение об обеспечении СИЗ',
+				template: 'policy_siz'
+			},
+			{
+				name: 'Положение о несчастных случаях',
+				template: 'policy_accidents'
+			},
+			{
+				name: 'Положение о порядке обучения ОТ',
+				template: 'policy_training'
+			},
+			{
+				name: 'Положение о СУОТ',
+				template: 'policy_suot'
+			},
+			{
+				name: 'Приказ об утверждении ЛНА по ОТ',
+				template: 'order_approve_lna'
+			},
+			{
+				name: 'Приказ о сан постах',
+				template: 'order_san_posts'
+			},
 			{
 				name: 'Приказ о старте новой СУОТ',
 				template: 'order_start_suot'
@@ -158,12 +202,30 @@ export const TEMPLATES_GROUPED = [
 				name: 'Приказ ответственный за ОТ',
 				template: 'order_responsible_ot'
 			},
-			{ name: 'Программа обучения по использованию СИЗ', template: 'program_siz_usage' },
-			{ name: 'Программа обучения по общим вопросам СУОТ', template: 'program_general_suot' },
-			{ name: 'Программа обучения по оказанию первой помощи', template: 'program_first_aid' },
-			{ name: 'Программа обучения при воздействии вредных и опасных факторов', template: 'program_hazard_factors' },
-			{ name: 'Программа стажировки на рабочем месте', template: 'program_workplace_internship' },
-			{ name: 'Нормы выдачи СИЗ', template: 'norm_issuance_siz' }
+			{
+				name: 'Программа обучения по использованию СИЗ',
+				template: 'program_siz_usage'
+			},
+			{
+				name: 'Программа обучения по общим вопросам СУОТ',
+				template: 'program_general_suot'
+			},
+			{
+				name: 'Программа обучения по оказанию первой помощи',
+				template: 'program_first_aid'
+			},
+			{
+				name: 'Программа обучения при воздействии вредных и опасных факторов',
+				template: 'program_hazard_factors'
+			},
+			{
+				name: 'Программа стажировки на рабочем месте',
+				template: 'program_workplace_internship'
+			},
+			{
+				name: 'Нормы выдачи СИЗ',
+				template: 'norm_issuance_siz'
+			}
 		]
 	}
 ];

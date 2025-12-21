@@ -10,7 +10,12 @@ from starlette import status
 from starlette.responses import Response, JSONResponse, StreamingResponse
 
 from constants import FileTemplatesNamingEnum
-from core.global_placeholders import NON_QUALIFY_PROF, REQUIRING_TRAINING_SIZ, TRAINEE_WORKERS
+from core.global_placeholders import (
+    EDUCATION_WORKERS_LIST,
+    NON_QUALIFY_PROF,
+    REQUIRING_TRAINING_SIZ,
+    TRAINEE_WORKERS,
+)
 from database.models import (
     Documents,
     Professions,
@@ -23,7 +28,9 @@ from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
 from externals.http.yandex_llm.yandex_llm_base import LLMResonseError
-from externals.http.yandex_llm.yandex_llm_education_workers_list import EducationWorkersListClient
+from externals.http.yandex_llm.yandex_llm_education_workers_list import (
+    EducationWorkersListClient,
+)
 from externals.http.yandex_llm.yandex_llm_ins_generato import (
     InsGeneratorClient,
 )
@@ -33,7 +40,9 @@ from externals.http.yandex_llm.yandex_llm_non_qualify_prof_list import (
 from externals.http.yandex_llm.yandex_llm_requiring_training_siz_list import (
     RequiringTrainingSIZListClient,
 )
-from externals.http.yandex_llm.yandex_llm_trainee_workers_list import TraineeWorkersListClient
+from externals.http.yandex_llm.yandex_llm_trainee_workers_list import (
+    TraineeWorkersListClient,
+)
 from main_schemas import ResponseErrorBody
 from settings import TEMPLATES_DIR
 from web.documents.schemas import (
@@ -45,7 +54,6 @@ from web.documents.schemas import (
     InsGenerateSectionsInput,
     PersonalInput,
     OrganizationInput,
-    DownloadSizListInput,
     ItemListInput,
     DownloadItemListInput,
 )
@@ -77,6 +85,7 @@ TEMPLATE_MAPPING = {
     'non_qualify_prof_list': {
         'client': NonQualifyProfListClient(),
         'placeholder': NON_QUALIFY_PROF,
+        'callback': 'replace_simple_list_placeholders_in_doc',
         'content': (
             'Список профессий: {items_list_str}\n\n'
             'Выбери только те профессии, которые могут быть '
@@ -86,6 +95,7 @@ TEMPLATE_MAPPING = {
     'trainee_workers_list': {
         'client': TraineeWorkersListClient(),
         'placeholder': TRAINEE_WORKERS,
+        'callback': 'replace_simple_list_placeholders_in_doc',
         'content': (
             'Список профессий: {items_list_str}\n\n'
             'Выбери только те профессии, для которых '
@@ -94,7 +104,8 @@ TEMPLATE_MAPPING = {
     },
     'education_workers_list': {
         'client': EducationWorkersListClient(),
-        'placeholder': TRAINEE_WORKERS, # TODO: fix placeholder
+        'placeholder': EDUCATION_WORKERS_LIST,
+        'callback': 'replace_program_matrix_in_doc',
         'content': (
             'Вот список профессий: {items_list_str}\n\n'
             'Распредели программы обучения согласно правилам выше.'
@@ -103,6 +114,7 @@ TEMPLATE_MAPPING = {
     'requiring_training_siz_list': {
         'client': RequiringTrainingSIZListClient(),
         'placeholder': REQUIRING_TRAINING_SIZ,
+        'callback': 'replace_simple_list_placeholders_in_doc',
         'content': (
             'Список средств индивидуальной защиты: {items_list_str}\n\n'
             'Выбери только те СИЗ, применение которых требует практических навыков. '
@@ -331,7 +343,7 @@ async def generate_items_list_document(
     try:
         buf = await generate_document_in_memory(
             template_path=template_path,
-            callback='replace_list_placeholders_in_doc',
+            callback=TEMPLATE_MAPPING[template_name]['callback'],
             items=input_data.items_list or [],
             placeholder=TEMPLATE_MAPPING[template_name]['placeholder'],
         )
