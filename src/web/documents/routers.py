@@ -28,21 +28,16 @@ from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
 from externals.http.yandex_llm.yandex_llm_base import LLMResonseError
-from externals.http.yandex_llm.yandex_llm_education_workers_list import (
-    EducationWorkersListClient,
-)
-from externals.http.yandex_llm.yandex_llm_ins_generato import (
-    InsGeneratorClient,
-)
-from externals.http.yandex_llm.yandex_llm_non_qualify_prof_list import (
+from externals.http.yandex_llm.yandex_llm_section_generator_clients import InsGeneratorClient, \
+    IntroBriefingGeneratorClient
+
+from externals.http.yandex_llm.yandex_llm_simple_list_clients import (
     NonQualifyProfListClient,
-)
-from externals.http.yandex_llm.yandex_llm_requiring_training_siz_list import (
+    TraineeWorkersListClient,
+    EducationWorkersListClient,
     RequiringTrainingSIZListClient,
 )
-from externals.http.yandex_llm.yandex_llm_trainee_workers_list import (
-    TraineeWorkersListClient,
-)
+
 from main_schemas import ResponseErrorBody
 from settings import TEMPLATES_DIR
 from web.documents.schemas import (
@@ -50,12 +45,11 @@ from web.documents.schemas import (
     CreateDocument,
     UpdateDocument,
     DeleteDocuments,
-    InsGenerateInput,
     InsGenerateSectionsInput,
     PersonalInput,
     OrganizationInput,
     ItemListInput,
-    DownloadItemListInput,
+    DownloadItemListInput, SectionsDataInput,
 )
 
 from web.documents.services import (
@@ -83,7 +77,7 @@ MODEL_MAPPING = {
 
 TEMPLATE_MAPPING = {
     'non_qualify_prof_list': {
-        'client': NonQualifyProfListClient(),
+        'client_class': NonQualifyProfListClient,
         'placeholder': NON_QUALIFY_PROF,
         'callback': 'replace_simple_list_placeholders_in_doc',
         'content': (
@@ -93,7 +87,7 @@ TEMPLATE_MAPPING = {
         ),
     },
     'trainee_workers_list': {
-        'client': TraineeWorkersListClient(),
+        'client_class': TraineeWorkersListClient,
         'placeholder': TRAINEE_WORKERS,
         'callback': 'replace_simple_list_placeholders_in_doc',
         'content': (
@@ -103,7 +97,7 @@ TEMPLATE_MAPPING = {
         ),
     },
     'education_workers_list': {
-        'client': EducationWorkersListClient(),
+        'client_class': EducationWorkersListClient,
         'placeholder': EDUCATION_WORKERS_LIST,
         'callback': 'replace_program_matrix_in_doc',
         'content': (
@@ -112,7 +106,7 @@ TEMPLATE_MAPPING = {
         ),
     },
     'requiring_training_siz_list': {
-        'client': RequiringTrainingSIZListClient(),
+        'client_class': RequiringTrainingSIZListClient,
         'placeholder': REQUIRING_TRAINING_SIZ,
         'callback': 'replace_simple_list_placeholders_in_doc',
         'content': (
@@ -121,6 +115,14 @@ TEMPLATE_MAPPING = {
             'Не включай простые элементы (например, сигнальные жилеты, белье, очки без особой настройки).'
         ),
     },
+    'iot_blank': {
+        'client_class': InsGeneratorClient,
+        'content': ('profession', 'description', 'sizo'),
+    },
+    'introductory_briefing_program': {
+        'client_class': IntroBriefingGeneratorClient,
+        'content': ('profession', 'manager_title', 'equipment_hint'),
+    }
 }
 
 
@@ -298,7 +300,8 @@ async def get_items_list(
     content = TEMPLATE_MAPPING[template_name]['content'].format(
         items_list_str=items_list_str
     )
-    client = TEMPLATE_MAPPING[template_name]['client']
+    client_class = TEMPLATE_MAPPING[template_name]['client_class']
+    client = client_class()
     try:
         resp = await client.get_llm_answer(content)
         resp['initial_items'] = items_list
@@ -362,7 +365,7 @@ async def generate_items_list_document(
 
 
 @router.post(
-    '/ins_generate',
+    '/sections_generate/{template_name}',
     status_code=status.HTTP_200_OK,
     response_model=None,
     responses={
@@ -371,13 +374,17 @@ async def generate_items_list_document(
         },
     },
 )
-async def ins_generate(input_data: InsGenerateInput):
-    client = InsGeneratorClient()
-    content = {
-        'profession': input_data.profession,
-        'description': input_data.description,
-        'sizo': ', '.join(input_data.sizo) if input_data.sizo else '',
-    }
+async def sections_generate(template_name: str, input_data: SectionsDataInput):
+    if template_name not in TEMPLATE_MAPPING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Invalid template name: {template_name}',
+        )
+
+    client_class = TEMPLATE_MAPPING[template_name]['client_class']
+    client = client_class(search_index=input_data.search_index)
+    content_values = TEMPLATE_MAPPING[template_name]['content']
+    content = {key: getattr(input_data, key) for key in content_values}
     try:
         resp = await client.get_llm_answer(content)
         return JSONResponse(content=resp)

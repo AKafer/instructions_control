@@ -22,13 +22,14 @@ from typing import List
 
 class FileTemplatesNamingEnum(str, Enum):
     # AI helpers
-    IOT_BLANK = 'iot_blank'
     NON_QUALIFY_PROF_LIST = 'non_qualify_prof_list'
     REQUIRING_TRAINING_SIZ_LIST = 'requiring_training_siz_list'
     TRAINEE_WORKERS_LIST = 'trainee_workers_list'
     EDUCATION_WORKERS_LIST = 'education_workers_list'
-
+    IOT_BLANK = 'iot_blank'
     INTRODUCTORY_BRIEFING_PROGRAM = 'introductory_briefing_program'
+    PRIMARY_BRIEFING_PROGRAM = 'primary_briefing_program'
+    NORMS_DSIZ_ISSUANCE = 'norms_dsiz_issuance'
 
     # Personals
     ACT_REG_INTRO = 'act_reg_intro'
@@ -68,10 +69,12 @@ class FileTemplatesNamingEnum(str, Enum):
         return {
             'ai_assistant': [
                 'non_qualify_prof_list',
-                'iot_blank',
                 'requiring_training_siz_list',
                 'trainee_workers_list',
+                'iot_blank',
+                'primary_briefing_program',
                 'introductory_briefing_program',
+                'norms_dsiz_issuance',
             ],
             'personal': [
                 'act_reg_intro',

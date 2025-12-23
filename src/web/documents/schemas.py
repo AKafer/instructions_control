@@ -63,10 +63,13 @@ class DownloadItemListInput(BaseModel):
     items_list: list | None = None
 
 
-class InsGenerateInput(BaseModel):
+class SectionsDataInput(BaseModel):
     profession: str
+    search_index: str | None = None
     description: str | None = None
     sizo: list[str] | None = None
+    manager_title: str | None = None
+    equipment_hint: str | None = None
 
 
 class Section(BaseModel):

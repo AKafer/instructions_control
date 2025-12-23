@@ -7,9 +7,11 @@ import Spinner from '../../../Spinner/Spinner';
 import Button from '../../../Button/Button';
 import Input from '../../../Input/Input';
 import {CustomSelect} from '../../../Select/Select';
+import {InsInputForm} from './InsInputForm/InsInputForm';
+import {IntroBriefingInputForm} from './IntroBriefingInputForm/IntroBriefingInputForm';
 
 
-export function InsGenerator({optionsProf, professionDict}) {
+export function SectionsGenerator({optionsProf, professionDict}) {
 	const api = useApi();
 
 	const [loading, setLoading] = useState(false);
@@ -26,19 +28,65 @@ export function InsGenerator({optionsProf, professionDict}) {
 	const [selectedSection, setSelectedSection] = useState(null);
 	const [textareaValue, setTextareaValue] = useState('');
 
+	const [managerTitle, setManagerTitle] = useState('');
+	const [equipmentHint, setEquipmentHint] = useState('');
+
+	const TEMPLATES = {
+		iot_blank: {
+			label: 'Инструкция по охране труда',
+			sectionsUrl: '/documents/sections_generate/iot_blank',
+			downloadUrl: '/documents/ins_generate/download',
+			InputComponent: 'IOT'
+		},
+		introductory_briefing_program: {
+			label: 'Программа первичного инструктажа',
+			sectionsUrl: '/documents/sections_generate/introductory_briefing_program',
+			downloadUrl: '/documents/intro_briefing/download',
+			InputComponent: 'INTRO'
+		}
+	};
+
+	const templateOptions = Object.entries(TEMPLATES).map(([value, t]) => ({
+		value,
+		label: t.label
+	}));
+
+	const handleTemplateChange = (option) => {
+		setSelectedTemplate(option);
+		setSections({});
+		setSelectedSection(null);
+		setTextareaValue('');
+		setError(undefined);
+	};
+
+	const [selectedTemplate, setSelectedTemplate] = useState(templateOptions[0]);
+
+
 	const handleGenerate = async () => {
 		setError(undefined);
 		setLoading(true);
+		const template = TEMPLATES[selectedTemplate.value];
 
-		try {
-			const sizoList = materials.split(',').map(s => s.trim()).filter(Boolean);
+		let payload;
 
-			const {data} = await api.post('/documents/ins_generate', {
+		if (selectedTemplate.value === 'iot_blank') {
+			payload = {
 				profession,
 				description,
-				sizo: sizoList
-			});
+				sizo: materials.split(',').map(s => s.trim()).filter(Boolean)
+			};
+		}
 
+		if (selectedTemplate.value === 'introductory_briefing_program') {
+			payload = {
+				profession,
+				manager_title: managerTitle,
+				equipment_hint: equipmentHint
+			};
+		}
+
+		try {
+			const { data } = await api.post(template.sectionsUrl, payload);
 			setSections(data);
 
 			const firstKey = Object.keys(data)[0];
@@ -162,38 +210,43 @@ export function InsGenerator({optionsProf, professionDict}) {
 
 	return (
 		<>
-			<h1 className={styles.title}>Генератор инструкций</h1>
+			<h1 className={styles.title}>Генератор документов</h1>
 
 			<div className={styles.formWrapper}>
 				<div className={styles.inputs}>
 					<CustomSelect
 						className={styles.my_wider_select}
-						value={selectedProfOption}
-						options={optionsProf}
-						placeholder="Профессия"
-						onChange={handleProfessionChange}
+						value={selectedTemplate}
+						options={templateOptions}
+						placeholder="Тип документа"
+						onChange={handleTemplateChange}
 						width="100%"
-					>
-					</CustomSelect>
-					<Input
-						placeholder="Описание"
-						value={description}
-						onChange={(e) => setDescription(e.target.value)}
 					/>
-					<div className={styles.textareaContainer}>
-						<Textarea
-							placeholder="Материалы (через запятую)"
-							value={materials}
-							disabled={true}
-							onChange={(e) => setMaterials(e.target.value)}
-							className={styles.textarea_siz}
+
+					{selectedTemplate?.value === 'iot_blank' && (
+						<InsInputForm
+							optionsProf={optionsProf}
+							selectedProfOption={selectedProfOption}
+							handleProfessionChange={handleProfessionChange}
+							description={description}
+							setDescription={setDescription}
+							materials={materials}
+							smallLoading={smallLoading}
 						/>
-						{smallLoading && (
-							<div className={styles.spinnerOverlay}>
-								<Spinner showSeconds={true} />
-							</div>
-						)}
-					</div>
+					)}
+
+					{selectedTemplate?.value === 'introductory_briefing_program' && (
+						<IntroBriefingInputForm
+							optionsProf={optionsProf}
+							selectedProfOption={selectedProfOption}
+							handleProfessionChange={handleProfessionChange}
+							managerTitle={managerTitle}
+							setManagerTitle={setManagerTitle}
+							equipmentHint={equipmentHint}
+							setEquipmentHint={setEquipmentHint}
+						/>
+					)}
+
 				</div>
 
 				<div className={styles.output}>

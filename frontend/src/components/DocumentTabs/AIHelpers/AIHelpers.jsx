@@ -1,6 +1,6 @@
 import styles from './AIHelpers.module.css';
 import {SimpleListFromDB} from './SimpleListFromDB/SimpleListFromDB';
-import {InsGenerator} from './InsGenerator/InsGenerator';
+import {SectionsGenerator} from './InsGenerator/SectionsGenerator';
 import useFillSelect from '../../../hooks/useFillSelect.hook';
 import {
 	getAllProfessionsUrl,
@@ -108,7 +108,7 @@ export function AIHelpers() {
 			</div>
 
 			<div className={styles.wrapper}>
-				<InsGenerator
+				<SectionsGenerator
 					optionsProf={optionsProf}
 					professionDict={professionDict}
 				/>
