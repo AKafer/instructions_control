@@ -1,9 +1,9 @@
-import styles from '../InsGenerator.module.css';
+import styles from './PrimaryBriefingInputForm.module.css';
 import Input from '../../../../Input/Input';
 import {CustomSelect} from '../../../../Select/Select';
 
 
-export function IntroBriefingInputForm({
+export function PrimaryBriefingInputForm({
 	optionsProf,
 	selectedProfOption,
 	handleProfessionChange,

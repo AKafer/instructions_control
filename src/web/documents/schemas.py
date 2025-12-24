@@ -77,17 +77,9 @@ class Section(BaseModel):
     text: str
 
 
-class DocSections(BaseModel):
-    general: Section | None = None
-    before: Section | None = None
-    during: Section | None = None
-    accidents: Section | None = None
-    after: Section | None = None
-
-
-class InsGenerateSectionsInput(BaseModel):
+class GenerateSectionsDownloadInput(BaseModel):
     profession: str
-    sections: DocSections
+    sections: dict
 
 
 class SIZListInput(BaseModel):

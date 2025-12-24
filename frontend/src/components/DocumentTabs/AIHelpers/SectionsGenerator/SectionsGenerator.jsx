@@ -1,50 +1,42 @@
-import styles from './InsGenerator.module.css';
-import {useState} from 'react';
+import styles from './SectionsGenerator.module.css';
+import React, {useState} from 'react';
 import cn from 'classnames';
 import useApi from '../../../../hooks/useApi.hook';
 import {Textarea} from '../../../textarea/Textarea';
 import Spinner from '../../../Spinner/Spinner';
 import Button from '../../../Button/Button';
-import Input from '../../../Input/Input';
 import {CustomSelect} from '../../../Select/Select';
 import {InsInputForm} from './InsInputForm/InsInputForm';
-import {IntroBriefingInputForm} from './IntroBriefingInputForm/IntroBriefingInputForm';
+import {PrimaryBriefingInputForm} from './PrimaryBriefingInputForm/PrimaryBriefingInputForm';
+import Input from '../../../Input/Input';
 
 
 export function SectionsGenerator({optionsProf, professionDict}) {
 	const api = useApi();
+	const baseGenerateUrl = '/documents/sections_generate/';
+	const baseDownloadUrl = '/documents/download_sections_document/';
+	const TEMPLATES = {
+		iot_blank: {
+			label: 'Инструкция по охране труда'
+		},
+		primary_briefing_program: {
+			label: 'Программа первичного инструктажа'
+		}
+	};
 
 	const [loading, setLoading] = useState(false);
 	const [smallLoading, setSmallLoading] = useState(false);
 	const [error, setError] = useState(undefined);
-
 	const [selectedProfOption, setSelectedProfOption] = useState(null);
-
 	const [profession, setProfession] = useState('');
 	const [description, setDescription] = useState('');
 	const [materials, setMaterials] = useState('');
-
 	const [sections, setSections] = useState({});
 	const [selectedSection, setSelectedSection] = useState(null);
 	const [textareaValue, setTextareaValue] = useState('');
-
 	const [managerTitle, setManagerTitle] = useState('');
 	const [equipmentHint, setEquipmentHint] = useState('');
-
-	const TEMPLATES = {
-		iot_blank: {
-			label: 'Инструкция по охране труда',
-			sectionsUrl: '/documents/sections_generate/iot_blank',
-			downloadUrl: '/documents/ins_generate/download',
-			InputComponent: 'IOT'
-		},
-		introductory_briefing_program: {
-			label: 'Программа первичного инструктажа',
-			sectionsUrl: '/documents/sections_generate/introductory_briefing_program',
-			downloadUrl: '/documents/intro_briefing/download',
-			InputComponent: 'INTRO'
-		}
-	};
+	const [searchIndex, setSearchIndex] = useState(null);
 
 	const templateOptions = Object.entries(TEMPLATES).map(([value, t]) => ({
 		value,
@@ -65,28 +57,28 @@ export function SectionsGenerator({optionsProf, professionDict}) {
 	const handleGenerate = async () => {
 		setError(undefined);
 		setLoading(true);
-		const template = TEMPLATES[selectedTemplate.value];
 
 		let payload;
-
 		if (selectedTemplate.value === 'iot_blank') {
 			payload = {
-				profession,
-				description,
+				search_index: searchIndex,
+				profession: profession,
+				description: description,
 				sizo: materials.split(',').map(s => s.trim()).filter(Boolean)
 			};
 		}
 
-		if (selectedTemplate.value === 'introductory_briefing_program') {
+		if (selectedTemplate.value === 'primary_briefing_program') {
 			payload = {
-				profession,
+				search_index: searchIndex,
+				profession: profession,
 				manager_title: managerTitle,
 				equipment_hint: equipmentHint
 			};
 		}
 
 		try {
-			const { data } = await api.post(template.sectionsUrl, payload);
+			const { data } = await api.post(`${baseGenerateUrl}${selectedTemplate.value}`, payload);
 			setSections(data);
 
 			const firstKey = Object.keys(data)[0];
@@ -144,7 +136,7 @@ export function SectionsGenerator({optionsProf, professionDict}) {
 			}
 
 			const response = await api.post(
-				'/documents/ins_generate/download',
+				`${baseDownloadUrl}${selectedTemplate.value}`,
 				{
 					profession,
 					sections: payloadSections
@@ -158,7 +150,7 @@ export function SectionsGenerator({optionsProf, professionDict}) {
 			const url = window.URL.createObjectURL(blob);
 			const link = document.createElement('a');
 			link.href = url;
-			link.download = 'InsGenerated.docx';
+			link.download = 'Document.docx';
 			document.body.appendChild(link);
 			link.click();
 			link.remove();
@@ -210,8 +202,12 @@ export function SectionsGenerator({optionsProf, professionDict}) {
 
 	return (
 		<>
-			<h1 className={styles.title}>Генератор документов</h1>
-
+			{error && (
+				<div className={styles.error} onClick={() => setError(undefined)}>
+					{error} <span className={styles.errorClose}>✖</span>
+				</div>
+			)}
+			<h1 className={styles.title}>Генератор секционных документов</h1>
 			<div className={styles.formWrapper}>
 				<div className={styles.inputs}>
 					<CustomSelect
@@ -221,6 +217,11 @@ export function SectionsGenerator({optionsProf, professionDict}) {
 						placeholder="Тип документа"
 						onChange={handleTemplateChange}
 						width="100%"
+					/>
+					<Input
+						placeholder="Поисковый индекс"
+						value={searchIndex}
+						onChange={(e) => setSearchIndex(e.target.value)}
 					/>
 
 					{selectedTemplate?.value === 'iot_blank' && (
@@ -235,8 +236,8 @@ export function SectionsGenerator({optionsProf, professionDict}) {
 						/>
 					)}
 
-					{selectedTemplate?.value === 'introductory_briefing_program' && (
-						<IntroBriefingInputForm
+					{selectedTemplate?.value === 'primary_briefing_program' && (
+						<PrimaryBriefingInputForm
 							optionsProf={optionsProf}
 							selectedProfOption={selectedProfOption}
 							handleProfessionChange={handleProfessionChange}
@@ -264,7 +265,7 @@ export function SectionsGenerator({optionsProf, professionDict}) {
 							setText={handleTextareaChange}
 							placeholder="Текст инструкции будет здесь"
 							disabled={false}
-							className={styles.textarea_ins}
+							className={styles.textarea_output}
 						/>
 						{loading && (
 							<div className={styles.spinnerOverlay}>
@@ -291,8 +292,6 @@ export function SectionsGenerator({optionsProf, professionDict}) {
 					</Button>
 				</div>
 			</div>
-
-			{error && <div className={styles.error}>{error}</div>}
 		</>
 	);
 }

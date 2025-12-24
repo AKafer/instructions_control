@@ -28,8 +28,10 @@ from dependencies import get_db_session
 from starlette.exceptions import HTTPException
 
 from externals.http.yandex_llm.yandex_llm_base import LLMResonseError
-from externals.http.yandex_llm.yandex_llm_section_generator_clients import InsGeneratorClient, \
-    IntroBriefingGeneratorClient
+from externals.http.yandex_llm.yandex_llm_section_generator_clients import (
+    InsGeneratorClient,
+    PrimaryBriefingGeneratorClient
+)
 
 from externals.http.yandex_llm.yandex_llm_simple_list_clients import (
     NonQualifyProfListClient,
@@ -45,11 +47,10 @@ from web.documents.schemas import (
     CreateDocument,
     UpdateDocument,
     DeleteDocuments,
-    InsGenerateSectionsInput,
     PersonalInput,
     OrganizationInput,
     ItemListInput,
-    DownloadItemListInput, SectionsDataInput,
+    DownloadItemListInput, SectionsDataInput, GenerateSectionsDownloadInput,
 )
 
 from web.documents.services import (
@@ -119,8 +120,8 @@ TEMPLATE_MAPPING = {
         'client_class': InsGeneratorClient,
         'content': ('profession', 'description', 'sizo'),
     },
-    'introductory_briefing_program': {
-        'client_class': IntroBriefingGeneratorClient,
+    'primary_briefing_program': {
+        'client_class': PrimaryBriefingGeneratorClient,
         'content': ('profession', 'manager_title', 'equipment_hint'),
     }
 }
@@ -393,7 +394,7 @@ async def sections_generate(template_name: str, input_data: SectionsDataInput):
 
 
 @router.post(
-    '/ins_generate/download',
+    '/download_sections_document/{template_name}',
     status_code=status.HTTP_200_OK,
     response_model=None,
     responses={
@@ -402,27 +403,34 @@ async def sections_generate(template_name: str, input_data: SectionsDataInput):
         },
     },
 )
-async def ins_generate_document(
-    input_data: InsGenerateSectionsInput,
+async def download_sections_document(
+    template_name: str,
+    input_data: GenerateSectionsDownloadInput,
 ):
-    filename = None
-    for file in os.listdir(TEMPLATES_DIR):
-        if file.startswith(FileTemplatesNamingEnum.IOT_BLANK.value):
-            filename = file
-            break
+    try:
+        prefix = FileTemplatesNamingEnum(template_name).value
+    except KeyError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Invalid template name: {template_name}',
+        )
+    filename = next(
+        (f for f in os.listdir(TEMPLATES_DIR) if f.startswith(prefix)),
+        None,
+    )
 
     if filename is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Template file for non-qualify profession list not found.',
+            detail='Template file for items list not found.',
         )
 
     template_path = os.path.join(TEMPLATES_DIR, filename)
     try:
         buf = await generate_document_in_memory(
             template_path=template_path,
-            callback='replace_ins_generate_in_doc',
-            sections=input_data.sections.dict(),
+            callback='replace_sections_generate_in_doc',
+            sections=input_data.sections,
             profession=input_data.profession,
         )
     except DocumentCreateError as e:
@@ -430,7 +438,7 @@ async def ins_generate_document(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Unexpected error: {e}')
 
-    download_filename = f'{FileTemplatesNamingEnum.IOT_BLANK.value}.docx'
+    download_filename = f'{template_name}.docx'
     media_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     headers = {
         'Content-Disposition': f'attachment; filename="{download_filename}"'

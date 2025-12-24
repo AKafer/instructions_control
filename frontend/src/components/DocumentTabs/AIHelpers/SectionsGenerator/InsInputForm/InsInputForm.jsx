@@ -1,4 +1,4 @@
-import styles from '../InsGenerator.module.css';
+import styles from './InsInputForm.module.css';
 import {CustomSelect} from '../../../../Select/Select';
 import Input from '../../../../Input/Input';
 import {Textarea} from '../../../../textarea/Textarea';

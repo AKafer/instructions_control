@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, date
 from io import BytesIO
-from typing import Any, Sequence, List, Dict
+from typing import Any, Sequence, List, Dict, Callable
 from zipfile import ZipFile, ZIP_DEFLATED
 
 from sqlalchemy import select
@@ -86,16 +86,14 @@ def replace_simple_list_placeholders_in_doc(
     return doc
 
 
-def replace_ins_generate_in_doc(
+def replace_sections_generate_in_doc(
     doc: Document, sections: Dict[str, dict], profession: str
 ) -> Document:
-    name_mapping = {
-        'general': 'Часть 1',
-        'before': 'Часть 2',
-        'during': 'Часть 3',
-        'accidents': 'Часть 4',
-        'after': 'Часть 5',
-    }
+    name_mapping = {}
+    i = 0
+    for key in sections.keys():
+        i += 1
+        name_mapping[key] = f'Часть {i}'
     replacements: Dict[str, str] = {}
     replacements[PROFESSION] = profession
 
@@ -118,11 +116,11 @@ def replace_program_matrix_in_doc(
 
 
 async def generate_document_in_memory(
-    template_path: str, callback: replace_ins_generate_in_doc, **kwargs
+    template_path: str, callback: str, **kwargs
 ) -> BytesIO:
     doc = Document(template_path)
     callback_map = {
-        'replace_ins_generate_in_doc': replace_ins_generate_in_doc,
+        'replace_sections_generate_in_doc': replace_sections_generate_in_doc,
         'replace_simple_list_placeholders_in_doc': replace_simple_list_placeholders_in_doc,
         'replace_program_matrix_in_doc': replace_program_matrix_in_doc,
     }

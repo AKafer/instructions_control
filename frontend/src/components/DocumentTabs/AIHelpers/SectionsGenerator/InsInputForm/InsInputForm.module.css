@@ -1,0 +1,36 @@
+
+.inputs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.textareaContainer {
+  position: relative;
+}
+
+.textarea_siz {
+  width: 100%;
+  height: 228px;
+  font-size: 14px;
+  border: 1px solid var(--color_element_border);
+  padding: 10px;
+  background-color: var(--color_surface_default);
+  resize: none;
+  z-index: 1;
+}
+
+.spinnerOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.7);
+  z-index: 2;
+}

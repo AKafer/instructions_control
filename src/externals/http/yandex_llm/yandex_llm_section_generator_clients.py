@@ -10,7 +10,7 @@ from externals.http.yandex_llm.yandex_llm_base import (
 __all__ = [
     'BaseLLMSectionsGenerator',
     'InsGeneratorClient',
-    'IntroBriefingGeneratorClient',
+    'PrimaryBriefingGeneratorClient',
 ]
 
 
@@ -34,6 +34,7 @@ class BaseLLMSectionsGenerator(YandexLLMClient):
 
     def __init__(self, **kwargs):
         self.search_index = kwargs.pop('search_index', self.LLM_DEFAULT_SEARCH_INDEX)
+        x = self.search_index
         super().__init__(**kwargs)
 
 
@@ -175,7 +176,7 @@ class InsGeneratorClient(BaseLLMSectionsGenerator):
 
 
 
-class IntroBriefingGeneratorClient(BaseLLMSectionsGenerator):
+class PrimaryBriefingGeneratorClient(BaseLLMSectionsGenerator):
     SECTION_PROMPTS = INTRO_BRIEFING_PROMPTS
 
     def __init__(self, **kwargs):
