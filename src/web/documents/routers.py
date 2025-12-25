@@ -37,7 +37,7 @@ from externals.http.yandex_llm.yandex_llm_simple_list_clients import (
     NonQualifyProfListClient,
     TraineeWorkersListClient,
     EducationWorkersListClient,
-    RequiringTrainingSIZListClient,
+    RequiringTrainingSIZListClient, IntroductoryBriefingProgramClient, NormIssuanceSIZClient,
 )
 
 from main_schemas import ResponseErrorBody
@@ -59,7 +59,7 @@ from web.documents.services import (
     DocumentCreateError,
     generate_document_in_memory,
     generate_zip_personals_in_memory,
-    generate_doc_organization_in_memory,
+    generate_doc_organization_in_memory, add_shoe_size_profs,
 )
 from web.users.users import current_superuser
 
@@ -73,6 +73,7 @@ router = APIRouter(
 MODEL_MAPPING = {
     'profession': Professions,
     'siz': MaterialTypes,
+    'skip': None,
 }
 
 
@@ -115,6 +116,18 @@ TEMPLATE_MAPPING = {
             'Выбери только те СИЗ, применение которых требует практических навыков. '
             'Не включай простые элементы (например, сигнальные жилеты, белье, очки без особой настройки).'
         ),
+    },
+    'introductory_briefing_program': {
+        'client_class': IntroductoryBriefingProgramClient,
+        'placeholder': None,
+        'callback': 'replace_introductory_briefing_program_in_doc',
+        'content': ''
+    },
+    'norms_dsiz_issuance': {
+        'client_class': NormIssuanceSIZClient,
+        'placeholder': None,
+        'callback': 'replace_norms_dsiz_issuance_in_doc',
+        'content': 'Вот список профессий: {items_list_str}\n\n'
     },
     'iot_blank': {
         'client_class': InsGeneratorClient,
@@ -286,9 +299,12 @@ async def get_items_list(
 
     if input_data.all_db_items:
         model = MODEL_MAPPING[item_name]
-        query = select(model.title)
-        result = await db_session.execute(query)
-        items_list = result.scalars().all()
+        if model is not None:
+            query = select(model.title)
+            result = await db_session.execute(query)
+            items_list = result.scalars().all()
+        else:
+            items_list = []
     else:
         if not input_data.items_list:
             raise HTTPException(
@@ -302,10 +318,12 @@ async def get_items_list(
         items_list_str=items_list_str
     )
     client_class = TEMPLATE_MAPPING[template_name]['client_class']
-    client = client_class()
+    client = client_class(search_index=input_data.search_index)
     try:
         resp = await client.get_llm_answer(content)
         resp['initial_items'] = items_list
+        if template_name == 'norms_dsiz_issuance':
+            resp = await add_shoe_size_profs(resp)
         return JSONResponse(content=resp)
     except LLMResonseError as e:
         raise HTTPException(status_code=502, detail=f'LLM service error: {e}')

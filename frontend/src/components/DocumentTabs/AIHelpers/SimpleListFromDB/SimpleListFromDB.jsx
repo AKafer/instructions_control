@@ -6,45 +6,54 @@ import {Textarea} from '../../../textarea/Textarea';
 import Spinner from '../../../Spinner/Spinner';
 import Button from '../../../Button/Button';
 import {CustomSelect} from '../../../Select/Select';
+import {TEMPLATES_BY_KEY} from '../../../../helpers/constants';
+import Input from '../../../Input/Input';
 
 export function SimpleListFromDB() {
 	const api = useApi();
 	const baseGetItemsUrl = '/documents/get_items/';
 	const baseDownloadItemsUrl = '/documents/download_items/';
-	const TEMPLATES = {
-		non_qualify_prof_list: {
-			itemName: 'profession',
-			label: 'Перечень профессий освобожденных от первичного инструктажа'
-		},
-		trainee_workers_list: {
-			itemName: 'profession',
-			label: 'Перечень стажирующихся работников'
-		},
-		education_workers_list: {
-			itemName: 'profession',
-			label: 'Перечень профессий, требующих обучения по вопросам ОТ'
-		},
-		requiring_training_siz_list: {
-			itemName: 'siz',
-			label: 'Перечень СИЗ требующих обучения'
-		}
-	};
 
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(undefined);
 	const [resultRequest, setResultRequest] = useState('');
 	const [selectedTemplate, setSelectedTemplate] = useState(null);
+	const [searchIndex, setSearchIndex] = useState(null);
 
-	const templateOptions = Object.entries(TEMPLATES).map(([value, t]) => ({
-		value,
-		label: t.label
-	}));
+	const TEMPLATE_KEYS = [
+		'NON_QUALIFY_PROF_LIST',
+		'TRAINEE_WORKERS_LIST',
+		'EDUCATION_WORKERS_LIST',
+		'REQUIRING_TRAINING_SIZ_LIST',
+		'INTRODUCTORY_BRIEFING_PROGRAM',
+		'NORMS_DSIZ_ISSUANCE'
+	];
 
-	const formatExempt = (exempt) =>
+	const templateOptions = TEMPLATE_KEYS
+		.map(key => ({
+			value: key,
+			label: TEMPLATES_BY_KEY[key]?.name ?? key
+		}))
+		.filter(Boolean);
+
+	const formatEduResponse = (exempt) =>
 		(exempt || [])
 			.map(({ profession, programs }) => `${profession}: ${(programs || []).join(', ')}`)
 			.join('\n');
 
+	const formatIntroResponse = (exempt) => {
+		if (!exempt || typeof exempt !== 'object') return '';
+		const risks = Array.isArray(exempt.risks) ? exempt.risks.filter(Boolean) : [];
+		const factors = Array.isArray(exempt.factors) ? exempt.factors.filter(Boolean) : [];
+		return `риски: ${risks.join(', ')};\n\nфакторы: ${factors.join(', ')}`;
+	};
+
+	const formatDsizResponse = (exempt) => {
+		if (!exempt || typeof exempt !== 'object') return '';
+		const with_primary = Array.isArray(exempt.with_primary) ? exempt.with_primary.filter(Boolean) : [];
+		const shoe_size = Array.isArray(exempt.shoe_size) ? exempt.shoe_size.filter(Boolean) : [];
+		return `список должностей с первичным: ${with_primary.join(', ')};\n\nсписок должностей СИЗ ног: ${shoe_size.join(', ')}`;
+	};
 
 	const handleTemplateChange = (option) => {
 		setSelectedTemplate(option);
@@ -55,19 +64,26 @@ export function SimpleListFromDB() {
 	const handleRequest = async () => {
 		setError(undefined);
 		setLoading(true);
-		const template = TEMPLATES[selectedTemplate.value];
+		const templateMeta = TEMPLATES_BY_KEY[selectedTemplate.value];
 
 		try {
 			const { data } = await api.post(
-				`${baseGetItemsUrl}${template.itemName}/${selectedTemplate.value}`,
-				{ all_db_items: true }
+				`${baseGetItemsUrl}${templateMeta.itemName}/${templateMeta.template}`,
+				{
+					search_index: searchIndex,
+					all_db_items: true
+				}
 			);
 
 			if (data?.exempt) {
 				const exempt = data.exempt;
 
-				if (selectedTemplate.value === 'education_workers_list') {
-					setResultRequest(formatExempt(exempt));
+				if (selectedTemplate.value === 'EDUCATION_WORKERS_LIST') {
+					setResultRequest(formatEduResponse(exempt));
+				} else if (selectedTemplate.value === 'INTRODUCTORY_BRIEFING_PROGRAM') {
+					setResultRequest(formatIntroResponse(exempt));
+				} else if (selectedTemplate.value === 'NORMS_DSIZ_ISSUANCE') {
+					setResultRequest(formatDsizResponse(exempt));
 				} else if (Array.isArray(exempt) && exempt.every(v => typeof v === 'string')) {
 					setResultRequest(exempt.join('\n'));
 				} else {
@@ -88,13 +104,13 @@ export function SimpleListFromDB() {
 	const handleDownload = async () => {
 		setError(undefined);
 		setLoading(true);
+		const templateMeta = TEMPLATES_BY_KEY[selectedTemplate.value];
 
 		try {
 			const items_list = resultRequest.split('\n').map(s => s.trim()).filter(Boolean);
-
 			const response = await api.post(
-				`${baseDownloadItemsUrl}${selectedTemplate.value}`,
-				{ items_list: items_list },
+				`${baseDownloadItemsUrl}${templateMeta.template}`,
+				{ items_list },
 				{ responseType: 'blob' }
 			);
 
@@ -133,6 +149,11 @@ export function SimpleListFromDB() {
 					placeholder="Тип документа"
 					onChange={handleTemplateChange}
 					width="100%"
+				/>
+				<Input
+					placeholder="Поисковый индекс"
+					value={searchIndex}
+					onChange={(e) => setSearchIndex(e.target.value)}
 				/>
 				<div className={styles['span']}>
 					<div className={styles['textarea-container']}>

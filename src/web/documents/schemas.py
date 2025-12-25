@@ -55,6 +55,7 @@ class DeleteDocuments(BaseModel):
 
 
 class ItemListInput(BaseModel):
+    search_index: str | None = None
     items_list: list | None = None
     all_db_items: bool | None = False
 

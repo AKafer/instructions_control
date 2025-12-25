@@ -29,7 +29,8 @@ from core.global_placeholders import (
     fill_table_with_items,
     PROFESSION,
     fill_complex_ppe_table,
-    fill_program_matrix_table,
+    fill_program_matrix_table, PROF_RISKS, HARM_FACTORS, PRIMARY_PLACEHOLDER, SHOE_PLACEHOLDER,
+    replace_in_paragraph_runs,
 )
 from database.models import (
     User,
@@ -115,6 +116,62 @@ def replace_program_matrix_in_doc(
     return fill_program_matrix_table(doc, items)
 
 
+def replace_introductory_briefing_program_in_doc(
+    doc: Document, items: List[str], placeholder: str = None
+) -> Document:
+    risks_raw = ''
+    factors_raw = ''
+
+    for line in items:
+        s = line.strip()
+        low = s.lower()
+        if low.startswith('риски:'):
+            risks_raw = s.split(':', 1)[1].strip().rstrip(';')
+        elif low.startswith('факторы:'):
+            factors_raw = s.split(':', 1)[1].strip()
+    risk_items = [x.strip() for x in risks_raw.split(',') if x.strip()]
+    factor_items = [x.strip() for x in factors_raw.split(',') if x.strip()]
+    doc = replace_simple_list_placeholders_in_doc(
+        doc, risk_items, PROF_RISKS
+    )
+    doc = replace_simple_list_placeholders_in_doc(
+        doc, factor_items, HARM_FACTORS
+    )
+    return doc
+
+
+def replace_norms_dsiz_issuance_in_doc(
+    doc: Document, items: List[str], placeholder: str = None
+) -> Document:
+    primary_raw = ""
+    shoe_raw = ""
+
+    for line in items:
+        s = (line or "").strip()
+        low = s.lower()
+
+        if low.startswith('список должностей с первичным:'):
+            primary_raw = s.split(":", 1)[1].strip().rstrip(';').strip()
+
+        elif low.startswith('список должностей сиз ног:'):
+            shoe_raw = s.split(':', 1)[1].strip().rstrip(';').strip()
+
+    primary_items = [x.strip() for x in primary_raw.split(',') if x.strip()]
+    shoe_items = [x.strip() for x in shoe_raw.split(',') if x.strip()]
+
+    primary_text = '\n'.join(f'{p},' for p in primary_items)
+    shoe_text = '\n'.join(f'{p},' for p in shoe_items)
+
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    replace_in_paragraph_runs(paragraph, PRIMARY_PLACEHOLDER, primary_text)
+                    replace_in_paragraph_runs(paragraph, SHOE_PLACEHOLDER, shoe_text)
+
+    return doc
+
+
 async def generate_document_in_memory(
     template_path: str, callback: str, **kwargs
 ) -> BytesIO:
@@ -123,6 +180,8 @@ async def generate_document_in_memory(
         'replace_sections_generate_in_doc': replace_sections_generate_in_doc,
         'replace_simple_list_placeholders_in_doc': replace_simple_list_placeholders_in_doc,
         'replace_program_matrix_in_doc': replace_program_matrix_in_doc,
+        'replace_introductory_briefing_program_in_doc': replace_introductory_briefing_program_in_doc,
+        'replace_norms_dsiz_issuance_in_doc': replace_norms_dsiz_issuance_in_doc
     }
     local_placeholders_replace = callback_map.get(callback)
     doc = local_placeholders_replace(doc, **kwargs)
@@ -377,3 +436,24 @@ async def generate_doc_organization_in_memory(
     doc.save(output_buffer)
     output_buffer.seek(0)
     return output_buffer
+
+
+async def add_shoe_size_profs(response: dict) -> dict:
+    async with Session() as session:
+        query = select(Professions).options(
+            selectinload(Professions.norm)
+            .selectinload(Norms.material_norm_types)
+            .selectinload(NormMaterials.material_type)
+        )
+        result = await session.execute(query)
+        professions = result.scalars().all()
+        shoe_size_profs = set()
+        for profession in professions:
+            if not profession.norm:
+                continue
+            for mat in profession.norm.material_norm_types:
+                if mat.material_type.size_type == 'shoe_size':
+                    shoe_size_profs.add(profession.title)
+                    break
+        response['exempt']['shoe_size'] = list(shoe_size_profs)
+    return response

@@ -21,14 +21,21 @@ class YandexLLMClient(BaseApiClient):
     LLM_FOLDER_ID: str = settings.YANDEX_LLM_FOLDER_ID
     LLM_COMPLETION_TEMPERATURE: float = COMPLETION_TEMPERATURE
     LLM_COMPLETION_MAX_TOKENS: int = COMPLETION_MAX_TOKENS
-    LLM_DEFAULT_SEARCH_INDEX: str | None = None
     MAX_TEXT_LEN: int = 300
+
+    def __init__(self, **kwargs):
+        self.search_index = kwargs.pop('search_index', None)
+        super().__init__(**kwargs)
 
     def build_prompt(self, content, *args, **kwargs) -> str:
         return ''
 
     def get_data(self, content: str) -> dict:
         prompt = self.build_prompt(content)
+        messages = [{'role': 'system', 'text': prompt}]
+        if content and content.strip():
+            messages.append({'role': 'user', 'text': content})
+
         payload = {
             'modelUri': f'gpt://{self.LLM_FOLDER_ID}/yandexgpt/latest',
             'completionOptions': {
@@ -36,15 +43,12 @@ class YandexLLMClient(BaseApiClient):
                 'temperature': self.LLM_COMPLETION_TEMPERATURE,
                 'maxTokens': self.LLM_COMPLETION_MAX_TOKENS,
             },
-            'messages': [
-                {'role': 'system', 'text': prompt},
-                {'role': 'user', 'text': content},
-            ],
+            'messages': messages,
             'json_schema': self.get_json_schema(content),
         }
 
-        if self.LLM_DEFAULT_SEARCH_INDEX:
-            payload['searchIndex'] = self.LLM_DEFAULT_SEARCH_INDEX
+        if self.search_index:
+            payload['searchIndex'] = self.search_index
 
         return payload
 

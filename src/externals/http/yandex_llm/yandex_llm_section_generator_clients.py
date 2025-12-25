@@ -34,7 +34,6 @@ class BaseLLMSectionsGenerator(YandexLLMClient):
 
     def __init__(self, **kwargs):
         self.search_index = kwargs.pop('search_index', self.LLM_DEFAULT_SEARCH_INDEX)
-        x = self.search_index
         super().__init__(**kwargs)
 
 

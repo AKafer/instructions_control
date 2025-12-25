@@ -9,20 +9,14 @@ import {CustomSelect} from '../../../Select/Select';
 import {InsInputForm} from './InsInputForm/InsInputForm';
 import {PrimaryBriefingInputForm} from './PrimaryBriefingInputForm/PrimaryBriefingInputForm';
 import Input from '../../../Input/Input';
+import {TEMPLATES_BY_KEY} from '../../../../helpers/constants';
 
 
 export function SectionsGenerator({optionsProf, professionDict}) {
 	const api = useApi();
 	const baseGenerateUrl = '/documents/sections_generate/';
 	const baseDownloadUrl = '/documents/download_sections_document/';
-	const TEMPLATES = {
-		iot_blank: {
-			label: 'Инструкция по охране труда'
-		},
-		primary_briefing_program: {
-			label: 'Программа первичного инструктажа'
-		}
-	};
+	const TEMPLATE_KEYS = ['IOT_BLANK', 'PRIMARY_BRIEFING_PROGRAM'];
 
 	const [loading, setLoading] = useState(false);
 	const [smallLoading, setSmallLoading] = useState(false);
@@ -38,10 +32,12 @@ export function SectionsGenerator({optionsProf, professionDict}) {
 	const [equipmentHint, setEquipmentHint] = useState('');
 	const [searchIndex, setSearchIndex] = useState(null);
 
-	const templateOptions = Object.entries(TEMPLATES).map(([value, t]) => ({
-		value,
-		label: t.label
-	}));
+	const templateOptions = TEMPLATE_KEYS
+		.map(key => ({
+			value: key,
+			label: TEMPLATES_BY_KEY[key]?.name ?? key
+		}))
+		.filter(Boolean);
 
 	const handleTemplateChange = (option) => {
 		setSelectedTemplate(option);
@@ -57,9 +53,10 @@ export function SectionsGenerator({optionsProf, professionDict}) {
 	const handleGenerate = async () => {
 		setError(undefined);
 		setLoading(true);
+		const template = TEMPLATES_BY_KEY[selectedTemplate.value].template;
 
 		let payload;
-		if (selectedTemplate.value === 'iot_blank') {
+		if (selectedTemplate.value === 'IOT_BLANK') {
 			payload = {
 				search_index: searchIndex,
 				profession: profession,
@@ -68,7 +65,7 @@ export function SectionsGenerator({optionsProf, professionDict}) {
 			};
 		}
 
-		if (selectedTemplate.value === 'primary_briefing_program') {
+		if (selectedTemplate.value === 'PRIMARY_BRIEFING_PROGRAM') {
 			payload = {
 				search_index: searchIndex,
 				profession: profession,
@@ -78,7 +75,7 @@ export function SectionsGenerator({optionsProf, professionDict}) {
 		}
 
 		try {
-			const { data } = await api.post(`${baseGenerateUrl}${selectedTemplate.value}`, payload);
+			const { data } = await api.post(`${baseGenerateUrl}${template}`, payload);
 			setSections(data);
 
 			const firstKey = Object.keys(data)[0];
@@ -125,6 +122,7 @@ export function SectionsGenerator({optionsProf, professionDict}) {
 	const handleDownload = async () => {
 		setError(undefined);
 		setLoading(true);
+		const template = TEMPLATES_BY_KEY[selectedTemplate.value].template;
 
 		try {
 			const payloadSections = {};
@@ -136,7 +134,7 @@ export function SectionsGenerator({optionsProf, professionDict}) {
 			}
 
 			const response = await api.post(
-				`${baseDownloadUrl}${selectedTemplate.value}`,
+				`${baseDownloadUrl}${template}`,
 				{
 					profession,
 					sections: payloadSections
@@ -224,7 +222,7 @@ export function SectionsGenerator({optionsProf, professionDict}) {
 						onChange={(e) => setSearchIndex(e.target.value)}
 					/>
 
-					{selectedTemplate?.value === 'iot_blank' && (
+					{selectedTemplate?.value === 'IOT_BLANK' && (
 						<InsInputForm
 							optionsProf={optionsProf}
 							selectedProfOption={selectedProfOption}
@@ -236,7 +234,7 @@ export function SectionsGenerator({optionsProf, professionDict}) {
 						/>
 					)}
 
-					{selectedTemplate?.value === 'primary_briefing_program' && (
+					{selectedTemplate?.value === 'PRIMARY_BRIEFING_PROGRAM' && (
 						<PrimaryBriefingInputForm
 							optionsProf={optionsProf}
 							selectedProfOption={selectedProfOption}
