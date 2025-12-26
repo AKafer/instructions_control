@@ -16,11 +16,23 @@
 }
 
 .tableBox {
-  width: 50%;
+  min-width: 0;
+  flex: 1;
+  width: auto;
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--color_element_border);
   border-left: 1px solid var(--color_element_border);
+}
+
+@media (max-width: 1800px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .tableBox {
+    width: 100%;
+  }
 }
 
 .title {

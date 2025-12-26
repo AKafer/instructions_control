@@ -1,14 +1,29 @@
+.container {
+    width: 1200px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 .title {
   font-size: 24px;
   font-weight: bold;
   color: var(--color_text_default);
-  margin-bottom: 16px;
 }
 
 .formWrapper {
   display: flex;
   gap: 20px;
   margin-bottom: 20px;
+}
+
+@media (max-width: 1800px) {
+  .formWrapper {
+    flex-direction: column;
+  }
+  .container {
+    max-width: 600px;
+  }
 }
 
 .inputs {

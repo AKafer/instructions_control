@@ -1,12 +1,9 @@
-from enum import Enum
-from typing import List, Dict, ClassVar
-
+# CACHE
 MATERIAL_TYPE_SIMPLE_NEEDS_CACHE_KEY = 'material_type_simple_needs_{id}'
 MATERIAL_TYPE_SIMPLE_NEEDS_TTL = 60 * 60 * 24
 
 # API clients
 DEFAULT_REQUEST_TIMEOUT_SECONDS = 60
-
 
 # Failsafe
 FAILSAFE_ALLOWED_RETRIES: int = 3
@@ -16,113 +13,25 @@ FAILSAFE_BACKOFF_SECONDS: float = 0.2
 COMPLETION_TEMPERATURE = 0.2
 COMPLETION_MAX_TOKENS = 5000
 
-#FILE TEMPLATES
-from enum import Enum
-from typing import List
-
-class FileTemplatesNamingEnum(str, Enum):
-    # AI helpers
-    NON_QUALIFY_PROF_LIST = 'non_qualify_prof_list'
-    REQUIRING_TRAINING_SIZ_LIST = 'requiring_training_siz_list'
-    TRAINEE_WORKERS_LIST = 'trainee_workers_list'
-    EDUCATION_WORKERS_LIST = 'education_workers_list'
-    IOT_BLANK = 'iot_blank'
-    INTRODUCTORY_BRIEFING_PROGRAM = 'introductory_briefing_program'
-    PRIMARY_BRIEFING_PROGRAM = 'primary_briefing_program'
-    NORMS_DSIZ_ISSUANCE = 'norms_dsiz_issuance'
-
-    # Personals
-    ACT_REG_INTRO = 'act_reg_intro'
-    ACT_REG_CIVIL_DEF = 'act_reg_civil_def'
-    ACT_REG_PRIMARY = 'act_reg_primary'
-    JOURNAL_INTRO_PRIMARY = 'journal_intro_primary'
-    LNNA_ACK = 'lnna_ack'
-    LK_SIZ = 'lk_siz'
-    ORDER_INTERNSHIP = 'order_internship'
-    INTERNSHIP_SHEET = 'internship_sheet'
-    REF_MEDICAL_EXAM = 'ref_medical_exam'
-    KNOWLEDGE_TESTING_PROTOCOL = 'knowledge_testing_protocol'
-
-    # Organization
-    JOURNAL_MICRODAMAGE = 'journal_microdamage'
-    JOURNAL_ACCIDENTS = 'journal_accidents'
-    IOT_FIRST_AID = 'iot_first_aid'
-    IOT_SIZ = 'iot_siz'
-    LIST_INSTRUCTIONS = 'list_instructions'
-    POLICY_SIZ = 'policy_siz'
-    POLICY_ACCIDENTS = 'policy_accidents'
-    POLICY_TRAINING = 'policy_training'
-    POLICY_SUOT = 'policy_suot'
-    ORDER_APPROVE_LNA = 'order_approve_lna'
-    ORDER_SAN_POSTS = 'order_san_posts'
-    ORDER_START_SUOT = 'order_start_suot'
-    ORDER_RESPONSIBLE_OT = 'order_responsible_ot'
-    PROGRAM_SIZ_USAGE = 'program_siz_usage'
-    PROGRAM_GENERAL_SUOT = 'program_general_suot'
-    PROGRAM_FIRST_AID = 'program_first_aid'
-    PROGRAM_HAZARD_FACTORS = 'program_hazard_factors'
-    PROGRAM_WORKPLACE_INTERNSHIP = 'program_workplace_internship'
-    NORM_ISSUANCE_SIZ = 'norm_issuance_siz'
-
-    @classmethod
-    def groups(cls) -> Dict[str, List[str]]:
-        return {
-            'ai_assistant': [
-                'non_qualify_prof_list',
-                'requiring_training_siz_list',
-                'trainee_workers_list',
-                'iot_blank',
-                'primary_briefing_program',
-                'introductory_briefing_program',
-                'norms_dsiz_issuance',
-            ],
-            'personal': [
-                'act_reg_intro',
-                'act_reg_civil_def',
-                'act_reg_primary',
-                'journal_intro_primary',
-                'lnna_ack',
-                'lk_siz',
-                'order_internship',
-                'internship_sheet',
-                'ref_medical_exam',
-                'knowledge_testing_protocol'
-            ],
-            'organization': [
-                'journal_microdamage',
-                'journal_accidents',
-                'iot_first_aid',
-                'iot_siz',
-                'list_instructions',
-                'policy_siz',
-                'policy_accidents',
-                'policy_training',
-                'policy_suot',
-                'order_approve_lna',
-                'order_san_posts',
-                'order_start_suot',
-                'order_responsible_ot',
-                'program_siz_usage',
-                'program_general_suot',
-                'program_first_aid',
-                'program_hazard_factors',
-                'program_workplace_internship',
-                'norm_issuance_siz',
-            ],
-        }
-
-    @classmethod
-    def members_of_group(cls, group_name: str) -> List['FileTemplatesNamingEnum']:
-        keys = cls.groups().get(group_name, [])
-        return [cls(key) for key in keys if key in cls._value2member_map_]
-
-    @classmethod
-    def values_of_group(cls, group_name: str) -> List[str]:
-        return [m.value for m in cls.members_of_group(group_name)]
-
-    def is_in_group(self, group_name: str) -> bool:
-        return self.value in self.groups().get(group_name, [])
-
+# PLACEHOLDERS
+PROFESSION = '{{профессия}}'
+POINT_NUMBER = '{{номер пп}}'
+INSTRUCTION_NAME = '{{наименование инструкции}}'
+INSTRUCTION_USER_NAME = '{{наименование инструкции работника}}'
+INSTRUCTION_NUMBER = '{{номер инструкции}}'
+NPA_SIZ = '{{пункт 767}}'
+QUANTITY_SIZ = '{{кол СИЗ}}'
+NAME_SIZ = '{{Наименование СИЗ}}'
+START_DATE_SIZ = '{{дата выдачи СИЗ}}'
+UNIT_OF_MEASUREMENT_SIZ = '{{шт-пар}}'
+NON_QUALIFY_PROF = '{{профессии освобожденные от первичного инструктажа}}'
+REQUIRING_TRAINING_SIZ = '{{СИЗ требующие обучения}}'
+TRAINEE_WORKERS = '{{профессии кому нужна стажировка}}'
+EDUCATION_WORKERS_LIST = '{{профессия}}'
+HARM_FACTORS = '{{возможные вредные факторы}}'
+PROF_RISKS = '{{возможные проф риски}}'
+PRIMARY_PLACEHOLDER = '{{список должностей с первичным}}'
+SHOE_PLACEHOLDER = '{{список должностей СИЗ ног}}'
 
 personal_placeholders = [
     {'key': '{{фамилия работника}}', 'value': 'last_name'},
@@ -141,9 +50,3 @@ personal_placeholders = [
     {'key': '{{р-р головы}}', 'value': 'additional_features.head_size'},
     {'key': '{{р-р рук}}', 'value': 'additional_features.gloves_size'},
 ]
-
-personal_list_placeholders = [
-    {'key': '{{наименование инструкции работника}}', 'value': 'instructions'},
-    {'key': '{{наименование инструкции работника}}', 'value': 'meterials'},
-]
-

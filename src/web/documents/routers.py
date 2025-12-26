@@ -2,64 +2,44 @@ import os
 from datetime import datetime
 
 import sqlalchemy
+from database.models import Documents, NormMaterials, Norms, Professions, User
+from dependencies import get_db_session
+from externals.http.yandex_llm.yandex_llm_base import LLMResonseError
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, Delete
+from main_schemas import ResponseErrorBody
+from settings import TEMPLATES_DIR
+from sqlalchemy import Delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 from starlette import status
-from starlette.responses import Response, JSONResponse, StreamingResponse
-
-from constants import FileTemplatesNamingEnum
-from core.global_placeholders import (
-    EDUCATION_WORKERS_LIST,
-    NON_QUALIFY_PROF,
-    REQUIRING_TRAINING_SIZ,
-    TRAINEE_WORKERS,
-)
-from database.models import (
-    Documents,
-    Professions,
-    User,
-    Norms,
-    NormMaterials,
-    MaterialTypes,
-)
-from dependencies import get_db_session
 from starlette.exceptions import HTTPException
-
-from externals.http.yandex_llm.yandex_llm_base import LLMResonseError
-from externals.http.yandex_llm.yandex_llm_section_generator_clients import (
-    InsGeneratorClient,
-    PrimaryBriefingGeneratorClient
+from starlette.responses import JSONResponse, Response, StreamingResponse
+from templates_config import (
+    MODEL_MAPPING,
+    TEMPLATE_MAPPING,
+    FileTemplatesNamingEnum,
+    TemplateRegistry,
 )
-
-from externals.http.yandex_llm.yandex_llm_simple_list_clients import (
-    NonQualifyProfListClient,
-    TraineeWorkersListClient,
-    EducationWorkersListClient,
-    RequiringTrainingSIZListClient, IntroductoryBriefingProgramClient, NormIssuanceSIZClient,
-)
-
-from main_schemas import ResponseErrorBody
-from settings import TEMPLATES_DIR
+from web.documents.placeholders_funcs import DocumentCreateError
 from web.documents.schemas import (
-    Document,
     CreateDocument,
-    UpdateDocument,
     DeleteDocuments,
-    PersonalInput,
-    OrganizationInput,
+    Document,
+    DownloadItemListInput,
+    GenerateSectionsDownloadInput,
     ItemListInput,
-    DownloadItemListInput, SectionsDataInput, GenerateSectionsDownloadInput,
+    OrganizationInput,
+    PersonalInput,
+    SectionsDataInput,
+    UpdateDocument,
 )
-
 from web.documents.services import (
+    add_shoe_size_profs,
     check_document_create,
-    update_document_db,
-    DocumentCreateError,
+    generate_doc_organization_in_memory,
     generate_document_in_memory,
     generate_zip_personals_in_memory,
-    generate_doc_organization_in_memory, add_shoe_size_profs,
+    update_document_db,
 )
 from web.users.users import current_superuser
 
@@ -68,76 +48,6 @@ router = APIRouter(
     tags=['documents'],
     dependencies=[Depends(current_superuser)],
 )
-
-
-MODEL_MAPPING = {
-    'profession': Professions,
-    'siz': MaterialTypes,
-    'skip': None,
-}
-
-
-TEMPLATE_MAPPING = {
-    'non_qualify_prof_list': {
-        'client_class': NonQualifyProfListClient,
-        'placeholder': NON_QUALIFY_PROF,
-        'callback': 'replace_simple_list_placeholders_in_doc',
-        'content': (
-            'Список профессий: {items_list_str}\n\n'
-            'Выбери только те профессии, которые могут быть '
-            'освобождены от первичного инструктажа.'
-        ),
-    },
-    'trainee_workers_list': {
-        'client_class': TraineeWorkersListClient,
-        'placeholder': TRAINEE_WORKERS,
-        'callback': 'replace_simple_list_placeholders_in_doc',
-        'content': (
-            'Список профессий: {items_list_str}\n\n'
-            'Выбери только те профессии, для которых '
-            'обязательно прохождение стажировки на рабочем месте.'
-        ),
-    },
-    'education_workers_list': {
-        'client_class': EducationWorkersListClient,
-        'placeholder': EDUCATION_WORKERS_LIST,
-        'callback': 'replace_program_matrix_in_doc',
-        'content': (
-            'Вот список профессий: {items_list_str}\n\n'
-            'Распредели программы обучения согласно правилам выше.'
-        ),
-    },
-    'requiring_training_siz_list': {
-        'client_class': RequiringTrainingSIZListClient,
-        'placeholder': REQUIRING_TRAINING_SIZ,
-        'callback': 'replace_simple_list_placeholders_in_doc',
-        'content': (
-            'Список средств индивидуальной защиты: {items_list_str}\n\n'
-            'Выбери только те СИЗ, применение которых требует практических навыков. '
-            'Не включай простые элементы (например, сигнальные жилеты, белье, очки без особой настройки).'
-        ),
-    },
-    'introductory_briefing_program': {
-        'client_class': IntroductoryBriefingProgramClient,
-        'placeholder': None,
-        'callback': 'replace_introductory_briefing_program_in_doc',
-        'content': ''
-    },
-    'norms_dsiz_issuance': {
-        'client_class': NormIssuanceSIZClient,
-        'placeholder': None,
-        'callback': 'replace_norms_dsiz_issuance_in_doc',
-        'content': 'Вот список профессий: {items_list_str}\n\n'
-    },
-    'iot_blank': {
-        'client_class': InsGeneratorClient,
-        'content': ('profession', 'description', 'sizo'),
-    },
-    'primary_briefing_program': {
-        'client_class': PrimaryBriefingGeneratorClient,
-        'content': ('profession', 'manager_title', 'equipment_hint'),
-    }
-}
 
 
 @router.get('/', response_model=list[Document])
@@ -486,7 +396,7 @@ async def personal_generate(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f'Invalid template value: {input_data.template}',
         )
-    if not template.is_in_group('personal'):
+    if not TemplateRegistry.is_in_group(template.value, 'personal'):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f'Template {input_data.template} is not a personal template',
@@ -577,7 +487,7 @@ async def organization_generate(input_data: OrganizationInput):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f'Invalid template value: {input_data.template}',
         )
-    if not template.is_in_group('organization'):
+    if not TemplateRegistry.is_in_group(template.value, 'organization'):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f'Template {input_data.template} is not a organization template',

@@ -1,32 +1,20 @@
 import re
 from copy import deepcopy
-from typing import List, Dict, Tuple, Set
+from typing import Dict, List, Set, Tuple
 
-from sqlalchemy import select
-
+from constants import (
+    EDUCATION_WORKERS_LIST,
+    NAME_SIZ,
+    NPA_SIZ,
+    POINT_NUMBER,
+    PROFESSION,
+    QUANTITY_SIZ,
+    UNIT_OF_MEASUREMENT_SIZ,
+)
 from database.models import Config
 from database.orm import Session
 from docx import Document
-
-PROFESSION = '{{профессия}}'
-POINT_NUMBER = '{{номер пп}}'
-INSTRUCTION_NAME = '{{наименование инструкции}}'
-INSTRUCTION_USER_NAME = '{{наименование инструкции работника}}'
-INSTRUCTION_NUMBER = '{{номер инструкции}}'
-NPA_SIZ = '{{пункт 767}}'
-QUANTITY_SIZ = '{{кол СИЗ}}'
-NAME_SIZ = '{{Наименование СИЗ}}'
-START_DATE_SIZ = '{{дата выдачи СИЗ}}'
-UNIT_OF_MEASUREMENT_SIZ = '{{шт-пар}}'
-NON_QUALIFY_PROF = '{{профессии освобожденные от первичного инструктажа}}'
-REQUIRING_TRAINING_SIZ = '{{СИЗ требующие обучения}}'
-TRAINEE_WORKERS = '{{профессии кому нужна стажировка}}'
-EDUCATION_WORKERS_LIST = '{{профессия}}'
-HARM_FACTORS = '{{возможные вредные факторы}}'
-PROF_RISKS = '{{возможные проф риски}}'
-PRIMARY_PLACEHOLDER = '{{список должностей с первичным}}'
-SHOE_PLACEHOLDER = '{{список должностей СИЗ ног}}'
-
+from sqlalchemy import select
 
 _PLACEHOLDER_RE = re.compile(r'\{\{([^{}]+)\}\}')
 

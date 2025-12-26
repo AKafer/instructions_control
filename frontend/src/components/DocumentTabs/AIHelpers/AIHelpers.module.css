@@ -1,6 +1,6 @@
 .helpers_content {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 16px;
   padding: 16px;
 }
@@ -8,8 +8,26 @@
 .wrapper {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    border-bottom: 1px solid var(--color_element_border);
-    padding: 20px;
-    width: 75%;
+    gap: 20px;
+    border: 1px solid var(--color_element_border);
+    padding: 40px;
+    width: auto;
+    min-width: 0;
+    overflow: hidden;
+}
+
+@media (max-width: 2000px) {
+  .helpers_content {
+    flex-direction: column;
+  }
+
+  .wrapper {
+    width: 100%;
+  }
+}
+
+@media (max-width: 500px) {
+  .helpers_content {
+    display: none;
+  }
 }

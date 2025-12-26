@@ -6,15 +6,8 @@ import unicodedata
 import aiofiles as aiof
 from docx import Document
 from fastapi import Request, UploadFile
-from sqlalchemy.testing import startswith_
-
-from constants import FileTemplatesNamingEnum
-from settings import (
-    BASE_URL,
-    STATIC_FOLDER,
-    TEMPLATES_DIR,
-    TEMPLATES_FOLDER,
-)
+from settings import BASE_URL, STATIC_FOLDER, TEMPLATES_DIR, TEMPLATES_FOLDER
+from templates_config import FileTemplatesNamingEnum
 from web.filetemplates.schemas import DocumentField, RequestModel
 
 logger = logging.getLogger('control')
@@ -73,7 +66,6 @@ def roolback_rename_file(filename: str) -> None:
         pass
 
 
-
 def delete_file(filename: str) -> None:
     logger.debug(f'Delete file {filename}')
     try:
@@ -86,15 +78,9 @@ def delete_file(filename: str) -> None:
 
 def replace_text_in_runs(runs, replacements):
     full_text = ''.join(run.text for run in runs).strip()
-    full_text = unicodedata.normalize(
-        'NFKD', full_text
-    )
-    full_text = re.sub(
-        r'\s+', ' ', full_text
-    )
-    full_text = full_text.replace('“', '{').replace(
-        '”', '}'
-    )
+    full_text = unicodedata.normalize('NFKD', full_text)
+    full_text = re.sub(r'\s+', ' ', full_text)
+    full_text = full_text.replace('“', '{').replace('”', '}')
 
     if not full_text:
         return
@@ -129,9 +115,7 @@ def insert_list_into_table(table, list_data):
     if not column_mapping:
         return
 
-    base_row_idx = min(
-        row_idx for row_idx, _ in column_mapping.values()
-    )
+    base_row_idx = min(row_idx for row_idx, _ in column_mapping.values())
 
     for item in list_data:
         if base_row_idx < len(table.rows):

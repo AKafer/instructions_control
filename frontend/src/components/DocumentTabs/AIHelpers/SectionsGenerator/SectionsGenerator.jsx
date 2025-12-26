@@ -200,96 +200,98 @@ export function SectionsGenerator({optionsProf, professionDict}) {
 
 	return (
 		<>
-			{error && (
-				<div className={styles.error} onClick={() => setError(undefined)}>
-					{error} <span className={styles.errorClose}>✖</span>
-				</div>
-			)}
-			<h1 className={styles.title}>Генератор секционных документов</h1>
-			<div className={styles.formWrapper}>
-				<div className={styles.inputs}>
-					<CustomSelect
-						className={styles.my_wider_select}
-						value={selectedTemplate}
-						options={templateOptions}
-						placeholder="Тип документа"
-						onChange={handleTemplateChange}
-						width="100%"
-					/>
-					<Input
-						placeholder="Поисковый индекс"
-						value={searchIndex}
-						onChange={(e) => setSearchIndex(e.target.value)}
-					/>
-
-					{selectedTemplate?.value === 'IOT_BLANK' && (
-						<InsInputForm
-							optionsProf={optionsProf}
-							selectedProfOption={selectedProfOption}
-							handleProfessionChange={handleProfessionChange}
-							description={description}
-							setDescription={setDescription}
-							materials={materials}
-							smallLoading={smallLoading}
+			<div className={styles.container}>
+				{error && (
+					<div className={styles.error} onClick={() => setError(undefined)}>
+						{error} <span className={styles.errorClose}>✖</span>
+					</div>
+				)}
+				<h1 className={styles.title}>Генератор секционных документов</h1>
+				<div className={styles.formWrapper}>
+					<div className={styles.inputs}>
+						<CustomSelect
+							className={styles.my_wider_select}
+							value={selectedTemplate}
+							options={templateOptions}
+							placeholder="Тип документа"
+							onChange={handleTemplateChange}
+							width="100%"
 						/>
-					)}
-
-					{selectedTemplate?.value === 'PRIMARY_BRIEFING_PROGRAM' && (
-						<PrimaryBriefingInputForm
-							optionsProf={optionsProf}
-							selectedProfOption={selectedProfOption}
-							handleProfessionChange={handleProfessionChange}
-							managerTitle={managerTitle}
-							setManagerTitle={setManagerTitle}
-							equipmentHint={equipmentHint}
-							setEquipmentHint={setEquipmentHint}
+						<Input
+							placeholder="Поисковый индекс"
+							value={searchIndex}
+							onChange={(e) => setSearchIndex(e.target.value)}
 						/>
-					)}
 
-				</div>
-
-				<div className={styles.output}>
-					<CustomSelect
-						className={styles.my_wider_select}
-						options={sectionOptions}
-						value={selectedSection}
-						placeholder="Выберите секцию"
-						onChange={handleSectionChange}
-						width="100%"
-					/>
-					<div className={styles.textareaContainer}>
-						<Textarea
-							text={textareaValue}
-							setText={handleTextareaChange}
-							placeholder="Текст инструкции будет здесь"
-							disabled={false}
-							className={styles.textarea_output}
-						/>
-						{loading && (
-							<div className={styles.spinnerOverlay}>
-								<Spinner showSeconds={true} />
-							</div>
+						{selectedTemplate?.value === 'IOT_BLANK' && (
+							<InsInputForm
+								optionsProf={optionsProf}
+								selectedProfOption={selectedProfOption}
+								handleProfessionChange={handleProfessionChange}
+								description={description}
+								setDescription={setDescription}
+								materials={materials}
+								smallLoading={smallLoading}
+							/>
 						)}
+
+						{selectedTemplate?.value === 'PRIMARY_BRIEFING_PROGRAM' && (
+							<PrimaryBriefingInputForm
+								optionsProf={optionsProf}
+								selectedProfOption={selectedProfOption}
+								handleProfessionChange={handleProfessionChange}
+								managerTitle={managerTitle}
+								setManagerTitle={setManagerTitle}
+								equipmentHint={equipmentHint}
+								setEquipmentHint={setEquipmentHint}
+							/>
+						)}
+
+					</div>
+
+					<div className={styles.output}>
+						<CustomSelect
+							className={styles.my_wider_select}
+							options={sectionOptions}
+							value={selectedSection}
+							placeholder="Выберите секцию"
+							onChange={handleSectionChange}
+							width="100%"
+						/>
+						<div className={styles.textareaContainer}>
+							<Textarea
+								text={textareaValue}
+								setText={handleTextareaChange}
+								placeholder="Текст инструкции будет здесь"
+								disabled={false}
+								className={styles.textarea_output}
+							/>
+							{loading && (
+								<div className={styles.spinnerOverlay}>
+									<Spinner showSeconds={true} />
+								</div>
+							)}
+						</div>
 					</div>
 				</div>
-			</div>
 
-			<div className={styles.buttonsContainer}>
-				<div className={styles.button}>
-					<Button onClick={handleGenerate} disabled={loading}>
-						{loading ? 'Запрос в обработке...' : 'Сформировать'}
-					</Button>
-				</div>
-				<div className={styles.button}>
-					<Button
-						onClick={handleDownload}
-						disabled={!profession || !Object.keys(sections).length}
-						className={cn({ [styles.disabled]: !profession || !Object.keys(sections).length })}
-					>
+				<div className={styles.buttonsContainer}>
+					<div className={styles.button}>
+						<Button onClick={handleGenerate} disabled={loading}>
+							{loading ? 'Запрос в обработке...' : 'Сформировать'}
+						</Button>
+					</div>
+					<div className={styles.button}>
+						<Button
+							onClick={handleDownload}
+							disabled={!profession || !Object.keys(sections).length}
+							className={cn({ [styles.disabled]: !profession || !Object.keys(sections).length })}
+						>
 						Выгрузить в файл
-					</Button>
+						</Button>
+					</div>
 				</div>
-			</div>
+			</div>	
 		</>
 	);
 }

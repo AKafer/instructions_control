@@ -1,49 +1,54 @@
 import logging
-from datetime import datetime, date
+from datetime import date, datetime
 from io import BytesIO
-from typing import Any, Sequence, List, Dict, Callable
-from zipfile import ZipFile, ZIP_DEFLATED
+from typing import Any, Dict, List, Sequence
+from zipfile import ZIP_DEFLATED, ZipFile
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from docx import Document
-from sqlalchemy.orm import selectinload
-
-from constants import personal_placeholders, FileTemplatesNamingEnum
-from core.global_placeholders import (
-    replace_global_placeholders_in_doc,
-    fill_template_placeholders,
-    replace_in_paragraphs,
-    replace_in_tables,
-    replace_in_headers_footers,
-    DocumentCreateError,
-    POINT_NUMBER,
-    INSTRUCTION_USER_NAME,
-    NAME_SIZ,
-    START_DATE_SIZ,
-    NPA_SIZ,
-    QUANTITY_SIZ,
-    UNIT_OF_MEASUREMENT_SIZ,
+from constants import (
+    HARM_FACTORS,
     INSTRUCTION_NAME,
     INSTRUCTION_NUMBER,
-    fill_table_with_items,
+    INSTRUCTION_USER_NAME,
+    NAME_SIZ,
+    NPA_SIZ,
+    POINT_NUMBER,
+    PRIMARY_PLACEHOLDER,
+    PROF_RISKS,
     PROFESSION,
-    fill_complex_ppe_table,
-    fill_program_matrix_table, PROF_RISKS, HARM_FACTORS, PRIMARY_PLACEHOLDER, SHOE_PLACEHOLDER,
-    replace_in_paragraph_runs,
+    QUANTITY_SIZ,
+    SHOE_PLACEHOLDER,
+    START_DATE_SIZ,
+    UNIT_OF_MEASUREMENT_SIZ,
+    personal_placeholders,
 )
 from database.models import (
-    User,
     Documents,
     DocumentTypes,
     Instructions,
-    Professions,
-    Norms,
     NormMaterials,
+    Norms,
+    Professions,
+    User,
 )
 from database.orm import Session
+from docx import Document
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+from templates_config import FileTemplatesNamingEnum
+from web.documents.placeholders_funcs import (
+    DocumentCreateError,
+    fill_complex_ppe_table,
+    fill_program_matrix_table,
+    fill_table_with_items,
+    fill_template_placeholders,
+    replace_global_placeholders_in_doc,
+    replace_in_headers_footers,
+    replace_in_paragraph_runs,
+    replace_in_paragraphs,
+    replace_in_tables,
+)
 from web.documents.schemas import CreateDocument, Placeholder
-
 
 logger = logging.getLogger('control')
 
@@ -131,9 +136,7 @@ def replace_introductory_briefing_program_in_doc(
             factors_raw = s.split(':', 1)[1].strip()
     risk_items = [x.strip() for x in risks_raw.split(',') if x.strip()]
     factor_items = [x.strip() for x in factors_raw.split(',') if x.strip()]
-    doc = replace_simple_list_placeholders_in_doc(
-        doc, risk_items, PROF_RISKS
-    )
+    doc = replace_simple_list_placeholders_in_doc(doc, risk_items, PROF_RISKS)
     doc = replace_simple_list_placeholders_in_doc(
         doc, factor_items, HARM_FACTORS
     )
@@ -143,15 +146,15 @@ def replace_introductory_briefing_program_in_doc(
 def replace_norms_dsiz_issuance_in_doc(
     doc: Document, items: List[str], placeholder: str = None
 ) -> Document:
-    primary_raw = ""
-    shoe_raw = ""
+    primary_raw = ''
+    shoe_raw = ''
 
     for line in items:
-        s = (line or "").strip()
+        s = (line or '').strip()
         low = s.lower()
 
         if low.startswith('список должностей с первичным:'):
-            primary_raw = s.split(":", 1)[1].strip().rstrip(';').strip()
+            primary_raw = s.split(':', 1)[1].strip().rstrip(';').strip()
 
         elif low.startswith('список должностей сиз ног:'):
             shoe_raw = s.split(':', 1)[1].strip().rstrip(';').strip()
@@ -166,8 +169,12 @@ def replace_norms_dsiz_issuance_in_doc(
         for row in table.rows:
             for cell in row.cells:
                 for paragraph in cell.paragraphs:
-                    replace_in_paragraph_runs(paragraph, PRIMARY_PLACEHOLDER, primary_text)
-                    replace_in_paragraph_runs(paragraph, SHOE_PLACEHOLDER, shoe_text)
+                    replace_in_paragraph_runs(
+                        paragraph, PRIMARY_PLACEHOLDER, primary_text
+                    )
+                    replace_in_paragraph_runs(
+                        paragraph, SHOE_PLACEHOLDER, shoe_text
+                    )
 
     return doc
 
@@ -181,7 +188,7 @@ async def generate_document_in_memory(
         'replace_simple_list_placeholders_in_doc': replace_simple_list_placeholders_in_doc,
         'replace_program_matrix_in_doc': replace_program_matrix_in_doc,
         'replace_introductory_briefing_program_in_doc': replace_introductory_briefing_program_in_doc,
-        'replace_norms_dsiz_issuance_in_doc': replace_norms_dsiz_issuance_in_doc
+        'replace_norms_dsiz_issuance_in_doc': replace_norms_dsiz_issuance_in_doc,
     }
     local_placeholders_replace = callback_map.get(callback)
     doc = local_placeholders_replace(doc, **kwargs)

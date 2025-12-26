@@ -17,7 +17,7 @@ export function SimpleListFromDB() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(undefined);
 	const [resultRequest, setResultRequest] = useState('');
-	const [selectedTemplate, setSelectedTemplate] = useState(null);
+
 	const [searchIndex, setSearchIndex] = useState(null);
 
 	const TEMPLATE_KEYS = [
@@ -35,6 +35,8 @@ export function SimpleListFromDB() {
 			label: TEMPLATES_BY_KEY[key]?.name ?? key
 		}))
 		.filter(Boolean);
+
+	const [selectedTemplate, setSelectedTemplate] = useState(templateOptions[0]);
 
 	const formatEduResponse = (exempt) =>
 		(exempt || [])

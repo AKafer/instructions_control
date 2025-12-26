@@ -23,6 +23,7 @@ export function AIHelpers() {
 
 	return (
 		<div className={styles.helpers_content}>
+
 			<div className={styles.wrapper}>
 				<SimpleListFromDB />
 			</div>
